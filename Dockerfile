@@ -11,7 +11,7 @@ RUN npm run build
 # Stage 2: Build .NET backend
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
 WORKDIR /src
-COPY Omphalos.sln ./
+COPY Omphalos.slnx ./
 COPY src/Omphalos.Domain/Omphalos.Domain.csproj src/Omphalos.Domain/
 COPY src/Omphalos.Repository/Omphalos.Repository.csproj src/Omphalos.Repository/
 COPY src/Omphalos.Services/Omphalos.Services.csproj src/Omphalos.Services/
