@@ -17,7 +17,7 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF }) {
   return (
     <div className="bg-[#2d2d2d] border-b border-[#3d3d3d] flex items-center gap-3 px-4 flex-shrink-0" style={{ paddingTop: 0, paddingBottom: 0, lineHeight: 0 }}>
       {/* Logo */}
-      <img src="/logo.png" alt="Omphalos" className="w-auto flex-shrink-0 block" style={{ height: '128px', marginTop: '-16px', marginBottom: '-16px' }} />
+      <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Omphalos" className="w-auto flex-shrink-0 block" style={{ height: '128px', marginTop: '-16px', marginBottom: '-16px' }} />
 
       <div className="w-px h-8 bg-[#3d3d3d] flex-shrink-0" />
 
