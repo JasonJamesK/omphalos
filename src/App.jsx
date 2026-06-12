@@ -3,6 +3,7 @@ import { useApp } from './context/AppContext'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import SettingsModal from './components/SettingsModal'
+import LoginPage from './components/LoginPage'
 import SessionLog from './components/tabs/SessionLog'
 import Locations from './components/tabs/Locations'
 import Characters from './components/tabs/Characters'
@@ -54,6 +55,18 @@ export default function App() {
         encounters: [],
       },
     })
+  }
+
+  // Show a blank screen while we check the cookie
+  if (!state.authChecked) return null
+
+  // Show login if not authenticated
+  if (!state.user) {
+    return (
+      <LoginPage
+        onLogin={(user) => dispatch({ type: 'SET_USER', payload: user })}
+      />
+    )
   }
 
   if (!state.loaded) {

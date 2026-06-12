@@ -1,45 +1,66 @@
-import { openDB } from 'idb'
+const BASE = '/api'
 
-const DB_NAME = 'omphalos'
-const DB_VER = 1
-
-let _db
-
-async function getDB() {
-  if (!_db) {
-    _db = await openDB(DB_NAME, DB_VER, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('sessions')) {
-          db.createObjectStore('sessions', { keyPath: 'id' })
-        }
-        if (!db.objectStoreNames.contains('settings')) {
-          db.createObjectStore('settings')
-        }
-      },
-    })
+async function request(path, options = {}) {
+  const res = await fetch(`${BASE}${path}`, {
+    credentials: 'include', // send httpOnly cookie automatically
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  })
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('omphalos:unauthorized'))
+    throw new Error('Unauthorized')
   }
-  return _db
+  if (!res.ok) throw new Error(`API error ${res.status}`)
+  if (res.status === 204) return null
+  return res.json()
 }
 
 export const db = {
   async getAllSessions() {
-    const d = await getDB()
-    return d.getAll('sessions')
+    return request('/sessions')
   },
+
   async saveSession(session) {
-    const d = await getDB()
-    return d.put('sessions', session)
+    return request(`/sessions/${session.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(session),
+    })
   },
+
   async deleteSession(id) {
-    const d = await getDB()
-    return d.delete('sessions', id)
+    return request(`/sessions/${id}`, { method: 'DELETE' })
   },
+
   async getSettings() {
-    const d = await getDB()
-    return d.get('settings', 'main')
+    return request('/settings')
   },
+
   async saveSettings(settings) {
-    const d = await getDB()
-    return d.put('settings', settings, 'main')
+    return request('/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ geminiApiKey: settings.geminiApiKey ?? '' }),
+    })
   },
+}
+
+export async function login(username, password) {
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  if (!res.ok) throw new Error('Invalid credentials')
+  return res.json()
+}
+
+export async function logout() {
+  // JWT is in httpOnly cookie — just clear local state; server can add a revoke endpoint later
+  window.dispatchEvent(new Event('omphalos:unauthorized'))
+}
+
+export async function getMe() {
+  const res = await fetch(`${BASE}/auth/me`, { credentials: 'include' })
+  if (!res.ok) return null
+  return res.json()
 }

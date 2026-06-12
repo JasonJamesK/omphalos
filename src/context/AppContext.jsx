@@ -1,6 +1,5 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
-import { db } from '../db/index.js'
-import { mockSessions } from '../data/mockData.js'
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import { db, getMe } from '../db/index.js'
 
 const AppContext = createContext(null)
 
@@ -11,10 +10,15 @@ const initial = {
   sidebarCollapsed: false,
   settings: { geminiApiKey: '', customTables: [] },
   loaded: false,
+  user: null,        // { id, username, role } when logged in
+  authChecked: false, // true once we know if user is logged in
 }
 
 function reducer(state, action) {
   switch (action.type) {
+    case 'SET_USER':
+      return { ...state, user: action.payload, authChecked: true }
+
     case 'INIT':
       return { ...state, ...action.payload, loaded: true }
 
@@ -30,16 +34,15 @@ function reducer(state, action) {
     case 'SET_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } }
 
-    case 'ADD_SESSION': {
+    case 'ADD_SESSION':
       return {
         ...state,
         sessions: [...state.sessions, action.payload],
         activeSessionId: action.payload.id,
         activeTab: 0,
       }
-    }
 
-    case 'UPDATE_SESSION': {
+    case 'UPDATE_SESSION':
       return {
         ...state,
         sessions: state.sessions.map(s =>
@@ -48,7 +51,6 @@ function reducer(state, action) {
             : s
         ),
       }
-    }
 
     case 'DELETE_SESSION': {
       const next = state.sessions.filter(s => s.id !== action.payload)
@@ -129,46 +131,49 @@ function updateSessionField(state, sessionId, updater) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initial)
 
+  // Check auth on mount
   useEffect(() => {
+    getMe().then(user => {
+      dispatch({ type: 'SET_USER', payload: user })
+    })
+
+    // Listen for 401s from any API call
+    const onUnauthorized = () => dispatch({ type: 'SET_USER', payload: null })
+    window.addEventListener('omphalos:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('omphalos:unauthorized', onUnauthorized)
+  }, [])
+
+  // Load data once authenticated
+  useEffect(() => {
+    if (!state.user) return
     async function load() {
       try {
         const [sessions, settings] = await Promise.all([
           db.getAllSessions(),
           db.getSettings(),
         ])
-        let loaded = sessions.length ? sessions : mockSessions
-        if (!sessions.length) {
-          for (const s of mockSessions) await db.saveSession(s)
-        }
         dispatch({
           type: 'INIT',
           payload: {
-            sessions: loaded,
-            activeSessionId: loaded[0]?.id || null,
-            settings: settings || { geminiApiKey: '' },
+            sessions: sessions ?? [],
+            activeSessionId: sessions?.[0]?.id ?? null,
+            settings: settings ?? { geminiApiKey: '' },
           },
         })
       } catch {
         dispatch({
           type: 'INIT',
-          payload: {
-            sessions: mockSessions,
-            activeSessionId: mockSessions[0]?.id || null,
-            settings: { geminiApiKey: '' },
-          },
+          payload: { sessions: [], activeSessionId: null, settings: { geminiApiKey: '' } },
         })
       }
     }
     load()
-  }, [])
+  }, [state.user])
 
-  // Persist sessions on change
-  useEffect(() => {
-    if (!state.loaded) return
-    for (const s of state.sessions) {
-      db.saveSession(s).catch(() => {})
-    }
-  }, [state.sessions, state.loaded])
+  // Persist the single changed session instead of all of them
+  const saveSession = useCallback((session) => {
+    db.saveSession(session).catch(() => {})
+  }, [])
 
   // Persist settings on change
   useEffect(() => {
@@ -178,8 +183,39 @@ export function AppProvider({ children }) {
 
   const activeSession = state.sessions.find(s => s.id === state.activeSessionId) || null
 
+  // Wrap dispatch to trigger targeted API saves on mutations
+  const dispatchWithPersist = useCallback((action) => {
+    dispatch(action)
+
+    if (!state.loaded) return
+
+    switch (action.type) {
+      case 'ADD_SESSION':
+      case 'UPDATE_SESSION':
+        saveSession(action.payload)
+        break
+      case 'DELETE_SESSION':
+        db.deleteSession(action.payload).catch(() => {})
+        break
+      case 'ADD_CHARACTER':
+      case 'UPDATE_CHARACTER':
+      case 'DELETE_CHARACTER':
+      case 'ADD_LOCATION':
+      case 'UPDATE_LOCATION':
+      case 'DELETE_LOCATION':
+      case 'ADD_ENCOUNTER':
+      case 'UPDATE_ENCOUNTER':
+      case 'DELETE_ENCOUNTER': {
+        // Save the parent session after sub-resource mutations
+        const session = state.sessions.find(s => s.id === action.sessionId)
+        if (session) saveSession(session)
+        break
+      }
+    }
+  }, [state.loaded, state.sessions, saveSession])
+
   return (
-    <AppContext.Provider value={{ state, dispatch, activeSession }}>
+    <AppContext.Provider value={{ state, dispatch: dispatchWithPersist, activeSession }}>
       {children}
     </AppContext.Provider>
   )
