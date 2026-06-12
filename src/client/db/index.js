@@ -55,7 +55,7 @@ export async function login(username, password) {
 }
 
 export async function logout() {
-  // JWT is in httpOnly cookie — just clear local state; server can add a revoke endpoint later
+  await fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' })
   window.dispatchEvent(new Event('omphalos:unauthorized'))
 }
 
