@@ -64,3 +64,13 @@ export async function getMe() {
   if (!res.ok) return null
   return res.json()
 }
+
+export const adminApi = {
+  getUsers: () => request('/admin/users'),
+  createUser: (username, password, role) =>
+    request('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, role }),
+    }),
+  deleteUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+}
