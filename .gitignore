@@ -12,3 +12,4 @@ dist
 # Visual Studio
 .vs/
 *.user
+.claude/settings.local.json
