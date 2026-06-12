@@ -1,3 +1,14 @@
 node_modules
 dist
 .DS_Store
+
+# Secrets
+.env
+
+# .NET build outputs
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user

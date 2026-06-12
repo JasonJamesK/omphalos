@@ -1,6 +1,5 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
-import { db } from '../db/index.js'
-import { mockSessions } from '../data/mockData.js'
+import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react'
+import { db, getMe } from '../db/index.js'
 
 const AppContext = createContext(null)
 
@@ -11,10 +10,15 @@ const initial = {
   sidebarCollapsed: false,
   settings: { geminiApiKey: '', customTables: [] },
   loaded: false,
+  user: null,
+  authChecked: false,
 }
 
 function reducer(state, action) {
   switch (action.type) {
+    case 'SET_USER':
+      return { ...state, user: action.payload, authChecked: true }
+
     case 'INIT':
       return { ...state, ...action.payload, loaded: true }
 
@@ -30,16 +34,15 @@ function reducer(state, action) {
     case 'SET_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } }
 
-    case 'ADD_SESSION': {
+    case 'ADD_SESSION':
       return {
         ...state,
         sessions: [...state.sessions, action.payload],
         activeSessionId: action.payload.id,
         activeTab: 0,
       }
-    }
 
-    case 'UPDATE_SESSION': {
+    case 'UPDATE_SESSION':
       return {
         ...state,
         sessions: state.sessions.map(s =>
@@ -48,7 +51,6 @@ function reducer(state, action) {
             : s
         ),
       }
-    }
 
     case 'DELETE_SESSION': {
       const next = state.sessions.filter(s => s.id !== action.payload)
@@ -129,46 +131,60 @@ function updateSessionField(state, sessionId, updater) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initial)
 
+  // Refs so dispatchWithPersist never closes over stale state
+  const loadedRef = useRef(false)
+  const dirtySessionRef = useRef(null)
+
+  useEffect(() => { loadedRef.current = state.loaded }, [state.loaded])
+
+  // Check auth on mount
   useEffect(() => {
+    getMe().then(user => dispatch({ type: 'SET_USER', payload: user }))
+
+    const onUnauthorized = () => dispatch({ type: 'SET_USER', payload: null })
+    window.addEventListener('omphalos:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('omphalos:unauthorized', onUnauthorized)
+  }, [])
+
+  // Load data once authenticated
+  useEffect(() => {
+    if (!state.user) return
     async function load() {
       try {
         const [sessions, settings] = await Promise.all([
           db.getAllSessions(),
           db.getSettings(),
         ])
-        let loaded = sessions.length ? sessions : mockSessions
-        if (!sessions.length) {
-          for (const s of mockSessions) await db.saveSession(s)
-        }
         dispatch({
           type: 'INIT',
           payload: {
-            sessions: loaded,
-            activeSessionId: loaded[0]?.id || null,
-            settings: settings || { geminiApiKey: '' },
+            sessions: sessions ?? [],
+            activeSessionId: sessions?.[0]?.id ?? null,
+            settings: settings ?? { geminiApiKey: '' },
           },
         })
       } catch {
         dispatch({
           type: 'INIT',
-          payload: {
-            sessions: mockSessions,
-            activeSessionId: mockSessions[0]?.id || null,
-            settings: { geminiApiKey: '' },
-          },
+          payload: { sessions: [], activeSessionId: null, settings: { geminiApiKey: '' } },
         })
       }
     }
     load()
+  }, [state.user])
+
+  const saveSession = useCallback((session) => {
+    db.saveSession(session).catch(() => {})
   }, [])
 
-  // Persist sessions on change
+  // After React re-renders with updated sessions, flush any pending sub-resource save.
+  // This ensures we always send the post-mutation state, not the pre-dispatch snapshot.
   useEffect(() => {
-    if (!state.loaded) return
-    for (const s of state.sessions) {
-      db.saveSession(s).catch(() => {})
-    }
-  }, [state.sessions, state.loaded])
+    if (!state.loaded || !dirtySessionRef.current) return
+    const session = state.sessions.find(s => s.id === dirtySessionRef.current)
+    if (session) saveSession(session)
+    dirtySessionRef.current = null
+  }, [state.sessions, state.loaded, saveSession])
 
   // Persist settings on change
   useEffect(() => {
@@ -176,10 +192,36 @@ export function AppProvider({ children }) {
     db.saveSettings(state.settings).catch(() => {})
   }, [state.settings, state.loaded])
 
+  const dispatchWithPersist = useCallback((action) => {
+    dispatch(action)
+    if (!loadedRef.current) return
+
+    switch (action.type) {
+      case 'ADD_SESSION':
+      case 'UPDATE_SESSION':
+        saveSession(action.payload)
+        break
+      case 'DELETE_SESSION':
+        db.deleteSession(action.payload).catch(() => {})
+        break
+      case 'ADD_CHARACTER':
+      case 'UPDATE_CHARACTER':
+      case 'DELETE_CHARACTER':
+      case 'ADD_LOCATION':
+      case 'UPDATE_LOCATION':
+      case 'DELETE_LOCATION':
+      case 'ADD_ENCOUNTER':
+      case 'UPDATE_ENCOUNTER':
+      case 'DELETE_ENCOUNTER':
+        dirtySessionRef.current = action.sessionId
+        break
+    }
+  }, [saveSession])
+
   const activeSession = state.sessions.find(s => s.id === state.activeSessionId) || null
 
   return (
-    <AppContext.Provider value={{ state, dispatch, activeSession }}>
+    <AppContext.Provider value={{ state, dispatch: dispatchWithPersist, activeSession }}>
       {children}
     </AppContext.Provider>
   )

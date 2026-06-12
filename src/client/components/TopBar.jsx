@@ -1,7 +1,8 @@
 import { useRef } from 'react'
 import { useApp } from '../context/AppContext'
+import { logout } from '../db/index.js'
 
-export default function TopBar({ onSettings, onNewSession, onExportPDF }) {
+export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin }) {
   const { state, dispatch, activeSession } = useApp()
   const titleRef = useRef(null)
 
@@ -12,6 +13,10 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF }) {
         payload: { id: activeSession.id, title: e.target.value },
       })
     }
+  }
+
+  async function handleLogout() {
+    await logout()
   }
 
   return (
@@ -44,12 +49,31 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF }) {
       >
         PDF
       </button>
+
+      {state.user?.role === 'Admin' && (
+        <button
+          onClick={onAdmin}
+          className="w-8 h-8 rounded bg-[#3d3d3d] text-[#999999] hover:bg-[#4d4d4d] hover:text-[#f0f0f0] transition-colors flex items-center justify-center text-base"
+          title="User management"
+        >
+          👤
+        </button>
+      )}
+
       <button
         onClick={onSettings}
         className="w-8 h-8 rounded bg-[#3d3d3d] text-[#999999] hover:bg-[#4d4d4d] hover:text-[#f0f0f0] transition-colors flex items-center justify-center text-base"
-        title="Settings"
+        title="Settings (Ctrl+,)"
       >
         ⚙
+      </button>
+
+      <button
+        onClick={handleLogout}
+        className="w-8 h-8 rounded bg-[#3d3d3d] text-[#999999] hover:bg-[#4d4d4d] hover:text-[#f0f0f0] transition-colors flex items-center justify-center text-sm"
+        title={`Sign out (${state.user?.username})`}
+      >
+        ⏻
       </button>
     </div>
   )

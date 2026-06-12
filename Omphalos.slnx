@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Omphalos.Domain/Omphalos.Domain.csproj" />
+    <Project Path="src/Omphalos.Repository/Omphalos.Repository.csproj" />
+    <Project Path="src/Omphalos.Services/Omphalos.Services.csproj" />
+    <Project Path="src/Omphalos.Web/Omphalos.Web.csproj" />
+  </Folder>
+</Solution>

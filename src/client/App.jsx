@@ -3,6 +3,8 @@ import { useApp } from './context/AppContext'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import SettingsModal from './components/SettingsModal'
+import AdminModal from './components/AdminModal'
+import LoginPage from './components/LoginPage'
 import SessionLog from './components/tabs/SessionLog'
 import Locations from './components/tabs/Locations'
 import Characters from './components/tabs/Characters'
@@ -15,6 +17,7 @@ const TABS = ['Session', 'Locations', 'Characters', 'Encounters', 'Toolkit']
 export default function App() {
   const { state, dispatch, activeSession } = useApp()
   const [showSettings, setShowSettings] = useState(false)
+  const [showAdmin, setShowAdmin] = useState(false)
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -56,6 +59,18 @@ export default function App() {
     })
   }
 
+  // Show a blank screen while we check the cookie
+  if (!state.authChecked) return null
+
+  // Show login if not authenticated
+  if (!state.user) {
+    return (
+      <LoginPage
+        onLogin={(user) => dispatch({ type: 'SET_USER', payload: user })}
+      />
+    )
+  }
+
   if (!state.loaded) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
@@ -82,6 +97,7 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar
           onSettings={() => setShowSettings(true)}
+          onAdmin={() => setShowAdmin(true)}
           onNewSession={createSession}
           onExportPDF={() => activeSession && exportToPDF(activeSession)}
         />
@@ -130,6 +146,7 @@ export default function App() {
       </div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showAdmin && <AdminModal onClose={() => setShowAdmin(false)} />}
     </div>
   )
 }
