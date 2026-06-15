@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Omphalos.Repository;
@@ -12,9 +13,11 @@ using Omphalos.Repository;
 namespace Omphalos.Repository.Migrations
 {
     [DbContext(typeof(OmphalosDbContext))]
-    partial class OmphalosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615113424_AddEncounterEnemies")]
+    partial class AddEncounterEnemies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,45 +159,12 @@ namespace Omphalos.Repository.Migrations
                     b.ToTable("GameSessions");
                 });
 
-            modelBuilder.Entity("Omphalos.Domain.Entities.GlobalLocation", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ImageBase64")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SecretsAndHazards")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GlobalLocations");
-                });
-
             modelBuilder.Entity("Omphalos.Domain.Entities.Location", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("GlobalLocationId")
                         .HasColumnType("text");
 
                     b.Property<string>("ImageBase64")
@@ -211,15 +181,10 @@ namespace Omphalos.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("SessionNotes")
-                        .HasColumnType("text");
-
                     b.Property<string>("Type")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GlobalLocationId");
 
                     b.HasIndex("SessionId");
 
@@ -355,18 +320,11 @@ namespace Omphalos.Repository.Migrations
 
             modelBuilder.Entity("Omphalos.Domain.Entities.Location", b =>
                 {
-                    b.HasOne("Omphalos.Domain.Entities.GlobalLocation", "GlobalLocation")
-                        .WithMany("SessionLocations")
-                        .HasForeignKey("GlobalLocationId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Omphalos.Domain.Entities.GameSession", "Session")
                         .WithMany("Locations")
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("GlobalLocation");
 
                     b.Navigation("Session");
                 });
@@ -389,11 +347,6 @@ namespace Omphalos.Repository.Migrations
                     b.Navigation("Encounters");
 
                     b.Navigation("Locations");
-                });
-
-            modelBuilder.Entity("Omphalos.Domain.Entities.GlobalLocation", b =>
-                {
-                    b.Navigation("SessionLocations");
                 });
 
             modelBuilder.Entity("Omphalos.Domain.Entities.User", b =>

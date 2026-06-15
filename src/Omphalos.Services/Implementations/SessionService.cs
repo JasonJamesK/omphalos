@@ -88,6 +88,8 @@ public class SessionService(ISessionRepository repo) : ISessionService
             Description = l.Description,
             Notes = l.Notes,
             ImageBase64 = l.ImageBase64,
+            GlobalLocationId = l.GlobalLocationId,
+            SessionNotes = l.SessionNotes,
         }).ToList(),
         Encounters = (r.Encounters ?? []).Select(e => new Encounter
         {
@@ -98,6 +100,12 @@ public class SessionService(ISessionRepository repo) : ISessionService
             Description = e.Description,
             Notes = e.Notes,
             Difficulty = e.Difficulty,
+            Enemies = (e.Enemies ?? []).Select(en => new EncounterEnemy
+            {
+                Name = en.Name,
+                Qty = en.Qty,
+                Tier = en.Tier,
+            }).ToList(),
         }).ToList(),
     };
 
@@ -123,7 +131,8 @@ public class SessionService(ISessionRepository repo) : ISessionService
             c.PersonalityTraits, c.Flaw, c.Inventory, c.QuestHooks, c.Description,
             c.Relationships.Select(r => new CharacterRelationshipDto(r.Name, r.Type)).ToList()
         )).ToList(),
-        s.Locations.Select(l => new LocationDto(l.Id, l.Name, l.Type, l.Description, l.Notes, l.ImageBase64)).ToList(),
-        s.Encounters.Select(e => new EncounterDto(e.Id, e.Name, e.Type, e.Description, e.Notes, e.Difficulty)).ToList()
+        s.Locations.Select(l => new LocationDto(l.Id, l.Name, l.Type, l.Description, l.Notes, l.ImageBase64, l.GlobalLocationId, l.SessionNotes)).ToList(),
+        s.Encounters.Select(e => new EncounterDto(e.Id, e.Name, e.Type, e.Description, e.Notes, e.Difficulty,
+            e.Enemies.Select(en => new EnemyDto(en.Name, en.Qty, en.Tier)).ToList())).ToList()
     );
 }

@@ -17,11 +17,13 @@ builder.Services.AddDbContext<OmphalosDbContext>(opts =>
 // Repositories
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IGlobalLocationRepository, GlobalLocationRepository>();
 
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IGlobalLocationService, GlobalLocationService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]
@@ -88,6 +90,7 @@ app.MapAuthEndpoints();
 app.MapSessionEndpoints();
 app.MapAdminEndpoints();
 app.MapSettingsEndpoints();
+app.MapGlobalLocationEndpoints();
 
 // Serve React SPA from wwwroot (production)
 app.UseDefaultFiles();

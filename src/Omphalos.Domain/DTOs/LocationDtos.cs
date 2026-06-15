@@ -6,5 +6,7 @@ public record LocationDto(
     string? Type,
     string? Description,
     string? Notes,
-    string? ImageBase64
+    string? ImageBase64,
+    string? GlobalLocationId,
+    string? SessionNotes
 );
