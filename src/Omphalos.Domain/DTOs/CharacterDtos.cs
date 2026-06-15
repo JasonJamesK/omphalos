@@ -18,5 +18,7 @@ public record CharacterDto(
     string? Inventory,
     string? QuestHooks,
     string? Description,
-    List<CharacterRelationshipDto>? Relationships
+    List<CharacterRelationshipDto>? Relationships,
+    string? GlobalCharacterId = null,
+    string? SessionNotes = null
 );

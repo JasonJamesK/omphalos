@@ -4,21 +4,24 @@ using Omphalos.Domain.Entities;
 
 namespace Omphalos.Repository.Configurations;
 
-public class CharacterConfiguration : IEntityTypeConfiguration<Character>
+public class GlobalCharacterConfiguration : IEntityTypeConfiguration<GlobalCharacter>
 {
-    public void Configure(EntityTypeBuilder<Character> builder)
+    public void Configure(EntityTypeBuilder<GlobalCharacter> builder)
     {
-        builder.HasKey(c => c.Id);
-        builder.Property(c => c.Name).IsRequired().HasMaxLength(200);
+        builder.HasKey(g => g.Id);
+        builder.Property(g => g.Name).IsRequired().HasMaxLength(200);
 
-        builder.Property(c => c.Relationships)
+        builder.Property(g => g.Relationships)
             .HasColumnType("jsonb")
             .HasConversion(
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                 v => System.Text.Json.JsonSerializer.Deserialize<List<CharacterRelationship>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new()
             );
 
-        builder.Property(c => c.GlobalCharacterId).IsRequired(false);
-        builder.Property(c => c.SessionNotes).IsRequired(false);
+        builder.HasMany(g => g.SessionCharacters)
+            .WithOne(c => c.GlobalCharacter)
+            .HasForeignKey(c => c.GlobalCharacterId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

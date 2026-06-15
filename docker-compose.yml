@@ -25,7 +25,8 @@ services:
         Host=postgres;
         Database=omphalos;
         Username=${POSTGRES_USER:-omphalos};
-        Password=${POSTGRES_PASSWORD}
+        Password=${POSTGRES_PASSWORD};
+        SSL Mode=Disable
       Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
       Jwt__Issuer: omphalos
       Jwt__Audience: omphalos

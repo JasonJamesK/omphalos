@@ -5,7 +5,7 @@ import TopBar from './components/TopBar'
 import SettingsModal from './components/SettingsModal'
 import AdminModal from './components/AdminModal'
 import LoginPage from './components/LoginPage'
-import LocationsLibrary from './components/LocationsLibrary'
+import Library from './components/Library'
 import SessionLog from './components/tabs/SessionLog'
 import Locations from './components/tabs/Locations'
 import Characters from './components/tabs/Characters'
@@ -131,7 +131,7 @@ export default function App() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {view === 'library' ? (
-            <LocationsLibrary />
+            <Library />
           ) : activeSession ? (
             tabContents[state.activeTab]
           ) : (
