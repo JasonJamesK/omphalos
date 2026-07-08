@@ -23,6 +23,7 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
             .Include(s => s.Encounters)
             .FirstOrDefaultAsync(ct);
 
+
     public async Task<GameSession> UpsertAsync(GameSession session, CancellationToken ct = default)
     {
         var existing = await db.GameSessions

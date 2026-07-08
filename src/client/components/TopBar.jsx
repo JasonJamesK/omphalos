@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { logout } from '../db/index.js'
 
-export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin }) {
+export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin, onLibrary, libraryActive }) {
   const { state, dispatch, activeSession } = useApp()
   const titleRef = useRef(null)
 
@@ -41,6 +41,18 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin 
       )}
 
       {/* Actions */}
+      <button
+        onClick={onLibrary}
+        className={`px-3 py-1.5 rounded text-xs transition-colors ${
+          libraryActive
+            ? 'bg-[#d4a574] text-[#1a1a1a] font-medium'
+            : 'bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d]'
+        }`}
+        title="Locations Library"
+      >
+        🗺 Library
+      </button>
+
       <button
         onClick={onExportPDF}
         disabled={!activeSession}

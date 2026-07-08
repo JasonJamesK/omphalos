@@ -5,6 +5,7 @@ import TopBar from './components/TopBar'
 import SettingsModal from './components/SettingsModal'
 import AdminModal from './components/AdminModal'
 import LoginPage from './components/LoginPage'
+import Library from './components/Library'
 import SessionLog from './components/tabs/SessionLog'
 import Locations from './components/tabs/Locations'
 import Characters from './components/tabs/Characters'
@@ -18,6 +19,7 @@ export default function App() {
   const { state, dispatch, activeSession } = useApp()
   const [showSettings, setShowSettings] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [view, setView] = useState('sessions') // 'sessions' | 'library'
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -100,10 +102,12 @@ export default function App() {
           onAdmin={() => setShowAdmin(true)}
           onNewSession={createSession}
           onExportPDF={() => activeSession && exportToPDF(activeSession)}
+          onLibrary={() => setView(v => v === 'library' ? 'sessions' : 'library')}
+          libraryActive={view === 'library'}
         />
 
-        {/* Tab bar */}
-        {activeSession && (
+        {/* Tab bar — only in session view */}
+        {view === 'sessions' && activeSession && (
           <div className="flex bg-[#2d2d2d] border-b border-[#3d3d3d] flex-shrink-0">
             {TABS.map((tab, i) => (
               <button
@@ -126,7 +130,9 @@ export default function App() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          {activeSession ? (
+          {view === 'library' ? (
+            <Library />
+          ) : activeSession ? (
             tabContents[state.activeTab]
           ) : (
             <div className="flex items-center justify-center h-full">

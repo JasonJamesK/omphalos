@@ -78,6 +78,8 @@ public class SessionService(ISessionRepository repo) : ISessionService
             QuestHooks = c.QuestHooks,
             Description = c.Description,
             Relationships = (c.Relationships ?? []).Select(r => new CharacterRelationship { Name = r.Name, Type = r.Type }).ToList(),
+            GlobalCharacterId = c.GlobalCharacterId,
+            SessionNotes = c.SessionNotes,
         }).ToList(),
         Locations = (r.Locations ?? []).Select(l => new Location
         {
@@ -88,6 +90,8 @@ public class SessionService(ISessionRepository repo) : ISessionService
             Description = l.Description,
             Notes = l.Notes,
             ImageBase64 = l.ImageBase64,
+            GlobalLocationId = l.GlobalLocationId,
+            SessionNotes = l.SessionNotes,
         }).ToList(),
         Encounters = (r.Encounters ?? []).Select(e => new Encounter
         {
@@ -98,6 +102,12 @@ public class SessionService(ISessionRepository repo) : ISessionService
             Description = e.Description,
             Notes = e.Notes,
             Difficulty = e.Difficulty,
+            Enemies = (e.Enemies ?? []).Select(en => new EncounterEnemy
+            {
+                Name = en.Name,
+                Qty = en.Qty,
+                Tier = en.Tier,
+            }).ToList(),
         }).ToList(),
     };
 
@@ -121,9 +131,11 @@ public class SessionService(ISessionRepository repo) : ISessionService
             c.Id, c.Name, c.PortraitBase64, c.PortraitPanX, c.PortraitPanY,
             c.Tagline, c.Class, c.Race, c.Level, c.Alignment,
             c.PersonalityTraits, c.Flaw, c.Inventory, c.QuestHooks, c.Description,
-            c.Relationships.Select(r => new CharacterRelationshipDto(r.Name, r.Type)).ToList()
+            c.Relationships.Select(r => new CharacterRelationshipDto(r.Name, r.Type)).ToList(),
+            c.GlobalCharacterId, c.SessionNotes
         )).ToList(),
-        s.Locations.Select(l => new LocationDto(l.Id, l.Name, l.Type, l.Description, l.Notes, l.ImageBase64)).ToList(),
-        s.Encounters.Select(e => new EncounterDto(e.Id, e.Name, e.Type, e.Description, e.Notes, e.Difficulty)).ToList()
+        s.Locations.Select(l => new LocationDto(l.Id, l.Name, l.Type, l.Description, l.Notes, l.ImageBase64, l.GlobalLocationId, l.SessionNotes)).ToList(),
+        s.Encounters.Select(e => new EncounterDto(e.Id, e.Name, e.Type, e.Description, e.Notes, e.Difficulty,
+            e.Enemies.Select(en => new EnemyDto(en.Name, en.Qty, en.Tier)).ToList())).ToList()
     );
 }

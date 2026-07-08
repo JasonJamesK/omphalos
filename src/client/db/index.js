@@ -20,6 +20,38 @@ export const db = {
     return request('/sessions')
   },
 
+  async getAllGlobalLocations() {
+    return request('/locations')
+  },
+
+  async createGlobalLocation(data) {
+    return request('/locations', { method: 'POST', body: JSON.stringify(data) })
+  },
+
+  async updateGlobalLocation(id, data) {
+    return request(`/locations/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+  },
+
+  async deleteGlobalLocation(id, force = false) {
+    return request(`/locations/${id}${force ? '?force=true' : ''}`, { method: 'DELETE' })
+  },
+
+  async getAllGlobalCharacters() {
+    return request('/characters')
+  },
+
+  async createGlobalCharacter(data) {
+    return request('/characters', { method: 'POST', body: JSON.stringify(data) })
+  },
+
+  async updateGlobalCharacter(id, data) {
+    return request(`/characters/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+  },
+
+  async deleteGlobalCharacter(id, force = false) {
+    return request(`/characters/${id}${force ? '?force=true' : ''}`, { method: 'DELETE' })
+  },
+
   async saveSession(session) {
     return request(`/sessions/${session.id}`, {
       method: 'PUT',

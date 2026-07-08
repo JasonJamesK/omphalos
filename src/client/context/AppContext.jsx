@@ -5,6 +5,8 @@ const AppContext = createContext(null)
 
 const initial = {
   sessions: [],
+  globalLocations: [],
+  globalCharacters: [],
   activeSessionId: null,
   activeTab: 0,
   sidebarCollapsed: false,
@@ -77,6 +79,43 @@ function reducer(state, action) {
       return updateSessionField(state, action.sessionId, s => ({
         characters: (s.characters || []).filter(c => c.id !== action.payload),
       }))
+
+    case 'SET_GLOBAL_LOCATIONS':
+      return { ...state, globalLocations: action.payload }
+
+    case 'ADD_GLOBAL_LOCATION':
+      return { ...state, globalLocations: [...state.globalLocations, action.payload] }
+
+    case 'UPDATE_GLOBAL_LOCATION':
+      return {
+        ...state,
+        globalLocations: state.globalLocations.map(g =>
+          g.id === action.payload.id ? action.payload : g
+        ),
+      }
+
+    case 'DELETE_GLOBAL_LOCATION':
+      return {
+        ...state,
+        globalLocations: state.globalLocations.filter(g => g.id !== action.payload),
+      }
+
+    case 'ADD_GLOBAL_CHARACTER':
+      return { ...state, globalCharacters: [...state.globalCharacters, action.payload] }
+
+    case 'UPDATE_GLOBAL_CHARACTER':
+      return {
+        ...state,
+        globalCharacters: state.globalCharacters.map(g =>
+          g.id === action.payload.id ? action.payload : g
+        ),
+      }
+
+    case 'DELETE_GLOBAL_CHARACTER':
+      return {
+        ...state,
+        globalCharacters: state.globalCharacters.filter(g => g.id !== action.payload),
+      }
 
     case 'ADD_LOCATION':
       return updateSessionField(state, action.sessionId, s => ({
@@ -151,14 +190,18 @@ export function AppProvider({ children }) {
     if (!state.user) return
     async function load() {
       try {
-        const [sessions, settings] = await Promise.all([
+        const [sessions, settings, globalLocations, globalCharacters] = await Promise.all([
           db.getAllSessions(),
           db.getSettings(),
+          db.getAllGlobalLocations(),
+          db.getAllGlobalCharacters(),
         ])
         dispatch({
           type: 'INIT',
           payload: {
             sessions: sessions ?? [],
+            globalLocations: globalLocations ?? [],
+            globalCharacters: globalCharacters ?? [],
             activeSessionId: sessions?.[0]?.id ?? null,
             settings: settings ?? { geminiApiKey: '' },
           },
@@ -166,7 +209,7 @@ export function AppProvider({ children }) {
       } catch {
         dispatch({
           type: 'INIT',
-          payload: { sessions: [], activeSessionId: null, settings: { geminiApiKey: '' } },
+          payload: { sessions: [], globalLocations: [], globalCharacters: [], activeSessionId: null, settings: { geminiApiKey: '' } },
         })
       }
     }

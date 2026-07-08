@@ -22,6 +22,9 @@ RUN dotnet publish src/Omphalos.Web/Omphalos.Web.csproj -c Release -o /app/publi
 
 # Stage 3: Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+# libgssapi-krb5-2 is required by Npgsql for connection negotiation and is
+# absent from some .NET 10 preview base images.
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=backend-build /app/publish .
 # Copy React build into wwwroot so ASP.NET Core serves it

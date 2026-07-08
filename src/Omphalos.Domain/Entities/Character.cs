@@ -19,10 +19,14 @@ public class Character
     public string? QuestHooks { get; set; }
     public string? Description { get; set; }
 
+    public string? GlobalCharacterId { get; set; }
+    public string? SessionNotes { get; set; }
+
     // Stored as JSONB
     public List<CharacterRelationship> Relationships { get; set; } = [];
 
     public GameSession Session { get; set; } = null!;
+    public GlobalCharacter? GlobalCharacter { get; set; }
 }
 
 public class CharacterRelationship

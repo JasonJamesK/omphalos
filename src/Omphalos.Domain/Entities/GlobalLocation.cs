@@ -1,17 +1,14 @@
 namespace Omphalos.Domain.Entities;
 
-public class Location
+public class GlobalLocation
 {
     public string Id { get; set; } = string.Empty;
-    public string SessionId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Type { get; set; }
     public string? Description { get; set; }
     public string? Notes { get; set; }
+    public string? SecretsAndHazards { get; set; }
     public string? ImageBase64 { get; set; }
-    public string? GlobalLocationId { get; set; }
-    public string? SessionNotes { get; set; }
 
-    public GameSession Session { get; set; } = null!;
-    public GlobalLocation? GlobalLocation { get; set; }
+    public ICollection<Location> SessionLocations { get; set; } = [];
 }

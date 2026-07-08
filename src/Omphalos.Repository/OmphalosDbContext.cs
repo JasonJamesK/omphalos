@@ -11,6 +11,8 @@ public class OmphalosDbContext(DbContextOptions<OmphalosDbContext> options) : Db
     public DbSet<Character> Characters => Set<Character>();
     public DbSet<Location> Locations => Set<Location>();
     public DbSet<Encounter> Encounters => Set<Encounter>();
+    public DbSet<GlobalLocation> GlobalLocations => Set<GlobalLocation>();
+    public DbSet<GlobalCharacter> GlobalCharacters => Set<GlobalCharacter>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
