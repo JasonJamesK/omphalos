@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Session Persistence Reliability
 status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-10T12:47:45.830Z"
+stopped_at: "Phase 1 planning paused: UI-SPEC gate blocked (frontend detected — save-failure toast/banner component)"
+last_updated: "2026-07-10T12:50:21.306Z"
 last_activity: 2026-07-10
 last_activity_desc: "Roadmap revised: Phase 4 scope expanded to include image storage/serving overhaul (IMG-01..07) alongside the Cropper.js v2 rollout; all 27 v1 requirements re-validated across 4 phases (no phase count change, no orphans)"
 progress:
@@ -89,6 +89,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-10T12:47:45.822Z
-Stopped at: Phase 1 context gathered
+Last session: 2026-07-10T12:50:21.299Z
+Stopped at: Phase 1 planning paused: UI-SPEC gate blocked (frontend detected — save-failure toast/banner component)
 Resume file: .planning/phases/01-session-persistence-reliability/01-CONTEXT.md
