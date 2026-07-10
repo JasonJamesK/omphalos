@@ -13,7 +13,7 @@ This milestone fixes a pre-existing session-persistence bug, then delivers two i
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Session Persistence Reliability** - Session prep content, log, top bar, and toolkit saves reliably persist without silently wiping other session data
+- [x] **Phase 1: Session Persistence Reliability** - Session prep content, log, top bar, and toolkit saves reliably persist without silently wiping other session data (completed 2026-07-10)
 - [ ] **Phase 2: Markdown Editing — Character & Location Fields** - DM writes character bios/notes and location descriptions in markdown with live, auto-growing, dark-themed preview
 - [ ] **Phase 3: Markdown Editing — Session Prep Fields** - DM writes the Overview & Hook and Notes/Callout/Loot prep blocks in markdown with live preview, content persists on reload
 - [ ] **Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout** - DM crops portraits and location images with Cropper.js v2 (zoom, EXIF-safe, touch) at all three upload sites, backed by a new dual original/cropped storage model served via dedicated cached endpoints
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `SessionRepository.UpsertAsync` updates a session's Characters/Locations/Encounters by diffing against existing rows (add/update/remove only what changed) instead of deleting and reinserting the full collections on every save.
   5. DM sees a visible indicator (e.g. toast/banner) when a session save request fails, instead of the failure being silently swallowed.
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 **Wave 1**
@@ -45,7 +45,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Backend persistence fix (TDD): assign PrepData + diff-merge child collections by Id in UpsertAsync (PERSIST-01, PERSIST-03)
+- [x] 01-02-PLAN.md — Backend persistence fix (TDD): assign PrepData + diff-merge child collections by Id in UpsertAsync (PERSIST-01, PERSIST-03)
 
 ### Phase 2: Markdown Editing — Character & Location Fields
 
@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Session Persistence Reliability | 3/4 | In Progress|  |
+| 1. Session Persistence Reliability | 4/4 | Complete   | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 0/TBD | Not started | - |
 | 3. Markdown Editing — Session Prep Fields | 0/TBD | Not started | - |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
