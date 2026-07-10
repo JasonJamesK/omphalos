@@ -30,10 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Partial-payload `UPDATE_SESSION` dispatches from any of the existing call sites (`SessionPrep.jsx`, `SessionLog.jsx`, `TopBar.jsx`, `Toolkit.jsx`) no longer unconditionally overwrite unrelated session fields with empty/default values.
   4. `SessionRepository.UpsertAsync` updates a session's Characters/Locations/Encounters by diffing against existing rows (add/update/remove only what changed) instead of deleting and reinserting the full collections on every save.
   5. DM sees a visible indicator (e.g. toast/banner) when a session save request fails, instead of the failure being silently swallowed.
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md — Wave 0 test harness: Omphalos.UnitTests + Omphalos.IntegrationTests (Testcontainers Postgres), fixture + smoke test, dotnet test CI gate (D-04, D-05)
+- [ ] 01-02-PLAN.md — Backend persistence fix (TDD): assign PrepData + diff-merge child collections by Id in UpsertAsync (PERSIST-01, PERSIST-03)
+- [ ] 01-03-PLAN.md — Frontend full-payload UPDATE_SESSION dispatches at the 4 call sites (PERSIST-02, D-01)
+- [ ] 01-04-PLAN.md — Save-failure toast: SaveFailureToast + AppContext saveError wiring (PERSIST-04, D-03)
 
 ### Phase 2: Markdown Editing — Character & Location Fields
 **Goal**: A DM can write character bios/notes and location descriptions using markdown syntax, with a live preview that matches the app's dark theme and grows to fit content.
@@ -92,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Session Persistence Reliability | 0/TBD | Not started | - |
+| 1. Session Persistence Reliability | 0/4 | Not started | - |
 | 2. Markdown Editing — Character & Location Fields | 0/TBD | Not started | - |
 | 3. Markdown Editing — Session Prep Fields | 0/TBD | Not started | - |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
