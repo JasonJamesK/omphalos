@@ -31,10 +31,20 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **CROP-03**: DM can crop location images using Cropper.js v2
 - [ ] **CROP-04**: Crop tool preserves aspect-ratio lock (configurable per call site), drag-to-reposition, touch/mobile support, rule-of-thirds grid, and corner resize handles matching current behavior
 - [ ] **CROP-05**: Crop tool matches the app's existing modal chrome/theme (dark overlay, `bg-[#211b17]` card, amber heading, `×` close, Cancel / "Crop & Save" buttons)
-- [ ] **CROP-06**: Existing `onSave(dataURL)` contract is preserved so the 3 calling components' surrounding upload/save logic needs no changes
+- [ ] **CROP-06**: `ImageCropModal` outputs both the original and cropped image data on save, so callers can upload both (replaces the old single `onSave(dataURL)` contract, which only carried the cropped result)
 - [ ] **CROP-07**: One shared `ImageCropModal` component is reused across all 3 usage sites rather than three divergent implementations
 - [ ] **CROP-08**: DM can zoom (mouse wheel + pinch) while cropping
 - [ ] **CROP-09**: Images are EXIF-orientation-corrected and downscaled before cropping, so phone photos don't crop sideways/upside-down and don't hit the iOS Safari canvas-size ceiling
+
+### Image Storage & Serving
+
+- [ ] **IMG-01**: Each image-bearing entity (Character, GlobalCharacter, Location, GlobalLocation) stores both the original uploaded image and the cropped result as separate columns, replacing the current single base64 field
+- [ ] **IMG-02**: DM can re-crop an existing image without re-uploading, since the original is retained separately from the cropped result
+- [ ] **IMG-03**: Animated GIFs (which skip cropping entirely) still display correctly via a cropped-or-original fallback (`CroppedImage ?? OriginalImage`)
+- [ ] **IMG-04**: Images are served via dedicated binary endpoints (one route for the original, one for the cropped result, per entity type) instead of being embedded as base64 in the session/character/location JSON payloads
+- [ ] **IMG-05**: Session/character/location DTOs expose a `HasImage` boolean instead of embedded image bytes, so list/detail views can show a placeholder-or-photo state without pulling image data
+- [ ] **IMG-06**: Pages that list or display characters/locations load without waiting on image bytes — images load asynchronously via their own endpoint requests
+- [ ] **IMG-07**: Image endpoints include HTTP caching (ETag or Cache-Control), since cropped/original images are immutable once saved — a deliberate improvement over quest-board's uncached reference implementation
 
 ## v2 Requirements
 
@@ -66,32 +76,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERSIST-01 | TBD | Pending |
-| PERSIST-02 | TBD | Pending |
-| MDED-01 | TBD | Pending |
-| MDED-02 | TBD | Pending |
-| MDED-03 | TBD | Pending |
-| MDED-04 | TBD | Pending |
-| MDED-05 | TBD | Pending |
-| MDED-06 | TBD | Pending |
-| MDED-07 | TBD | Pending |
-| MDED-08 | TBD | Pending |
-| MDED-09 | TBD | Pending |
-| CROP-01 | TBD | Pending |
-| CROP-02 | TBD | Pending |
-| CROP-03 | TBD | Pending |
-| CROP-04 | TBD | Pending |
-| CROP-05 | TBD | Pending |
-| CROP-06 | TBD | Pending |
-| CROP-07 | TBD | Pending |
-| CROP-08 | TBD | Pending |
-| CROP-09 | TBD | Pending |
+| PERSIST-01 | Phase 1 | Pending |
+| PERSIST-02 | Phase 1 | Pending |
+| MDED-01 | Phase 3 | Pending |
+| MDED-02 | Phase 3 | Pending |
+| MDED-03 | Phase 2 | Pending |
+| MDED-04 | Phase 2 | Pending |
+| MDED-05 | Phase 2 | Pending |
+| MDED-06 | Phase 2 | Pending |
+| MDED-07 | Phase 2 | Pending |
+| MDED-08 | Phase 2 | Pending |
+| MDED-09 | Phase 3 | Pending |
+| CROP-01 | Phase 4 | Pending |
+| CROP-02 | Phase 4 | Pending |
+| CROP-03 | Phase 4 | Pending |
+| CROP-04 | Phase 4 | Pending |
+| CROP-05 | Phase 4 | Pending |
+| CROP-06 | Phase 4 | Pending |
+| CROP-07 | Phase 4 | Pending |
+| CROP-08 | Phase 4 | Pending |
+| CROP-09 | Phase 4 | Pending |
+| IMG-01 | Phase 4 | Pending |
+| IMG-02 | Phase 4 | Pending |
+| IMG-03 | Phase 4 | Pending |
+| IMG-04 | Phase 4 | Pending |
+| IMG-05 | Phase 4 | Pending |
+| IMG-06 | Phase 4 | Pending |
+| IMG-07 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 ⚠️ (roadmap not yet created)
+- v1 requirements: 27 total
+- Mapped to phases: 27
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-10*
-*Last updated: 2026-07-10 after initial definition*
+*Last updated: 2026-07-10 after roadmap creation*
