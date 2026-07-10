@@ -23,6 +23,12 @@ npm install
 npm run dev
 ```
 
+## Branching
+
+**Never commit or push directly to `main`.** All work must go on a feature branch: `feature/<short-description>`.
+
+If you realize commits have landed on `main` by mistake: create the branch from current `main`, then `git reset --hard <pre-commit-sha>` on `main` to remove them.
+
 ## Architecture
 
 ```
