@@ -102,6 +102,17 @@ When asked about a feature, system, or concept by name — even if the term isn'
 
 One failed `FindSymbol` query is not a reason to fall back — try at least 3 symbol-name variants before giving up on RIP.
 
+**When RIP is insufficient**, before falling back to file reads, output a short notice in this exact format so Thomas can improve the index:
+
+```
+⚠ RIP gap send to Thomas
+Query   : <tool name> / <symbol or query used>
+Reason  : <one sentence: why RIP couldn't answer — e.g. "symbol not indexed", "enum values missing", "FindCallers returned empty for X">
+Fallback: <what you are doing instead>
+```
+
+Then continue with the fallback. Do not block on this — emit the notice and proceed.
+
 ## Adding a new API endpoint
 
 1. Add entity to `Omphalos.Domain/Entities/` and DTO to `Omphalos.Domain/DTOs/`
