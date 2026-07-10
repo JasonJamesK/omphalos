@@ -132,3 +132,7 @@ None. The only new surface (client-side toast rendering a failure state) was exp
 ---
 *Phase: 01-session-persistence-reliability*
 *Completed: 2026-07-10*
+
+## Self-Check: PASSED
+
+All created/modified files found on disk; all task commits (`06e5026`, `f6e5b49`, `2140b3d`) and the SUMMARY commit (`789a881`) verified present in git history.
