@@ -9,7 +9,25 @@ public static class SessionCollectionSync
 {
     public static SyncResult<T> Diff<T>(IEnumerable<T> existing, IEnumerable<T> incoming, Func<T, string> keySelector)
     {
-        throw new NotImplementedException();
+        var existingByKey = existing.ToDictionary(keySelector);
+        var incomingByKey = incoming.ToDictionary(keySelector);
+
+        var toRemove = existingByKey
+            .Where(kvp => !incomingByKey.ContainsKey(kvp.Key))
+            .Select(kvp => kvp.Value)
+            .ToList();
+
+        var toUpdate = existingByKey
+            .Where(kvp => incomingByKey.ContainsKey(kvp.Key))
+            .Select(kvp => (Existing: kvp.Value, Incoming: incomingByKey[kvp.Key]))
+            .ToList();
+
+        var toAdd = incomingByKey
+            .Where(kvp => !existingByKey.ContainsKey(kvp.Key))
+            .Select(kvp => kvp.Value)
+            .ToList();
+
+        return new SyncResult<T> { ToAdd = toAdd, ToUpdate = toUpdate, ToRemove = toRemove };
     }
 }
 
