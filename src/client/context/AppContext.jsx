@@ -14,6 +14,7 @@ const initial = {
   loaded: false,
   user: null,
   authChecked: false,
+  saveError: null,
 }
 
 function reducer(state, action) {
@@ -44,6 +45,12 @@ function reducer(state, action) {
     case 'SET_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } }
 
+    case 'SAVE_FAILED':
+      return { ...state, saveError: action.payload }
+
+    case 'CLEAR_SAVE_ERROR':
+      return { ...state, saveError: null }
+
     case 'ADD_SESSION':
       return {
         ...state,
@@ -52,6 +59,8 @@ function reducer(state, action) {
         activeTab: 0,
       }
 
+    // Call sites must dispatch the full session object here — a partial payload
+    // silently drops any fields it omits (re-introduces the PERSIST-02 wipe bug).
     case 'UPDATE_SESSION':
       return {
         ...state,
@@ -225,7 +234,7 @@ export function AppProvider({ children }) {
   }, [state.user])
 
   const saveSession = useCallback((session) => {
-    db.saveSession(session).catch(() => {})
+    db.saveSession(session).catch(() => dispatch({ type: 'SAVE_FAILED', payload: true }))
   }, [])
 
   // Sessions from the list endpoint are summaries only (no characters/locations/
