@@ -24,7 +24,7 @@ export default function SessionPrep() {
   const phases = prep.phases || []
 
   function updatePrep(newPrep) {
-    dispatch({ type: 'UPDATE_SESSION', payload: { id: activeSession.id, prepData: newPrep } })
+    dispatch({ type: 'UPDATE_SESSION', payload: { ...activeSession, prepData: newPrep } })
   }
 
   function updateOverview(e) {

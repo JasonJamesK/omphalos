@@ -10,7 +10,7 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
     if (activeSession) {
       dispatch({
         type: 'UPDATE_SESSION',
-        payload: { id: activeSession.id, title: e.target.value },
+        payload: { ...activeSession, title: e.target.value },
       })
     }
   }
