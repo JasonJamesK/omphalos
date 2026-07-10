@@ -11,7 +11,7 @@ function emptyGlobalLocation() {
   return { id: uid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '', imageBase64: null }
 }
 
-const inputCls = 'w-full bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
+const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
 const labelCls = 'block text-xs text-[#999999] mb-1'
 
 function GlobalLocationModal({ loc, onSave, onClose }) {
@@ -31,10 +31,10 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
-        className="bg-[#2d2d2d] rounded-lg w-[580px] max-h-[90vh] overflow-y-auto fade-in"
+        className="bg-[#211b17] rounded-lg w-[580px] max-h-[90vh] overflow-y-auto fade-in"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-[#2d2d2d] border-b border-[#3d3d3d] px-5 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-[#211b17] border-b border-[#332922] px-5 py-4 flex items-center justify-between z-10">
           <h2 className="font-bold text-[#d4a574]">{form.name || 'New Location'}</h2>
           <button onClick={onClose} className="text-[#999999] hover:text-[#f0f0f0] text-xl">×</button>
         </div>
@@ -90,14 +90,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
               placeholder="Additional DM notes..."
             />
           </div>
-          <div className="flex gap-3 justify-end pt-2 border-t border-[#3d3d3d]">
-            <button onClick={onClose} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">
+          <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
+            <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={!form.name.trim() || saving}
-              className="px-4 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium hover:bg-[#c49464] transition-colors disabled:opacity-40"
+              className="px-4 py-2 bg-[#d4a574] text-[#161310] rounded font-medium hover:bg-[#c49464] transition-colors disabled:opacity-40"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -112,8 +112,8 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
   const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
 
   return (
-    <div className="bg-[#2d2d2d] border border-[#3d3d3d] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
-      <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#3d3d3d]">
+    <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
+      <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#332922]">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-[#f0f0f0] truncate">{loc.name}</h3>
           {loc.type && <span className="text-xs text-[#d4a574]">{loc.type}</span>}
@@ -121,7 +121,7 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           <button
             onClick={onEdit}
-            className="px-2 py-0.5 text-xs bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors"
+            className="px-2 py-0.5 text-xs bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors"
           >
             Edit
           </button>
@@ -139,7 +139,7 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
         </div>
       )}
       {hazardLines.length > 0 && (
-        <div className="px-4 py-3 border-t border-[#3d3d3d]">
+        <div className="px-4 py-3 border-t border-[#332922]">
           <p className="text-xs text-[#b24545] font-semibold mb-1.5 uppercase tracking-wide">Secrets / Hazards</p>
           <ul className="space-y-1">
             {hazardLines.slice(0, 3).map((line, i) => (
@@ -222,7 +222,7 @@ export default function LocationsLibrary() {
         </div>
         <button
           onClick={() => setEditing(emptyGlobalLocation())}
-          className="px-4 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium text-sm hover:bg-[#c49464] transition-colors"
+          className="px-4 py-2 bg-[#d4a574] text-[#161310] rounded font-medium text-sm hover:bg-[#c49464] transition-colors"
         >
           + New Location
         </button>
@@ -231,7 +231,7 @@ export default function LocationsLibrary() {
       {locations.length > 5 && (
         <div className="mb-4">
           <input
-            className="w-full max-w-sm bg-[#2d2d2d] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
+            className="w-full max-w-sm bg-[#211b17] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
             placeholder="Search locations..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -278,7 +278,7 @@ export default function LocationsLibrary() {
 
       {deleteError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[#2d2d2d] rounded-lg w-[420px] p-6 fade-in">
+          <div className="bg-[#211b17] rounded-lg w-[420px] p-6 fade-in">
             <h3 className="font-bold text-[#d4a574] mb-2">Location In Use</h3>
             <p className="text-sm text-[#d4d4d4] mb-1">{deleteError.message}</p>
             <p className="text-xs text-[#999999] mb-5">
@@ -287,7 +287,7 @@ export default function LocationsLibrary() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => { setDeleteError(null); setDeleteTarget(null) }}
-                className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors"
+                className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors"
               >
                 Cancel
               </button>

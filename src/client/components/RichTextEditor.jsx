@@ -4,11 +4,11 @@ import StarterKit from '@tiptap/starter-kit'
 const btnCls = (active) =>
   `px-2 py-1 text-xs rounded transition-colors ${
     active
-      ? 'bg-[#d4a574] text-[#1a1a1a]'
-      : 'bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d]'
+      ? 'bg-[#d4a574] text-[#161310]'
+      : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'
   }`
 
-export default function RichTextEditor({ content, onChange, placeholder = 'Start writing your session log...' }) {
+export default function RichTextEditor({ content, onChange, placeholder = 'Start writing your session log...', fill = false }) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -24,9 +24,9 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
   if (!editor) return null
 
   return (
-    <div className="tiptap-editor border border-[#3d3d3d] rounded-lg overflow-hidden bg-[#1a1a1a]">
+    <div className={`tiptap-editor border border-[#332922] rounded-lg bg-[#161310] ${fill ? 'h-full flex flex-col overflow-hidden' : 'overflow-hidden'}`}>
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 border-b border-[#3d3d3d] bg-[#2d2d2d]">
+      <div className="flex flex-wrap gap-1 p-2 border-b border-[#332922] bg-[#211b17] flex-shrink-0">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -43,7 +43,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
         >
           <em>I</em>
         </button>
-        <div className="w-px bg-[#3d3d3d] mx-1" />
+        <div className="w-px bg-[#332922] mx-1" />
         {[1, 2, 3].map(level => (
           <button
             key={level}
@@ -54,7 +54,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
             H{level}
           </button>
         ))}
-        <div className="w-px bg-[#3d3d3d] mx-1" />
+        <div className="w-px bg-[#332922] mx-1" />
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -71,12 +71,12 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
         >
           1. List
         </button>
-        <div className="w-px bg-[#3d3d3d] mx-1" />
+        <div className="w-px bg-[#332922] mx-1" />
         <button
           type="button"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          className="px-2 py-1 text-xs rounded bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d] disabled:opacity-30 transition-colors"
+          className="px-2 py-1 text-xs rounded bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a] disabled:opacity-30 transition-colors"
         >
           ↩
         </button>
@@ -84,12 +84,18 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
           type="button"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          className="px-2 py-1 text-xs rounded bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d] disabled:opacity-30 transition-colors"
+          className="px-2 py-1 text-xs rounded bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a] disabled:opacity-30 transition-colors"
         >
           ↪
         </button>
       </div>
-      <EditorContent editor={editor} />
+      {fill ? (
+        <div className="tiptap-fill-wrap">
+          <EditorContent editor={editor} />
+        </div>
+      ) : (
+        <EditorContent editor={editor} />
+      )}
     </div>
   )
 }

@@ -1,6 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import RichTextEditor from '../RichTextEditor'
+import NpcQuickBar from '../session/NpcQuickBar'
+import SessionPrep from './SessionPrep'
 
 function extractPlainText(node) {
   if (!node) return ''
@@ -22,12 +24,14 @@ const metaFields = [
   { key: 'nextSessionHooks', label: 'Next Session Hooks' },
 ]
 
+const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
+const labelCls = 'block text-xs text-[#999999] mb-1'
+
 export default function SessionLog() {
-  const { activeSession, dispatch } = useApp()
+  const { activeSession, dispatch, state } = useApp()
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSummary, setAiSummary] = useState('')
   const [aiError, setAiError] = useState('')
-  const { state } = useApp()
 
   const session = activeSession
   if (!session) return null
@@ -93,19 +97,21 @@ export default function SessionLog() {
     }
   }
 
-  const inputCls = 'w-full bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
-  const labelCls = 'block text-xs text-[#999999] mb-1'
-
   return (
-    <div className="p-4 max-w-5xl mx-auto space-y-6">
-      {/* Rich text editor */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider">Session</h2>
+    <div className="lg:h-full overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] divide-y lg:divide-y-0 divide-x-0 lg:divide-x divide-[#332922]">
+      {/* Left: prep — overview & phases */}
+      <div className="lg:h-full lg:overflow-y-auto">
+        <SessionPrep />
+      </div>
+
+      {/* Middle: live session log (rich text) */}
+      <div className="lg:h-full flex flex-col p-4">
+        <div className="flex items-center justify-between mb-2 flex-shrink-0">
+          <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider">Session Notes</h2>
           <button
             onClick={handleAISummary}
             disabled={aiLoading}
-            className="px-3 py-1.5 bg-[#3d3d3d] text-[#f0f0f0] rounded text-xs hover:bg-[#4d4d4d] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-[#332922] text-[#f0f0f0] rounded text-xs hover:bg-[#40332a] transition-colors disabled:opacity-50 flex items-center gap-1.5"
           >
             {aiLoading ? (
               <>
@@ -116,70 +122,81 @@ export default function SessionLog() {
           </button>
         </div>
 
-        <RichTextEditor
-          key={session.id}
-          content={session.sessionLog}
-          onChange={updateLog}
-        />
-
-        {aiError && (
-          <div className="mt-2 p-3 bg-[#b24545]/20 border border-[#b24545]/40 rounded text-sm text-[#f0f0f0]">
-            {aiError}
-          </div>
-        )}
-        {aiSummary && (
-          <div className="mt-3 p-4 bg-[#2d2d2d] border border-[#d4a574]/30 rounded">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[#d4a574] font-semibold uppercase tracking-wider">AI Summary</span>
-              <button onClick={() => setAiSummary('')} className="text-[#999999] hover:text-[#f0f0f0] text-sm">×</button>
-            </div>
-            <p className="text-[#f0f0f0] text-sm leading-relaxed whitespace-pre-wrap">{aiSummary}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Metadata grid */}
-      <div>
-        <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-3">Session Metadata</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {metaFields.map(({ key, label }) => {
-            const isLong = ['npcsMet', 'treasureAcquired', 'plotPoints', 'nextSessionHooks'].includes(key)
-            return (
-              <div key={key} className={isLong ? 'md:col-span-2' : ''}>
-                <label className={labelCls}>{label}</label>
-                {isLong ? (
-                  <textarea
-                    className={inputCls}
-                    rows={2}
-                    value={meta[key] || ''}
-                    onChange={e => updateMeta(key, e.target.value)}
-                    placeholder={`${label}...`}
-                  />
-                ) : (
-                  <input
-                    className={inputCls}
-                    value={meta[key] || ''}
-                    onChange={e => updateMeta(key, e.target.value)}
-                    placeholder={`${label}...`}
-                  />
-                )}
+        {(aiError || aiSummary) && (
+          <div className="flex-shrink-0 mb-3">
+            {aiError && (
+              <div className="p-3 bg-[#b24545]/20 border border-[#b24545]/40 rounded text-sm text-[#f0f0f0]">
+                {aiError}
               </div>
-            )
-          })}
+            )}
+            {aiSummary && (
+              <div className="p-4 bg-[#211b17] border border-[#d4a574]/30 rounded">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-[#d4a574] font-semibold uppercase tracking-wider">AI Summary</span>
+                  <button onClick={() => setAiSummary('')} className="text-[#999999] hover:text-[#f0f0f0] text-sm">×</button>
+                </div>
+                <p className="text-[#f0f0f0] text-sm leading-relaxed whitespace-pre-wrap">{aiSummary}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex-1 min-h-0">
+          <RichTextEditor
+            key={session.id}
+            content={session.sessionLog}
+            onChange={updateLog}
+            placeholder="Start logging what happens as the party plays..."
+            fill
+          />
         </div>
       </div>
 
-      {/* Session Notes */}
-      <div>
-        <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-2">Session Notes</h2>
-        <p className="text-xs text-[#666] mb-2">DC button clicks are logged here automatically.</p>
-        <textarea
-          className={inputCls + ' font-mono text-xs'}
-          rows={8}
-          value={session.sessionNotes || ''}
-          onChange={updateNotes}
-          placeholder="Quick notes, reminders, DC results..."
-        />
+      {/* Right: NPCs/monsters, metadata, quick notes */}
+      <div className="lg:h-full lg:overflow-y-auto p-4 space-y-6">
+        <NpcQuickBar />
+
+        <div>
+          <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-3">Session Metadata</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {metaFields.map(({ key, label }) => {
+              const isLong = ['npcsMet', 'treasureAcquired', 'plotPoints', 'nextSessionHooks'].includes(key)
+              return (
+                <div key={key} className={isLong ? 'col-span-2' : ''}>
+                  <label className={labelCls}>{label}</label>
+                  {isLong ? (
+                    <textarea
+                      className={inputCls}
+                      rows={2}
+                      value={meta[key] || ''}
+                      onChange={e => updateMeta(key, e.target.value)}
+                      placeholder={`${label}...`}
+                    />
+                  ) : (
+                    <input
+                      className={inputCls}
+                      value={meta[key] || ''}
+                      onChange={e => updateMeta(key, e.target.value)}
+                      placeholder={`${label}...`}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-2">Quick Notes</h2>
+          <p className="text-xs text-[#666] mb-2">DC button clicks are logged here automatically.</p>
+          <textarea
+            className={inputCls + ' font-mono text-xs'}
+            rows={6}
+            value={session.sessionNotes || ''}
+            onChange={updateNotes}
+            placeholder="Quick notes, reminders, DC results..."
+          />
+        </div>
       </div>
     </div>
   )

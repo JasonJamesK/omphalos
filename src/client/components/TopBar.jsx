@@ -20,11 +20,11 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
   }
 
   return (
-    <div className="bg-[#2d2d2d] border-b border-[#3d3d3d] flex items-center gap-3 px-4 flex-shrink-0" style={{ paddingTop: 0, paddingBottom: 0, lineHeight: 0 }}>
+    <div className="bg-[#211b17] border-b border-[#332922] flex items-center gap-3 px-4 flex-shrink-0" style={{ paddingTop: 0, paddingBottom: 0, lineHeight: 0 }}>
       {/* Logo */}
       <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Omphalos" className="w-auto flex-shrink-0 block" style={{ height: '128px', marginTop: '-16px', marginBottom: '-16px' }} />
 
-      <div className="w-px h-8 bg-[#3d3d3d] flex-shrink-0" />
+      <div className="w-px h-8 bg-[#332922] flex-shrink-0" />
 
       {/* Session title */}
       {activeSession ? (
@@ -45,8 +45,8 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
         onClick={onLibrary}
         className={`px-3 py-1.5 rounded text-xs transition-colors ${
           libraryActive
-            ? 'bg-[#d4a574] text-[#1a1a1a] font-medium'
-            : 'bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d]'
+            ? 'bg-[#d4a574] text-[#161310] font-medium'
+            : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'
         }`}
         title="Locations Library"
       >
@@ -56,7 +56,7 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
       <button
         onClick={onExportPDF}
         disabled={!activeSession}
-        className="px-3 py-1.5 rounded text-xs bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d] disabled:opacity-40 transition-colors"
+        className="px-3 py-1.5 rounded text-xs bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a] disabled:opacity-40 transition-colors"
         title="Export PDF (Ctrl+E)"
       >
         PDF
@@ -65,7 +65,7 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
       {state.user?.role === 'Admin' && (
         <button
           onClick={onAdmin}
-          className="w-8 h-8 rounded bg-[#3d3d3d] text-[#999999] hover:bg-[#4d4d4d] hover:text-[#f0f0f0] transition-colors flex items-center justify-center text-base"
+          className="w-8 h-8 rounded-full bg-[#6b8e6b]/15 text-[#6b8e6b] hover:bg-[#6b8e6b]/25 transition-colors flex items-center justify-center text-base"
           title="User management"
         >
           👤
@@ -74,7 +74,7 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
 
       <button
         onClick={onSettings}
-        className="w-8 h-8 rounded bg-[#3d3d3d] text-[#999999] hover:bg-[#4d4d4d] hover:text-[#f0f0f0] transition-colors flex items-center justify-center text-base"
+        className="w-8 h-8 rounded-full bg-[#d4a574]/15 text-[#d4a574] hover:bg-[#d4a574]/25 transition-colors flex items-center justify-center text-base"
         title="Settings (Ctrl+,)"
       >
         ⚙
@@ -82,7 +82,7 @@ export default function TopBar({ onSettings, onNewSession, onExportPDF, onAdmin,
 
       <button
         onClick={handleLogout}
-        className="w-8 h-8 rounded bg-[#3d3d3d] text-[#999999] hover:bg-[#4d4d4d] hover:text-[#f0f0f0] transition-colors flex items-center justify-center text-sm"
+        className="w-8 h-8 rounded-full bg-[#b24545]/15 text-[#b24545] hover:bg-[#b24545]/25 transition-colors flex items-center justify-center text-sm"
         title={`Sign out (${state.user?.username})`}
       >
         ⏻

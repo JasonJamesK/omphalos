@@ -17,23 +17,23 @@ export default function Sidebar({ onNewSession }) {
 
   if (collapsed) {
     return (
-      <div className="w-12 bg-[#2d2d2d] border-r border-[#3d3d3d] flex flex-col items-center pt-2 gap-2 flex-shrink-0">
+      <div className="w-12 bg-[#211b17] border-r border-[#332922] flex flex-col items-center pt-2 gap-2 flex-shrink-0">
         <button
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#3d3d3d] text-[#d4a574] text-lg transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#332922] text-[#d4a574] text-lg transition-colors"
           title="Expand sidebar"
         >
           ›
         </button>
-        <div className="w-6 h-px bg-[#3d3d3d]" />
+        <div className="w-6 h-px bg-[#332922]" />
         {state.sessions.map(s => (
           <button
             key={s.id}
             onClick={() => dispatch({ type: 'SET_ACTIVE_SESSION', payload: s.id })}
             className={`w-8 h-8 rounded text-xs font-bold transition-colors ${
               s.id === state.activeSessionId
-                ? 'bg-[#d4a574] text-[#1a1a1a]'
-                : 'bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d]'
+                ? 'bg-[#d4a574] text-[#161310]'
+                : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'
             }`}
             title={s.title}
           >
@@ -42,7 +42,7 @@ export default function Sidebar({ onNewSession }) {
         ))}
         <button
           onClick={onNewSession}
-          className="w-8 h-8 mt-auto rounded hover:bg-[#3d3d3d] text-[#d4a574] text-xl flex items-center justify-center transition-colors"
+          className="w-8 h-8 mt-auto rounded hover:bg-[#332922] text-[#d4a574] text-xl flex items-center justify-center transition-colors"
           title="New session"
         >
           +
@@ -52,7 +52,7 @@ export default function Sidebar({ onNewSession }) {
   }
 
   return (
-    <div className="w-[260px] flex-shrink-0 bg-[#2d2d2d] border-r border-[#3d3d3d] flex flex-col overflow-hidden">
+    <div className="w-[260px] flex-shrink-0 bg-[#211b17] border-r border-[#332922] flex flex-col overflow-hidden">
       {/* Collapse button */}
       <div className="flex justify-end px-2 pt-2">
         <button
@@ -68,7 +68,7 @@ export default function Sidebar({ onNewSession }) {
       <div className="px-3 py-2">
         <button
           onClick={onNewSession}
-          className="w-full py-2 px-3 bg-[#d4a574] text-[#1a1a1a] rounded font-medium text-sm hover:bg-[#c49464] transition-colors"
+          className="w-full py-2 px-3 bg-[#d4a574] text-[#161310] rounded font-medium text-sm hover:bg-[#c49464] transition-colors"
         >
           + New Session
         </button>
@@ -90,8 +90,8 @@ export default function Sidebar({ onNewSession }) {
               onClick={() => dispatch({ type: 'SET_ACTIVE_SESSION', payload: s.id })}
               className={`group flex items-start justify-between rounded-lg px-3 py-2.5 mb-1 cursor-pointer transition-all ${
                 active
-                  ? 'bg-[#3d3d3d] border border-[#d4a574]/40'
-                  : 'hover:bg-[#3d3d3d] border border-transparent'
+                  ? 'bg-[#332922] border border-[#d4a574]/40'
+                  : 'hover:bg-[#332922] border border-transparent'
               }`}
             >
               <div className="flex-1 min-w-0">
@@ -99,8 +99,10 @@ export default function Sidebar({ onNewSession }) {
                   {s.title || 'Untitled Session'}
                 </div>
                 <div className="text-xs text-[#999999] mt-0.5">{date}</div>
-                <div className="text-xs text-[#666] mt-0.5">
-                  {(s.characters?.length || 0)}c · {(s.locations?.length || 0)}l · {(s.encounters?.length || 0)}e
+                <div className="flex gap-1 mt-1.5">
+                  <span className="text-[10px] bg-[#161310] text-[#999999] px-1.5 py-0.5 rounded">{s.characters?.length || 0}c</span>
+                  <span className="text-[10px] bg-[#161310] text-[#999999] px-1.5 py-0.5 rounded">{s.locations?.length || 0}l</span>
+                  <span className="text-[10px] bg-[#161310] text-[#999999] px-1.5 py-0.5 rounded">{s.encounters?.length || 0}e</span>
                 </div>
               </div>
               <button

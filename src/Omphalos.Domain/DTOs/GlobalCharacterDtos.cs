@@ -14,7 +14,9 @@ public record GlobalCharacterDto(
     double PortraitPanX,
     double PortraitPanY,
     string? QuestHooks,
-    List<CharacterRelationshipDto>? Relationships
+    List<CharacterRelationshipDto>? Relationships,
+    bool IsNpc = false,
+    NpcStatBlockDto? StatBlock = null
 );
 
 public record CreateGlobalCharacterRequest(
@@ -31,7 +33,9 @@ public record CreateGlobalCharacterRequest(
     double PortraitPanX,
     double PortraitPanY,
     string? QuestHooks,
-    List<CharacterRelationshipDto>? Relationships
+    List<CharacterRelationshipDto>? Relationships,
+    bool IsNpc = false,
+    NpcStatBlockDto? StatBlock = null
 );
 
 public record UpdateGlobalCharacterRequest(
@@ -47,5 +51,7 @@ public record UpdateGlobalCharacterRequest(
     double PortraitPanX,
     double PortraitPanY,
     string? QuestHooks,
-    List<CharacterRelationshipDto>? Relationships
+    List<CharacterRelationshipDto>? Relationships,
+    bool IsNpc = false,
+    NpcStatBlockDto? StatBlock = null
 );

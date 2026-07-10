@@ -48,6 +48,7 @@ public class SessionService(ISessionRepository repo) : ISessionService
         DateModified = r.DateModified,
         SessionLog = r.SessionLog,
         SessionNotes = r.SessionNotes,
+        PrepData = r.PrepData,
         Metadata = r.Metadata is null ? new() : new SessionMetadata
         {
             Location = r.Metadata.Location,
@@ -80,6 +81,8 @@ public class SessionService(ISessionRepository repo) : ISessionService
             Relationships = (c.Relationships ?? []).Select(r => new CharacterRelationship { Name = r.Name, Type = r.Type }).ToList(),
             GlobalCharacterId = c.GlobalCharacterId,
             SessionNotes = c.SessionNotes,
+            IsNpc = c.IsNpc,
+            StatBlock = MapStatBlockToEntity(c.StatBlock),
         }).ToList(),
         Locations = (r.Locations ?? []).Select(l => new Location
         {
@@ -118,24 +121,58 @@ public class SessionService(ISessionRepository repo) : ISessionService
         s.DateModified,
         s.SessionLog,
         s.SessionNotes,
-        new SessionMetadataDto(
-            s.Metadata.Location,
-            s.Metadata.DateTime,
-            s.Metadata.Weather,
-            s.Metadata.NpcsMet,
-            s.Metadata.TreasureAcquired,
-            s.Metadata.PlotPoints,
-            s.Metadata.PartyLevelChange,
-            s.Metadata.NextSessionHooks),
+        MapMetadataToDto(s.Metadata),
         s.Characters.Select(c => new CharacterDto(
             c.Id, c.Name, c.PortraitBase64, c.PortraitPanX, c.PortraitPanY,
             c.Tagline, c.Class, c.Race, c.Level, c.Alignment,
             c.PersonalityTraits, c.Flaw, c.Inventory, c.QuestHooks, c.Description,
             c.Relationships.Select(r => new CharacterRelationshipDto(r.Name, r.Type)).ToList(),
-            c.GlobalCharacterId, c.SessionNotes
+            c.GlobalCharacterId, c.SessionNotes, c.IsNpc, MapStatBlockToDto(c.StatBlock)
         )).ToList(),
         s.Locations.Select(l => new LocationDto(l.Id, l.Name, l.Type, l.Description, l.Notes, l.ImageBase64, l.GlobalLocationId, l.SessionNotes)).ToList(),
         s.Encounters.Select(e => new EncounterDto(e.Id, e.Name, e.Type, e.Description, e.Notes, e.Difficulty,
-            e.Enemies.Select(en => new EnemyDto(en.Name, en.Qty, en.Tier)).ToList())).ToList()
+            e.Enemies.Select(en => new EnemyDto(en.Name, en.Qty, en.Tier)).ToList())).ToList(),
+        s.PrepData
+    );
+
+    private static SessionMetadataDto MapMetadataToDto(SessionMetadata m) => new(
+        m.Location, m.DateTime, m.Weather, m.NpcsMet,
+        m.TreasureAcquired, m.PlotPoints, m.PartyLevelChange, m.NextSessionHooks);
+
+    private static NpcStatBlock? MapStatBlockToEntity(NpcStatBlockDto? d) => d is null ? null : new NpcStatBlock
+    {
+        SizeType = d.SizeType,
+        Alignment = d.Alignment,
+        ArmorClass = d.ArmorClass,
+        HitPoints = d.HitPoints,
+        Speed = d.Speed,
+        Str = d.Str,
+        Dex = d.Dex,
+        Con = d.Con,
+        Int = d.Int,
+        Wis = d.Wis,
+        Cha = d.Cha,
+        SavingThrows = d.SavingThrows,
+        Skills = d.Skills,
+        DamageVulnerabilities = d.DamageVulnerabilities,
+        DamageResistances = d.DamageResistances,
+        DamageImmunities = d.DamageImmunities,
+        ConditionImmunities = d.ConditionImmunities,
+        Senses = d.Senses,
+        Languages = d.Languages,
+        ChallengeRating = d.ChallengeRating,
+        Traits = (d.Traits ?? []).Select(t => new StatBlockEntry { Name = t.Name, Text = t.Text, Cost = t.Cost }).ToList(),
+        Actions = (d.Actions ?? []).Select(t => new StatBlockEntry { Name = t.Name, Text = t.Text, Cost = t.Cost }).ToList(),
+        LegendaryActions = (d.LegendaryActions ?? []).Select(t => new StatBlockEntry { Name = t.Name, Text = t.Text, Cost = t.Cost }).ToList(),
+    };
+
+    private static NpcStatBlockDto? MapStatBlockToDto(NpcStatBlock? s) => s is null ? null : new NpcStatBlockDto(
+        s.SizeType, s.Alignment, s.ArmorClass, s.HitPoints, s.Speed,
+        s.Str, s.Dex, s.Con, s.Int, s.Wis, s.Cha,
+        s.SavingThrows, s.Skills, s.DamageVulnerabilities, s.DamageResistances, s.DamageImmunities,
+        s.ConditionImmunities, s.Senses, s.Languages, s.ChallengeRating,
+        s.Traits.Select(t => new StatBlockEntryDto(t.Name, t.Text, t.Cost)).ToList(),
+        s.Actions.Select(t => new StatBlockEntryDto(t.Name, t.Text, t.Cost)).ToList(),
+        s.LegendaryActions.Select(t => new StatBlockEntryDto(t.Name, t.Text, t.Cost)).ToList()
     );
 }

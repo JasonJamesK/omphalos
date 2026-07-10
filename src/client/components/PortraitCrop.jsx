@@ -36,7 +36,7 @@ export default function PortraitCrop({ imageData, panX = 0, panY = 0, onChange }
     <div className="space-y-1">
       <div
         className="relative overflow-hidden rounded select-none"
-        style={{ width: 150, height: h, cursor: dragging ? 'grabbing' : 'default', background: '#1a1a1a' }}
+        style={{ width: 150, height: h, cursor: dragging ? 'grabbing' : 'default', background: '#161310' }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}

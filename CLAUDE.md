@@ -97,12 +97,14 @@ Dark theme throughout. Core colours:
 
 | Token | Hex | Usage |
 |---|---|---|
-| `bg1` | `#1a1a1a` | Page background |
-| `bg2` | `#2d2d2d` | Panel / modal background |
-| `bg3` | `#3d3d3d` | Buttons, borders, inputs |
+| `bg1` | `#161310` | Page background |
+| `bg2` | `#211b17` | Panel / modal background |
+| `bg3` | `#332922` | Buttons, borders, inputs (hover: `#40332a`) |
 | `amber` | `#d4a574` | Primary accent (headings, active states) |
 | `text1` | `#f0f0f0` | Primary text |
 | `text2` | `#999999` | Muted / secondary text |
+
+Warmer/darker near-black palette (brownish undertone) rather than neutral gray — chosen to match the gothic/fantasy tone. Semantic accents unchanged: red `#b24545` (danger/delete/enemy), green `#6b8e6b` (success/NPC-friendly).
 
 Modals follow the `SettingsModal.jsx` pattern: fixed overlay (`bg-black/70`), `bg-[#2d2d2d]` card, amber heading, `×` close button top-right.
 

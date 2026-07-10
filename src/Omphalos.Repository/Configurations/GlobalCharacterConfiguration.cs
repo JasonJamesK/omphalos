@@ -18,6 +18,13 @@ public class GlobalCharacterConfiguration : IEntityTypeConfiguration<GlobalChara
                 v => System.Text.Json.JsonSerializer.Deserialize<List<CharacterRelationship>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new()
             );
 
+        builder.Property(g => g.StatBlock)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => v == null ? null : System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                v => v == null ? null : System.Text.Json.JsonSerializer.Deserialize<NpcStatBlock>(v, (System.Text.Json.JsonSerializerOptions?)null)
+            );
+
         builder.HasMany(g => g.SessionCharacters)
             .WithOne(c => c.GlobalCharacter)
             .HasForeignKey(c => c.GlobalCharacterId)

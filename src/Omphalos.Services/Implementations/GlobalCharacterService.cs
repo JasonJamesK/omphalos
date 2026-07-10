@@ -33,6 +33,8 @@ public class GlobalCharacterService(IGlobalCharacterRepository repo) : IGlobalCh
             PortraitPanY = request.PortraitPanY,
             QuestHooks = request.QuestHooks,
             Relationships = (request.Relationships ?? []).Select(r => new CharacterRelationship { Name = r.Name, Type = r.Type }).ToList(),
+            IsNpc = request.IsNpc,
+            StatBlock = MapStatBlockToEntity(request.StatBlock),
         };
         var created = await repo.CreateAsync(entity, ct);
         return MapToDto(created);
@@ -56,6 +58,8 @@ public class GlobalCharacterService(IGlobalCharacterRepository repo) : IGlobalCh
             PortraitPanY = request.PortraitPanY,
             QuestHooks = request.QuestHooks,
             Relationships = (request.Relationships ?? []).Select(r => new CharacterRelationship { Name = r.Name, Type = r.Type }).ToList(),
+            IsNpc = request.IsNpc,
+            StatBlock = MapStatBlockToEntity(request.StatBlock),
         };
         var updated = await repo.UpdateAsync(id, entity, ct);
         return updated is null ? null : MapToDto(updated);
@@ -69,5 +73,44 @@ public class GlobalCharacterService(IGlobalCharacterRepository repo) : IGlobalCh
         g.PersonalityTraits, g.Flaw, g.Description,
         g.PortraitBase64, g.PortraitPanX, g.PortraitPanY,
         g.QuestHooks,
-        g.Relationships.Select(r => new CharacterRelationshipDto(r.Name, r.Type)).ToList());
+        g.Relationships.Select(r => new CharacterRelationshipDto(r.Name, r.Type)).ToList(),
+        g.IsNpc,
+        MapStatBlockToDto(g.StatBlock));
+
+    private static NpcStatBlock? MapStatBlockToEntity(NpcStatBlockDto? d) => d is null ? null : new NpcStatBlock
+    {
+        SizeType = d.SizeType,
+        Alignment = d.Alignment,
+        ArmorClass = d.ArmorClass,
+        HitPoints = d.HitPoints,
+        Speed = d.Speed,
+        Str = d.Str,
+        Dex = d.Dex,
+        Con = d.Con,
+        Int = d.Int,
+        Wis = d.Wis,
+        Cha = d.Cha,
+        SavingThrows = d.SavingThrows,
+        Skills = d.Skills,
+        DamageVulnerabilities = d.DamageVulnerabilities,
+        DamageResistances = d.DamageResistances,
+        DamageImmunities = d.DamageImmunities,
+        ConditionImmunities = d.ConditionImmunities,
+        Senses = d.Senses,
+        Languages = d.Languages,
+        ChallengeRating = d.ChallengeRating,
+        Traits = (d.Traits ?? []).Select(t => new StatBlockEntry { Name = t.Name, Text = t.Text, Cost = t.Cost }).ToList(),
+        Actions = (d.Actions ?? []).Select(t => new StatBlockEntry { Name = t.Name, Text = t.Text, Cost = t.Cost }).ToList(),
+        LegendaryActions = (d.LegendaryActions ?? []).Select(t => new StatBlockEntry { Name = t.Name, Text = t.Text, Cost = t.Cost }).ToList(),
+    };
+
+    private static NpcStatBlockDto? MapStatBlockToDto(NpcStatBlock? s) => s is null ? null : new NpcStatBlockDto(
+        s.SizeType, s.Alignment, s.ArmorClass, s.HitPoints, s.Speed,
+        s.Str, s.Dex, s.Con, s.Int, s.Wis, s.Cha,
+        s.SavingThrows, s.Skills, s.DamageVulnerabilities, s.DamageResistances, s.DamageImmunities,
+        s.ConditionImmunities, s.Senses, s.Languages, s.ChallengeRating,
+        s.Traits.Select(t => new StatBlockEntryDto(t.Name, t.Text, t.Cost)).ToList(),
+        s.Actions.Select(t => new StatBlockEntryDto(t.Name, t.Text, t.Cost)).ToList(),
+        s.LegendaryActions.Select(t => new StatBlockEntryDto(t.Name, t.Text, t.Cost)).ToList()
+    );
 }

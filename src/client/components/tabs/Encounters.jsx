@@ -13,7 +13,7 @@ function emptyEncounter() {
   return { id: uid(), name: '', enemies: [], notes: '', initiativeOrder: [], currentRound: 0, currentTurnIndex: 0 }
 }
 
-const inp = 'bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
+const inp = 'bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
 const lbl = 'block text-xs text-[#999999] mb-1'
 
 function EncounterModal({ enc, onSave, onClose }) {
@@ -27,8 +27,8 @@ function EncounterModal({ enc, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="bg-[#2d2d2d] rounded-lg w-[540px] max-h-[90vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-[#2d2d2d] border-b border-[#3d3d3d] px-5 py-4 flex items-center justify-between z-10">
+      <div className="bg-[#211b17] rounded-lg w-[540px] max-h-[90vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-[#211b17] border-b border-[#332922] px-5 py-4 flex items-center justify-between z-10">
           <h2 className="font-bold text-[#b24545]">{form.name || 'New Encounter'}</h2>
           <button onClick={onClose} className="text-[#999999] hover:text-[#f0f0f0] text-xl">×</button>
         </div>
@@ -63,8 +63,8 @@ function EncounterModal({ enc, onSave, onClose }) {
             <textarea className={inp + ' w-full resize-none'} rows={4} value={form.notes} onChange={e => setForm(p=>({...p,notes:e.target.value}))} placeholder="Tactics, triggers, special conditions..." />
           </div>
 
-          <div className="flex gap-3 justify-end pt-2 border-t border-[#3d3d3d]">
-            <button onClick={onClose} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Cancel</button>
+          <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
+            <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
             <button onClick={() => form.name.trim() && onSave(form)} disabled={!form.name.trim()} className="px-4 py-2 bg-[#b24545] text-white rounded font-medium hover:bg-[#922b2b] transition-colors disabled:opacity-40">Save</button>
           </div>
         </div>
@@ -146,20 +146,20 @@ function InitiativeTracker({ enc, sessionId, characters }) {
   const order = enc.initiativeOrder || []
 
   return (
-    <div className="border-t border-[#3d3d3d] pt-4 mt-4">
+    <div className="border-t border-[#332922] pt-4 mt-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold text-[#d4a574]">⚔ Initiative Order</span>
           {enc.currentRound > 0 && (
-            <span className="text-xs bg-[#3d3d3d] text-[#d4a574] px-2 py-0.5 rounded font-mono">
+            <span className="text-xs bg-[#332922] text-[#d4a574] px-2 py-0.5 rounded font-mono">
               Round {enc.currentRound}
             </span>
           )}
         </div>
         <div className="flex gap-1.5">
-          <button onClick={prevTurn} disabled={!order.length} className="px-2 py-1 text-xs bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] disabled:opacity-40 transition-colors">◀ Prev</button>
-          <button onClick={nextTurn} disabled={!order.length} className="px-2 py-1 text-xs bg-[#d4a574] text-[#1a1a1a] rounded hover:bg-[#c49464] disabled:opacity-40 transition-colors font-medium">Next ▶</button>
-          <button onClick={resetCombat} className="px-2 py-1 text-xs bg-[#3d3d3d] text-[#999999] rounded hover:bg-[#4d4d4d] transition-colors">↺ Reset</button>
+          <button onClick={prevTurn} disabled={!order.length} className="px-2 py-1 text-xs bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] disabled:opacity-40 transition-colors">◀ Prev</button>
+          <button onClick={nextTurn} disabled={!order.length} className="px-2 py-1 text-xs bg-[#d4a574] text-[#161310] rounded hover:bg-[#c49464] disabled:opacity-40 transition-colors font-medium">Next ▶</button>
+          <button onClick={resetCombat} className="px-2 py-1 text-xs bg-[#332922] text-[#999999] rounded hover:bg-[#40332a] transition-colors">↺ Reset</button>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ function InitiativeTracker({ enc, sessionId, characters }) {
               <div
                 key={c.combatantId}
                 className={`flex items-center gap-2 rounded px-3 py-2 transition-colors ${
-                  active ? 'bg-[#d4a574]/15 border border-[#d4a574]/40' : 'bg-[#1a1a1a] border border-transparent'
+                  active ? 'bg-[#d4a574]/15 border border-[#d4a574]/40' : 'bg-[#161310] border border-transparent'
                 } ${dead ? 'opacity-50' : ''}`}
               >
                 {active && <span className="text-[#d4a574] text-xs font-bold flex-shrink-0">▶</span>}
@@ -187,15 +187,15 @@ function InitiativeTracker({ enc, sessionId, characters }) {
                 </span>
                 {/* HP controls */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => adjustHP(c.combatantId,-1)} className="w-5 h-5 bg-[#3d3d3d] rounded text-[#f0f0f0] text-xs hover:bg-[#b24545]/60 transition-colors leading-none">−</button>
+                  <button onClick={() => adjustHP(c.combatantId,-1)} className="w-5 h-5 bg-[#332922] rounded text-[#f0f0f0] text-xs hover:bg-[#b24545]/60 transition-colors leading-none">−</button>
                   <input
                     type="number"
-                    className="w-10 bg-[#3d3d3d] rounded text-center text-xs text-[#f0f0f0] py-0.5 focus:outline-none focus:border focus:border-[#d4a574]"
+                    className="w-10 bg-[#332922] rounded text-center text-xs text-[#f0f0f0] py-0.5 focus:outline-none focus:border focus:border-[#d4a574]"
                     value={c.currentHP}
                     onChange={e => setHP(c.combatantId, e.target.value)}
                   />
                   <span className="text-[#666] text-xs">/{c.maxHP}</span>
-                  <button onClick={() => adjustHP(c.combatantId,1)} className="w-5 h-5 bg-[#3d3d3d] rounded text-[#f0f0f0] text-xs hover:bg-[#6b8e6b]/60 transition-colors leading-none">+</button>
+                  <button onClick={() => adjustHP(c.combatantId,1)} className="w-5 h-5 bg-[#332922] rounded text-[#f0f0f0] text-xs hover:bg-[#6b8e6b]/60 transition-colors leading-none">+</button>
                 </div>
                 <button onClick={() => removeCombatant(c.combatantId)} className="text-[#666] hover:text-[#b24545] text-xs ml-1 flex-shrink-0 transition-colors">×</button>
               </div>
@@ -236,7 +236,7 @@ function InitiativeTracker({ enc, sessionId, characters }) {
       )}
 
       {/* Add combatant */}
-      <div className="bg-[#1a1a1a] rounded p-3 space-y-2">
+      <div className="bg-[#161310] rounded p-3 space-y-2">
         <p className="text-xs text-[#999999] font-semibold mb-2">Add Combatant</p>
         <div className="flex gap-2 flex-wrap">
           <input className={inp + ' flex-1 min-w-28 text-xs py-1.5'} value={newName} onChange={e => setNewName(e.target.value)} placeholder="Name" onKeyDown={e => e.key==='Enter' && addCombatant()} />
@@ -246,7 +246,7 @@ function InitiativeTracker({ enc, sessionId, characters }) {
             <input type="checkbox" checked={newIsNPC} onChange={e => setNewIsNPC(e.target.checked)} className="accent-amber" />
             NPC
           </label>
-          <button onClick={addCombatant} className="px-3 py-1.5 bg-[#d4a574] text-[#1a1a1a] rounded text-xs font-medium hover:bg-[#c49464] transition-colors">Add</button>
+          <button onClick={addCombatant} className="px-3 py-1.5 bg-[#d4a574] text-[#161310] rounded text-xs font-medium hover:bg-[#c49464] transition-colors">Add</button>
         </div>
 
         {characters.length > 0 && (
@@ -275,7 +275,7 @@ function InitiativeTracker({ enc, sessionId, characters }) {
 
 function EncounterCard({ enc, onEdit, onDelete, sessionId, characters, expanded, onToggle }) {
   return (
-    <div className={`bg-[#2d2d2d] border rounded-lg overflow-hidden transition-colors ${expanded ? 'border-[#b24545]/50' : 'border-[#3d3d3d] hover:border-[#b24545]/30'}`}>
+    <div className={`bg-[#211b17] border rounded-lg overflow-hidden transition-colors ${expanded ? 'border-[#b24545]/50' : 'border-[#332922] hover:border-[#b24545]/30'}`}>
       <div className="flex items-start gap-3 px-4 py-3 cursor-pointer" onClick={onToggle}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ function EncounterCard({ enc, onEdit, onDelete, sessionId, characters, expanded,
           )}
         </div>
         <div className="flex gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
-          <button onClick={onEdit} className="px-2 py-1 text-xs bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Edit</button>
+          <button onClick={onEdit} className="px-2 py-1 text-xs bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Edit</button>
           <button onClick={onDelete} className="px-2 py-1 text-xs bg-[#b24545]/20 text-[#b24545] rounded hover:bg-[#b24545]/40 transition-colors">Del</button>
         </div>
       </div>
@@ -300,7 +300,7 @@ function EncounterCard({ enc, onEdit, onDelete, sessionId, characters, expanded,
       {expanded && (
         <div className="px-4 pb-4">
           {enc.notes && (
-            <div className="bg-[#1a1a1a] rounded p-2.5 mb-4 text-sm text-[#d4d4d4] leading-relaxed">
+            <div className="bg-[#161310] rounded p-2.5 mb-4 text-sm text-[#d4d4d4] leading-relaxed">
               {enc.notes}
             </div>
           )}

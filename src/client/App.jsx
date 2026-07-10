@@ -53,6 +53,7 @@ export default function App() {
         dateModified: Date.now(),
         sessionLog: null,
         sessionNotes: '',
+        prepData: { overview: '', phases: [] },
         metadata: { location:'', dateTime:'', weather:'', npcsMet:'', treasureAcquired:'', plotPoints:'', partyLevelChange:'', nextSessionHooks:'' },
         characters: [],
         locations: [],
@@ -75,7 +76,7 @@ export default function App() {
 
   if (!state.loaded) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
+      <div className="flex items-center justify-center h-screen bg-[#161310]">
         <div className="text-center">
           <div className="text-[#d4a574] text-3xl font-bold mb-3">OMPHALOS</div>
           <div className="text-[#999999] text-sm">Loading campaign data…</div>
@@ -93,7 +94,7 @@ export default function App() {
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#1a1a1a] text-[#f0f0f0]">
+    <div className="flex h-screen overflow-hidden bg-[#161310] text-[#f0f0f0]">
       <Sidebar onNewSession={createSession} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -108,7 +109,7 @@ export default function App() {
 
         {/* Tab bar — only in session view */}
         {view === 'sessions' && activeSession && (
-          <div className="flex bg-[#2d2d2d] border-b border-[#3d3d3d] flex-shrink-0">
+          <div className="flex bg-[#211b17] border-b border-[#332922] flex-shrink-0">
             {TABS.map((tab, i) => (
               <button
                 key={tab}
@@ -141,7 +142,7 @@ export default function App() {
                 <p className="text-[#999999] mb-5 text-lg">No session selected</p>
                 <button
                   onClick={createSession}
-                  className="px-6 py-3 bg-[#d4a574] text-[#1a1a1a] rounded-lg font-bold hover:bg-[#c49464] transition-colors"
+                  className="px-6 py-3 bg-[#d4a574] text-[#161310] rounded-lg font-bold hover:bg-[#c49464] transition-colors"
                 >
                   Create New Session
                 </button>
