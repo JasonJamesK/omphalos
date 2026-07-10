@@ -41,14 +41,14 @@ export default function SessionLog() {
   function updateLog(json) {
     dispatch({
       type: 'UPDATE_SESSION',
-      payload: { id: session.id, sessionLog: json },
+      payload: { ...session, sessionLog: json },
     })
   }
 
   function updateNotes(e) {
     dispatch({
       type: 'UPDATE_SESSION',
-      payload: { id: session.id, sessionNotes: e.target.value },
+      payload: { ...session, sessionNotes: e.target.value },
     })
   }
 
@@ -56,7 +56,7 @@ export default function SessionLog() {
     dispatch({
       type: 'UPDATE_SESSION',
       payload: {
-        id: session.id,
+        ...session,
         metadata: { ...meta, [key]: value },
       },
     })
