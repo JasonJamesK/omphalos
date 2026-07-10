@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-07-10T14:15:31.027Z",
+  "phase": "01",
+  "phase_name": "Session Persistence Reliability",
+  "phase_dir": ".planning/phases/01-session-persistence-reliability",
+  "plan": 4,
+  "task": 10,
+  "total_tasks": 10,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "01-01", "name": "Test infrastructure (xUnit v3 + Testcontainers Postgres + CI gate)", "status": "done", "commit": "543d957"},
+    {"id": "01-02", "name": "Backend persistence fix (TDD): PrepData assignment + collection diff-merge", "status": "done", "commit": "2a34168"},
+    {"id": "01-03", "name": "Frontend full-payload UPDATE_SESSION dispatch fix (4 call sites)", "status": "done", "commit": "e0d429c"},
+    {"id": "01-04", "name": "Save-failure toast (SaveFailureToast + AppContext saveError wiring)", "status": "done", "commit": "fa220b6"},
+    {"id": "code-review", "name": "Code review of all phase 1 changes (standard depth, 17 files)", "status": "done", "commit": "265c039"}
+  ],
+  "remaining_tasks": [
+    {"id": "fix-CR-01", "name": "Fix the race-condition data-loss bug found by code review (see blockers)", "status": "not_started"},
+    {"id": "re-verify", "name": "Re-run dotnet test + npm run build after the CR-01 fix", "status": "not_started"},
+    {"id": "verify_phase_goal", "name": "Spawn gsd-verifier to check phase goal achievement (execute-phase.md step verify_phase_goal — not yet run)", "status": "not_started"},
+    {"id": "update_roadmap", "name": "Mark Phase 1 complete in ROADMAP.md/STATE.md (execute-phase.md step update_roadmap — not yet run)", "status": "not_started"},
+    {"id": "fix-validation-tbd", "name": "01-VALIDATION.md's Per-Task Verification Map still has literal TBD plan/wave/task-id placeholders from before planning assigned real IDs (01-01..01-04) — cosmetic, not blocking", "status": "not_started"}
+  ],
+  "blockers": [
+    {
+      "description": "CR-01 (Critical, code review): editing a session before its full detail loads (GET /api/sessions returns summary-only DTOs) wipes characters/locations/encounters/prepData/sessionLog server-side. Every edit surface (TopBar title, SessionLog notes, SessionPrep, Toolkit save) spreads the incomplete summary object into UPDATE_SESSION; the backend treats missing fields as null/empty; the new diff-merge from Plan 01-02 then deletes every existing child row. This is the exact bug class Phase 1 exists to fix, just relocated to a race window instead of the two originally-diagnosed bugs.",
+      "type": "technical",
+      "workaround": "Reviewer proposed a concrete fix: track which sessions have loaded full detail (e.g. a detailLoadedIds ref/set) and gate dispatchWithPersist on it — refuse to persist session-shaped mutations until the full record has loaded. See 01-REVIEW.md CR-01 for the exact patch. Not yet applied."
+    }
+  ],
+  "async_jobs": [],
+  "human_actions_pending": [
+    {
+      "action": "Decide how to fix CR-01 — apply the reviewer's suggested detailLoadedIds gating approach, or a different fix (e.g. hide edit controls until full detail loads)",
+      "context": "This blocks marking Phase 1 complete; the phase's own goal (session persistence reliability) isn't actually met while this race window exists",
+      "blocking": true
+    },
+    {
+      "action": "Optionally decide whether to also address the 7 Warning-level findings (WR-01..WR-07) in 01-REVIEW.md now or defer them",
+      "context": "Not blocking phase completion per se, but WR-01 (unhandled exception on duplicate child IDs) and WR-07 (no optimistic concurrency) are in the same area as the critical fix and might be worth bundling",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {"decision": "Client-side markdown rendering (react-markdown + remark-gfm + remark-breaks), not server-side Markdig", "rationale": "No Razor/server-rendering pipeline in Omphalos's minimal-API backend; avoids new backend dependency", "phase": "project-level"},
+    {"decision": "Cropper.js v2 web components integrated directly (no React wrapper library)", "rationale": "No maintained React wrapper exists for v2; react-cropper is still pinned to v1", "phase": "project-level"},
+    {"decision": "Dual original+cropped image storage per entity, served via dedicated cached binary endpoints", "rationale": "Ports quest-board's proven pattern; enables re-crop without re-upload, GIF fallback, and instant page loads", "phase": "project-level (Phase 4)"},
+    {"decision": "PERSIST-03 (collection diff-merge) and PERSIST-04 (save-failure toast) added as new requirements during Phase 1 discuss-phase", "rationale": "User chose to fix the adjacent delete/reinsert anti-pattern and add save-failure UX while already touching the same code path", "phase": "01"},
+    {"decision": "Fix PERSIST-02 (partial-payload wipe) at the frontend call sites (full session spread), not via backend merge logic", "rationale": "Matches the existing safe dirtySessionRef pattern; smaller, more consistent fix", "phase": "01"},
+    {"decision": "First-ever test project: xUnit v3 (not legacy xunit v2) + Testcontainers.PostgreSql for integration tests, wired into CI", "rationale": "xUnit v2 is deprecated on nuget.org; Testcontainers gives 1:1 fidelity with production Postgres/JSONB, unlike EF InMemory or unconfirmed SQLite jsonb support", "phase": "01"},
+    {"decision": "Walking Skeleton mode overridden to false for Phase 1 despite the tool's default heuristic (MVP mode + phase 01 + zero summaries)", "rationale": "Omphalos is an existing, fully working, deployed brownfield app — not a from-scratch new project; forcing a minimal-skeleton framing would work against the thorough fix CONTEXT.md decided on", "phase": "01"},
+    {"decision": "01-03's self-reported worktree expected_base was wrong (reported its own final commit SHA instead of the fork base) and had to be corrected manually via git merge-base before cleanup-wave would proceed", "rationale": "Orchestrator-level data-quality issue in that specific executor run, not a real base mismatch; verified independently via git merge-base before correcting", "phase": "01"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Decide on and apply the CR-01 fix (see 01-REVIEW.md), re-run `dotnet test` and `npm run build`, then resume execute-phase.md at the verify_phase_goal step (spawn gsd-verifier) — do NOT mark Phase 1 complete in ROADMAP.md/STATE.md until that fix is verified, since the phase's own goal isn't met while CR-01 stands.",
+  "context_notes": "All 4 plans executed cleanly and passed their own tests (7/7 backend tests green, both npm and dotnet builds green, all wave merges clean). Code review then found that the phase's fix is real but incomplete — it closed the two originally-diagnosed bugs (missing PrepData assignment, delete/reinsert collection replace) but a third, previously-undiagnosed variant of the same 'partial session payload wipes data' bug class survives via a load-race window that predates this phase and wasn't in original scope (PERSIST-01/02/03 CONTEXT.md). This is a legitimate scope gap, not a review nitpick — I flagged it clearly to the user before pausing. Docker containers omphalos-api-1/omphalos-postgres-1/redis-stack-server are running but pre-existing (up 8h, not started this session) — no action needed there. Working tree is clean, everything is committed through 265c039 (docs(01): add code review report)."
+}
