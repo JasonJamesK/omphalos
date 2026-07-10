@@ -2,6 +2,10 @@
 
 DM campaign manager. React frontend + .NET 10 ASP.NET Core backend + PostgreSQL, all self-hosted via Docker Compose.
 
+## Development Environment
+
+**Platform**: Development is done on **Windows**. Use Windows-style paths and CRLF line endings when creating or editing files. Avoid Unix-only shell syntax.
+
 ## Running locally
 
 ```bash
@@ -23,11 +27,17 @@ npm install
 npm run dev
 ```
 
+**Build failures due to locked files**: If `dotnet build` fails because output files are in use, Visual Studio (or another running `dotnet` process) is most likely holding a lock — stop the debugger/process before retrying.
+
 ## Branching
 
-**Never commit or push directly to `main`.** All work must go on a feature branch: `feature/<short-description>`.
+**Never commit or push directly to `main`.** All work — including planning docs, migrations, and feature code — must go on a feature branch: `feature/<short-description>`. Milestone-scoped work uses `milestone/v<N>-<name>` (e.g. `milestone/v2-quest-board-integration`).
 
 If you realize commits have landed on `main` by mistake: create the branch from current `main`, then `git reset --hard <pre-commit-sha>` on `main` to remove them.
+
+## Code Comments
+
+**Never embed GSD planning/tracking references in source code** — no requirement IDs, phase/plan numbers, or review-finding IDs in comments, XML doc comments, or string literals. These references go stale the moment a phase closes and become dead noise a future cleanup has to strip. Write comments that explain the *why* in plain language that stays true independent of which phase touched the code. Planning/tracking context belongs in `.planning/`, not in source. This does not apply to git commit messages, which are expected to reference phase/plan IDs for traceability.
 
 ## Architecture
 
@@ -57,6 +67,40 @@ src/
 | `docker-compose.yml` | Postgres 17 + api service. Postgres data in named volume `postgres_data`. |
 | `Dockerfile` | Multi-stage: Node builds React → .NET SDK builds API → aspnet runtime serves both. |
 | `.env` | Runtime secrets (gitignored). See `.env.example` for all required keys. |
+
+## Code Navigation — RIP MCP
+
+If the `rip` MCP server is available (tools prefixed `mcp__rip__`), **always prefer it over reading files** for any symbol-navigation question. It has the full codebase indexed.
+
+| Goal | Tool |
+|---|---|
+| Find where a symbol is defined | `FindDefinition` |
+| Find a symbol by name (partial or exact) | `FindSymbol` |
+| Find every usage of a symbol across the codebase | `FindReferences` |
+| Read the source body of a function/class | `GetSymbolBody` |
+| List all fields and methods of a class | `GetClassMembers` |
+| List all values of an enum | `GetEnumValues` |
+| Who calls a function | `FindCallers` |
+| What does a function call | `FindCallees` |
+| Subclasses / implementors of a base | `FindImplementations` |
+| Full inheritance chain | `FindInheritanceTree` |
+| Trace a dependency path between two symbols | `FindDependencyPath` |
+| High-level subsystem dependency map | `GetArchitectureSummary` |
+
+### RIP Lookup Protocol
+
+When asked about a feature, system, or concept by name — even if the term isn't obviously a symbol — follow this sequence:
+
+1. **`GetArchitectureSummary`** — identify which namespaces/subsystems relate to the term
+2. **`FindSymbol`** — try PascalCase variants and the plural, base class name, interface name
+3. **`GetClassMembers`** on each found type — get structure without reading files
+4. **`GetSymbolBody`** for specific methods of interest
+5. **`FindCallers` / `FindCallees`** to trace integrations
+6. **`FindImplementations`** for interfaces or base classes
+
+**Only after all of the above yield nothing:** use `Grep` with `output_mode: files_with_matches` to find file paths, then apply RIP tools to symbols found in those files. **Never `Read` a whole file** when RIP can answer the question.
+
+One failed `FindSymbol` query is not a reason to fall back — try at least 3 symbol-name variants before giving up on RIP.
 
 ## Adding a new API endpoint
 
@@ -134,3 +178,16 @@ See `.env.example`. All required vars are validated at startup with `:?` in `doc
 | `POSTGRES_USER` | No | Defaults to `omphalos` |
 | `API_PORT` | No | Host port, defaults to `8080` |
 | `ALLOWED_ORIGIN` | No | CORS origin; leave empty when React is served by the same process |
+
+## Reference Docs
+
+Read these on demand when needed — not loaded by default:
+
+- **Architecture** — `.planning/codebase/ARCHITECTURE.md` — layer structure, dependency direction, data flow, key abstractions
+- **Structure** — `.planning/codebase/STRUCTURE.md` — directory/file layout conventions
+- **Conventions** — `.planning/codebase/CONVENTIONS.md` — naming patterns, code style
+- **Tech Stack** — `.planning/codebase/STACK.md` — full dependency list, versions, configuration details
+- **Integrations** — `.planning/codebase/INTEGRATIONS.md` — external services/APIs
+- **Testing** — `.planning/codebase/TESTING.md` — test approach
+- **Concerns** — `.planning/codebase/CONCERNS.md` — known issues and technical debt
+- **Roadmap** — `.planning/ROADMAP.md` — planned phases and milestones
