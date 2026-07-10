@@ -53,7 +53,7 @@ export default function AdminModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
-        className="bg-[#2d2d2d] rounded-lg w-[520px] p-6 fade-in max-h-[80vh] flex flex-col"
+        className="bg-[#211b17] rounded-lg w-[520px] p-6 fade-in max-h-[80vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -69,14 +69,14 @@ export default function AdminModal({ onClose }) {
           {!loading && users.map(u => (
             <div
               key={u.id}
-              className="flex items-center justify-between py-2.5 border-b border-[#3d3d3d] last:border-0"
+              className="flex items-center justify-between py-2.5 border-b border-[#332922] last:border-0"
             >
               <div>
                 <span className="text-[#f0f0f0] text-sm font-medium">{u.username}</span>
                 <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
                   u.role === 'Admin'
                     ? 'bg-[#d4a574]/20 text-[#d4a574]'
-                    : 'bg-[#3d3d3d] text-[#999999]'
+                    : 'bg-[#332922] text-[#999999]'
                 }`}>{u.role}</span>
               </div>
               {u.id !== state.user?.id && (
@@ -91,7 +91,7 @@ export default function AdminModal({ onClose }) {
                     </button>
                     <button
                       onClick={() => setConfirmDelete(null)}
-                      className="text-xs px-2 py-1 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-[#f0f0f0] rounded transition-colors"
+                      className="text-xs px-2 py-1 bg-[#332922] hover:bg-[#40332a] text-[#f0f0f0] rounded transition-colors"
                     >
                       No
                     </button>
@@ -99,7 +99,7 @@ export default function AdminModal({ onClose }) {
                 ) : (
                   <button
                     onClick={() => setConfirmDelete(u.id)}
-                    className="text-xs px-2 py-1 bg-[#3d3d3d] hover:bg-[#b24545] text-[#999999] hover:text-white rounded transition-colors"
+                    className="text-xs px-2 py-1 bg-[#332922] hover:bg-[#b24545] text-[#999999] hover:text-white rounded transition-colors"
                   >
                     Delete
                   </button>
@@ -110,19 +110,19 @@ export default function AdminModal({ onClose }) {
         </div>
 
         {/* Create user form */}
-        <div className="border-t border-[#3d3d3d] pt-4 mt-4">
+        <div className="border-t border-[#332922] pt-4 mt-4">
           <h3 className="text-sm font-medium text-[#f0f0f0] mb-3">Add User</h3>
           <form onSubmit={handleCreate} className="flex flex-col gap-2">
             <div className="flex gap-2">
               <input
-                className="flex-1 bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-1.5 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
+                className="flex-1 bg-[#161310] border border-[#332922] rounded px-3 py-1.5 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
                 placeholder="Username"
                 value={newUsername}
                 onChange={e => setNewUsername(e.target.value)}
                 required
               />
               <input
-                className="flex-1 bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-1.5 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
+                className="flex-1 bg-[#161310] border border-[#332922] rounded px-3 py-1.5 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
                 placeholder="Password"
                 type="password"
                 value={newPassword}
@@ -130,7 +130,7 @@ export default function AdminModal({ onClose }) {
                 required
               />
               <select
-                className="bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-1.5 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
+                className="bg-[#161310] border border-[#332922] rounded px-3 py-1.5 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]"
                 value={newRole}
                 onChange={e => setNewRole(e.target.value)}
               >
@@ -143,7 +143,7 @@ export default function AdminModal({ onClose }) {
               <button
                 type="submit"
                 disabled={creating}
-                className="px-4 py-1.5 bg-[#d4a574] hover:bg-[#c49464] disabled:opacity-50 text-[#1a1a1a] font-medium text-sm rounded transition-colors"
+                className="px-4 py-1.5 bg-[#d4a574] hover:bg-[#c49464] disabled:opacity-50 text-[#161310] font-medium text-sm rounded transition-colors"
               >
                 {creating ? 'Creating…' : 'Add User'}
               </button>

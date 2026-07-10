@@ -22,8 +22,11 @@ public class Character
     public string? GlobalCharacterId { get; set; }
     public string? SessionNotes { get; set; }
 
+    public bool IsNpc { get; set; }
+
     // Stored as JSONB
     public List<CharacterRelationship> Relationships { get; set; } = [];
+    public NpcStatBlock? StatBlock { get; set; }
 
     public GameSession Session { get; set; } = null!;
     public GlobalCharacter? GlobalCharacter { get; set; }

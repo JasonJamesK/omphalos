@@ -11,6 +11,7 @@ public class GameSession
     public long DateModified { get; set; }
     public JsonDocument? SessionLog { get; set; }
     public string? SessionNotes { get; set; }
+    public JsonDocument? PrepData { get; set; }
 
     // Owned entity — stored in same table
     public SessionMetadata Metadata { get; set; } = new();

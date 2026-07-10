@@ -3,7 +3,7 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 const MAX_W = 600
 const MAX_H = 500
 
-export default function CropModal({ imageData, onSave, onClose }) {
+export default function CropModal({ imageData, onSave, onClose, aspectW = 3, aspectH = 4, title = 'Crop Portrait' }) {
   const imgRef = useRef(null)
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
@@ -24,9 +24,9 @@ export default function CropModal({ imageData, onSave, onClose }) {
     const dh = Math.round(nh * scale)
     setDisplaySize({ w: dw, h: dh })
 
-    // Initial crop box: 3:4, ~80% of display height, centered
-    const cropH = Math.round(Math.min(dh * 0.85, dw * 4 / 3))
-    const cropW = Math.round(cropH * 3 / 4)
+    // Initial crop box: aspectW:aspectH, ~85% of display height, centered
+    const cropH = Math.round(Math.min(dh * 0.85, dw * aspectH / aspectW))
+    const cropW = Math.round(cropH * aspectW / aspectH)
     const cx = Math.round((dw - cropW) / 2)
     const cy = Math.round((dh - cropH) / 2)
     setCrop({ x: cx, y: cy, w: cropW, h: cropH })
@@ -76,10 +76,12 @@ export default function CropModal({ imageData, onSave, onClose }) {
     const sy = Math.round(crop.y * scaleY)
     const sw = Math.round(crop.w * scaleX)
     const sh = Math.round(crop.h * scaleY)
-    canvas.width = 300
-    canvas.height = 400
+    const outW = aspectW >= aspectH ? 400 : 300
+    const outH = aspectW >= aspectH ? 300 : 400
+    canvas.width = outW
+    canvas.height = outH
     const ctx = canvas.getContext('2d')
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 300, 400)
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH)
     onSave(canvas.toDataURL('image/jpeg', 0.92))
   }
 
@@ -87,12 +89,12 @@ export default function CropModal({ imageData, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 p-4" onClick={onClose}>
-      <div className="bg-[#2d2d2d] rounded-lg p-5 fade-in max-w-full" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#211b17] rounded-lg p-5 fade-in max-w-full" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-[#d4a574]">Crop Portrait</h3>
+          <h3 className="font-bold text-[#d4a574]">{title}</h3>
           <button onClick={onClose} className="text-[#999999] hover:text-[#f0f0f0] text-xl leading-none">×</button>
         </div>
-        <p className="text-xs text-[#999999] mb-3">Drag the highlighted box to select your 3:4 portrait area</p>
+        <p className="text-xs text-[#999999] mb-3">Drag the highlighted box to select your {aspectW}:{aspectH} area</p>
 
         <div
           ref={containerRef}
@@ -172,7 +174,7 @@ export default function CropModal({ imageData, onSave, onClose }) {
                 borderRadius:3,
                 pointerEvents:'none',
               }}>
-                3:4
+                {aspectW}:{aspectH}
               </div>
             </>
           )}
@@ -181,13 +183,13 @@ export default function CropModal({ imageData, onSave, onClose }) {
         <canvas ref={canvasRef} style={{ display:'none' }} />
 
         <div className="flex gap-3 justify-end mt-4">
-          <button onClick={onClose} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">
+          <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">
             Cancel
           </button>
           <button
             onClick={handleCrop}
             disabled={!ready}
-            className="px-5 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold hover:bg-[#c49464] transition-colors disabled:opacity-40"
+            className="px-5 py-2 bg-[#d4a574] text-[#161310] rounded font-bold hover:bg-[#c49464] transition-colors disabled:opacity-40"
           >
             Crop & Save
           </button>

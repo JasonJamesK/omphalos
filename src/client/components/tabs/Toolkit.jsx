@@ -1,15 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-
-function useClickOutside(ref, onOutside) {
-  useEffect(() => {
-    if (!onOutside) return
-    function handler(e) {
-      if (ref.current && !ref.current.contains(e.target)) onOutside()
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [ref, onOutside])
-}
+import { useState } from 'react'
 import { generateName, RACES, GENDERS } from '../../data/nameGen.js'
 import { generateLoot, LOOT_TIERS } from '../../data/lootTables.js'
 import {
@@ -23,19 +12,73 @@ import {
 } from '../../data/toolkitTables.js'
 import { useApp } from '../../context/AppContext'
 
-const inp = 'bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
+const inp = 'bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
 const DICE = [4, 6, 8, 10, 12, 20, 100]
 const MAGIC_TIERS = Object.keys(magicItemTiers)
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 
-// ─── Shared Result Card ───────────────────────────────────────────────────────
-function ResultCard({ children, onClear }) {
+// ─── Tool shell: compact card + modal (config, generate, result) ─────────────
+function ToolShell({ icon, title, buttonLabel, accent = 'amber', onGenerate, renderConfig, renderResult, hasResult, fullBody }) {
+  const [open, setOpen] = useState(false)
+
+  const btnCls = accent === 'red'
+    ? 'bg-[#b24545] text-white hover:bg-[#922b2b]'
+    : 'bg-[#d4a574] text-[#161310] hover:bg-[#c49464]'
+
+  function handleCardClick() {
+    onGenerate?.()
+    setOpen(true)
+  }
+
   return (
-    <div className="bg-[#1a1a1a] rounded-lg p-3 relative fade-in">
-      {onClear && (
-        <button onClick={onClear} className="absolute top-2 right-2 text-[#444] hover:text-[#999999] text-sm leading-none">×</button>
+    <>
+      <div className="bg-[#211b17] border border-[#332922] rounded-lg p-4 hover:border-[#d4a574]/40 transition-colors flex flex-col gap-3">
+        <div className="flex items-start gap-2 min-w-0 min-h-[2.25rem]">
+          <span className="text-lg flex-shrink-0">{icon}</span>
+          <h3 className="font-bold text-[#f0f0f0] text-sm leading-tight">{title}</h3>
+        </div>
+        <button onClick={handleCardClick} className={`w-full py-2 rounded font-bold text-sm transition-colors ${btnCls}`}>
+          {buttonLabel}
+        </button>
+      </div>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setOpen(false)}>
+          <div className="bg-[#211b17] border border-[#332922] rounded-lg w-[460px] max-h-[85vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#211b17] flex items-center justify-between px-5 py-4 border-b border-[#332922] z-10">
+              <h2 className="font-bold text-[#d4a574] flex items-center gap-2 uppercase tracking-wide text-sm">
+                <span>{icon}</span>{title}
+              </h2>
+              <button onClick={() => setOpen(false)} className="text-[#999999] hover:text-[#f0f0f0] text-xl">×</button>
+            </div>
+            <div className="p-5 space-y-4">
+              {fullBody ? fullBody() : (
+                <>
+                  {renderConfig?.()}
+                  <button onClick={onGenerate} className={`w-full py-2.5 rounded font-bold text-sm transition-colors ${btnCls}`}>
+                    {buttonLabel}
+                  </button>
+                  {hasResult && (
+                    <div className="pt-3 border-t border-[#332922]">
+                      <p className="text-xs text-[#999999] uppercase tracking-wide mb-2">Latest Result</p>
+                      {renderResult()}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
+    </>
+  )
+}
+
+// ─── Shared Result Card ───────────────────────────────────────────────────────
+function ResultCard({ children }) {
+  return (
+    <div className="bg-[#161310] rounded-lg p-3 fade-in">
       {children}
     </div>
   )
@@ -46,9 +89,38 @@ function CopyBtn({ text }) {
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
-      className={`text-xs px-2 py-0.5 rounded transition-colors ${copied ? 'bg-[#6b8e6b] text-white' : 'bg-[#3d3d3d] text-[#999999] hover:text-[#f0f0f0]'}`}
+      className={`text-xs px-2 py-0.5 rounded transition-colors ${copied ? 'bg-[#6b8e6b] text-white' : 'bg-[#332922] text-[#999999] hover:text-[#f0f0f0]'}`}
     >
       {copied ? 'Copied!' : 'Copy'}
+    </button>
+  )
+}
+
+// Saves the result into this session's Quick Notes so it can be found later.
+function SaveBtn({ text }) {
+  const { activeSession, dispatch } = useApp()
+  const [saved, setSaved] = useState(false)
+
+  function save() {
+    if (!activeSession) return
+    const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const line = `[${stamp}] ${text}`
+    dispatch({
+      type: 'UPDATE_SESSION',
+      payload: { id: activeSession.id, sessionNotes: (activeSession.sessionNotes ? activeSession.sessionNotes + '\n' : '') + line },
+    })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
+  }
+
+  return (
+    <button
+      onClick={save}
+      disabled={!activeSession}
+      title={activeSession ? 'Save to Quick Notes' : 'Select a session first'}
+      className={`text-xs px-2 py-0.5 rounded transition-colors disabled:opacity-40 ${saved ? 'bg-[#6b8e6b] text-white' : 'bg-[#332922] text-[#999999] hover:text-[#f0f0f0]'}`}
+    >
+      {saved ? 'Saved!' : '★ Save'}
     </button>
   )
 }
@@ -67,50 +139,50 @@ function NameGenerator() {
   const latest = history[0]
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🎲 Name Generator</h3>
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div>
-          <label className="block text-xs text-[#999999] mb-1">Gender</label>
-          <div className="flex gap-1">
-            {GENDERS.map(g => (
-              <button key={g.value} onClick={() => setGender(g.value)} className={`flex-1 py-1.5 rounded text-xs transition-colors ${gender === g.value ? 'bg-[#d4a574] text-[#1a1a1a] font-medium' : 'bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d]'}`}>{g.label}</button>
-            ))}
+    <ToolShell
+      icon="🎲" title="Name Generator" buttonLabel="Generate" onGenerate={generate} hasResult={!!latest}
+      renderConfig={() => (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs text-[#999999] mb-1">Gender</label>
+            <div className="flex gap-1">
+              {GENDERS.map(g => (
+                <button key={g.value} onClick={() => setGender(g.value)} className={`flex-1 py-1.5 rounded text-xs transition-colors ${gender === g.value ? 'bg-[#d4a574] text-[#161310] font-medium' : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'}`}>{g.label}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-[#999999] mb-1">Race</label>
+            <select className={inp + ' w-full text-xs py-1.5'} value={race} onChange={e => setRace(e.target.value)}>
+              {RACES.map(r => <option key={r}>{r}</option>)}
+            </select>
           </div>
         </div>
-        <div>
-          <label className="block text-xs text-[#999999] mb-1">Race</label>
-          <select className={inp + ' w-full text-xs py-1.5'} value={race} onChange={e => setRace(e.target.value)}>
-            {RACES.map(r => <option key={r}>{r}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="flex gap-2 mb-3">
-        <button onClick={generate} className="flex-1 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors">Generate</button>
-        {latest && <button onClick={generate} className="px-3 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded text-xs hover:bg-[#4d4d4d] transition-colors">Again</button>}
-      </div>
-      {latest && (
-        <ResultCard>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-bold text-[#f0f0f0]">{latest.name}</div>
-              <div className="text-xs text-[#666] mt-0.5">{latest.gender} {latest.race}</div>
-            </div>
-            <CopyBtn text={latest.name} />
-          </div>
-        </ResultCard>
       )}
-      {history.length > 1 && (
-        <div className="mt-2 space-y-0.5 max-h-28 overflow-y-auto">
-          {history.slice(1).map(h => (
-            <div key={h.id} className="flex justify-between text-xs px-2 py-1 rounded hover:bg-[#3d3d3d] transition-colors group">
-              <span className="text-[#d4d4d4]">{h.name}</span>
-              <span className="text-[#555] group-hover:text-[#999999]">{h.race}</span>
+      renderResult={() => (
+        <>
+          <ResultCard>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-[#f0f0f0]">{latest.name}</div>
+                <div className="text-xs text-[#666] mt-0.5">{latest.gender} {latest.race}</div>
+              </div>
+              <div className="flex gap-1.5 flex-shrink-0"><CopyBtn text={latest.name} /><SaveBtn text={latest.name} /></div>
             </div>
-          ))}
-        </div>
+          </ResultCard>
+          {history.length > 1 && (
+            <div className="mt-2 space-y-0.5 max-h-28 overflow-y-auto">
+              {history.slice(1).map(h => (
+                <div key={h.id} className="flex justify-between text-xs px-2 py-1 rounded hover:bg-[#332922] transition-colors group">
+                  <span className="text-[#d4d4d4]">{h.name}</span>
+                  <span className="text-[#555] group-hover:text-[#999999]">{h.race}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
-    </div>
+    />
   )
 }
 
@@ -133,25 +205,23 @@ function LootGenerator() {
   }
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">💰 Loot Generator</h3>
-      <div className="grid grid-cols-4 gap-1 mb-3">
-        {LOOT_TIERS.map(t => (
-          <button key={t} onClick={() => setTier(t)} style={tier === t ? { borderColor: tierColors[t], color: tierColors[t] } : {}} className={`py-1.5 rounded text-xs font-medium border transition-colors ${tier === t ? 'bg-[#3d3d3d]' : 'bg-[#1a1a1a] border-[#3d3d3d] text-[#999999] hover:bg-[#3d3d3d] hover:text-[#f0f0f0]'}`}>{t}</button>
-        ))}
-      </div>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Loot</button>
-      {loot && (
+    <ToolShell
+      icon="💰" title="Loot Generator" buttonLabel="Generate Loot" onGenerate={generate} hasResult={!!loot}
+      renderConfig={() => (
+        <div className="grid grid-cols-4 gap-1">
+          {LOOT_TIERS.map(t => (
+            <button key={t} onClick={() => setTier(t)} style={tier === t ? { borderColor: tierColors[t], color: tierColors[t] } : {}} className={`py-1.5 rounded text-xs font-medium border transition-colors ${tier === t ? 'bg-[#332922]' : 'bg-[#161310] border-[#332922] text-[#999999] hover:bg-[#332922] hover:text-[#f0f0f0]'}`}>{t}</button>
+          ))}
+        </div>
+      )}
+      renderResult={() => (
         <ResultCard>
           <div className="flex items-center justify-between mb-2">
             <div>
               <span className="text-[#f0f0f0] font-medium text-sm">{loot.name}</span>
               {loot.quantity > 1 && <span className="ml-2 text-xs" style={{ color: tierColors[tier] }}>×{loot.quantity}</span>}
             </div>
-            <div className="flex gap-1.5">
-              <button onClick={generate} className="text-xs px-2 py-0.5 bg-[#3d3d3d] text-[#999999] rounded hover:text-[#f0f0f0] transition-colors">Again</button>
-              <CopyBtn text={loot.display} />
-            </div>
+            <div className="flex gap-1.5"><CopyBtn text={loot.display} /><SaveBtn text={loot.display} /></div>
           </div>
           {chars.length > 0 && (
             <div className="flex gap-1.5 mt-2">
@@ -159,12 +229,12 @@ function LootGenerator() {
                 <option value="">Add to character…</option>
                 {chars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-              <button onClick={addToChar} disabled={!targetChar} className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-40 ${added ? 'bg-[#6b8e6b] text-white' : 'bg-[#d4a574] text-[#1a1a1a] hover:bg-[#c49464]'}`}>{added ? '✓' : 'Add'}</button>
+              <button onClick={addToChar} disabled={!targetChar} className={`px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-40 ${added ? 'bg-[#6b8e6b] text-white' : 'bg-[#d4a574] text-[#161310] hover:bg-[#c49464]'}`}>{added ? '✓' : 'Add'}</button>
             </div>
           )}
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
@@ -175,173 +245,160 @@ function DiceRoller() {
   const [modifier, setModifier] = useState(0)
   const [result, setResult] = useState(null)
   const [history, setHistory] = useState([])
-  const [rolling, setRolling] = useState(false)
 
   function roll() {
-    setRolling(true)
-    setTimeout(() => {
-      const rolls = Array.from({ length: qty }, () => Math.floor(Math.random() * die) + 1)
-      const total = rolls.reduce((a, b) => a + b, 0) + modifier
-      const entry = { qty, die, modifier, rolls, total, id: Date.now() }
-      setResult(entry); setHistory(prev => [entry, ...prev.slice(0, 8)]); setRolling(false)
-    }, 120)
+    const rolls = Array.from({ length: qty }, () => Math.floor(Math.random() * die) + 1)
+    const total = rolls.reduce((a, b) => a + b, 0) + modifier
+    const entry = { qty, die, modifier, rolls, total, id: Date.now() }
+    setResult(entry); setHistory(prev => [entry, ...prev.slice(0, 8)])
   }
 
   const isCrit = die === 20 && qty === 1 && result?.rolls[0] === 20
   const isFumble = die === 20 && qty === 1 && result?.rolls[0] === 1
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🎲 Dice Roller</h3>
-      <div className="flex flex-wrap gap-1 mb-3">
-        {DICE.map(d => (
-          <button key={d} onClick={() => setDie(d)} className={`px-2.5 py-1.5 rounded font-bold text-xs transition-colors ${die === d ? 'bg-[#d4a574] text-[#1a1a1a]' : 'bg-[#1a1a1a] text-[#999999] border border-[#3d3d3d] hover:border-[#d4a574] hover:text-[#f0f0f0]'}`}>d{d}</button>
-        ))}
-      </div>
-      <div className="flex gap-3 mb-3">
-        <div className="flex-1">
-          <label className="block text-xs text-[#999999] mb-1">Qty</label>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setQty(q => Math.max(1, q-1))} className="w-6 h-6 bg-[#3d3d3d] rounded text-[#f0f0f0] text-xs hover:bg-[#4d4d4d]">−</button>
-            <span className="text-[#f0f0f0] font-bold w-5 text-center text-sm">{qty}</span>
-            <button onClick={() => setQty(q => Math.min(20, q+1))} className="w-6 h-6 bg-[#3d3d3d] rounded text-[#f0f0f0] text-xs hover:bg-[#4d4d4d]">+</button>
+    <ToolShell
+      icon="🎲" title="Dice Roller" buttonLabel="Roll" onGenerate={roll} hasResult={!!result}
+      renderConfig={() => (
+        <>
+          <div className="flex flex-wrap gap-1">
+            {DICE.map(d => (
+              <button key={d} onClick={() => setDie(d)} className={`px-2.5 py-1.5 rounded font-bold text-xs transition-colors ${die === d ? 'bg-[#d4a574] text-[#161310]' : 'bg-[#161310] text-[#999999] border border-[#332922] hover:border-[#d4a574] hover:text-[#f0f0f0]'}`}>d{d}</button>
+            ))}
           </div>
-        </div>
-        <div className="flex-1">
-          <label className="block text-xs text-[#999999] mb-1">Mod</label>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setModifier(m => m-1)} className="w-6 h-6 bg-[#3d3d3d] rounded text-[#f0f0f0] text-xs hover:bg-[#4d4d4d]">−</button>
-            <span className={`font-bold w-8 text-center text-sm ${modifier > 0 ? 'text-[#6b8e6b]' : modifier < 0 ? 'text-[#b24545]' : 'text-[#f0f0f0]'}`}>{modifier > 0 ? `+${modifier}` : modifier}</span>
-            <button onClick={() => setModifier(m => m+1)} className="w-6 h-6 bg-[#3d3d3d] rounded text-[#f0f0f0] text-xs hover:bg-[#4d4d4d]">+</button>
-          </div>
-        </div>
-        <div className="flex items-end"><button onClick={() => setModifier(0)} className="text-xs text-[#555] hover:text-[#999999] mb-0.5 transition-colors">reset</button></div>
-      </div>
-      <div className="text-center text-[#666] text-xs font-mono mb-2">{qty}d{die}{modifier !== 0 ? (modifier > 0 ? ` +${modifier}` : ` ${modifier}`) : ''}</div>
-      <button onClick={roll} disabled={rolling} className="w-full py-2.5 bg-[#d4a574] text-[#1a1a1a] rounded font-bold hover:bg-[#c49464] transition-colors disabled:opacity-60 mb-3">{rolling ? '…' : 'Roll'}</button>
-      {result && (
-        <ResultCard>
-          <div className={`text-4xl font-bold text-center mb-1 ${isCrit ? 'text-[#d4a574]' : isFumble ? 'text-[#b24545]' : 'text-[#f0f0f0]'}`}>{result.total}</div>
-          {isCrit && <div className="text-center text-[#d4a574] text-xs font-bold uppercase tracking-widest mb-1">Critical!</div>}
-          {isFumble && <div className="text-center text-[#b24545] text-xs font-bold uppercase tracking-widest mb-1">Fumble!</div>}
-          {(result.rolls.length > 1 || result.modifier !== 0) && (
-            <div className="text-center text-xs text-[#666]">[{result.rolls.join(', ')}]{result.modifier !== 0 ? (result.modifier > 0 ? ` +${result.modifier}` : ` ${result.modifier}`) : ''} = {result.total}</div>
-          )}
-        </ResultCard>
-      )}
-      {history.length > 1 && (
-        <div className="mt-2 space-y-0.5 max-h-24 overflow-y-auto">
-          {history.slice(1).map(h => (
-            <div key={h.id} className="flex justify-between text-xs px-2 py-0.5 rounded hover:bg-[#3d3d3d] transition-colors">
-              <span className="text-[#666] font-mono">{h.qty}d{h.die}{h.modifier !== 0 ? (h.modifier > 0 ? `+${h.modifier}` : h.modifier) : ''}</span>
-              <span className="text-[#d4d4d4] font-bold">{h.total}</span>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-xs text-[#999999] mb-1">Qty</label>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setQty(q => Math.max(1, q-1))} className="w-6 h-6 bg-[#332922] rounded text-[#f0f0f0] text-xs hover:bg-[#40332a]">−</button>
+                <span className="text-[#f0f0f0] font-bold w-5 text-center text-sm">{qty}</span>
+                <button onClick={() => setQty(q => Math.min(20, q+1))} className="w-6 h-6 bg-[#332922] rounded text-[#f0f0f0] text-xs hover:bg-[#40332a]">+</button>
+              </div>
             </div>
-          ))}
-        </div>
+            <div className="flex-1">
+              <label className="block text-xs text-[#999999] mb-1">Mod</label>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setModifier(m => m-1)} className="w-6 h-6 bg-[#332922] rounded text-[#f0f0f0] text-xs hover:bg-[#40332a]">−</button>
+                <span className={`font-bold w-8 text-center text-sm ${modifier > 0 ? 'text-[#6b8e6b]' : modifier < 0 ? 'text-[#b24545]' : 'text-[#f0f0f0]'}`}>{modifier > 0 ? `+${modifier}` : modifier}</span>
+                <button onClick={() => setModifier(m => m+1)} className="w-6 h-6 bg-[#332922] rounded text-[#f0f0f0] text-xs hover:bg-[#40332a]">+</button>
+              </div>
+            </div>
+            <div className="flex items-end"><button onClick={() => setModifier(0)} className="text-xs text-[#555] hover:text-[#999999] mb-0.5 transition-colors">reset</button></div>
+          </div>
+          <div className="text-center text-[#666] text-xs font-mono">{qty}d{die}{modifier !== 0 ? (modifier > 0 ? ` +${modifier}` : ` ${modifier}`) : ''}</div>
+        </>
       )}
-    </div>
+      renderResult={() => (
+        <>
+          <ResultCard>
+            <div className={`text-4xl font-bold text-center mb-1 ${isCrit ? 'text-[#d4a574]' : isFumble ? 'text-[#b24545]' : 'text-[#f0f0f0]'}`}>{result.total}</div>
+            {isCrit && <div className="text-center text-[#d4a574] text-xs font-bold uppercase tracking-widest mb-1">Critical!</div>}
+            {isFumble && <div className="text-center text-[#b24545] text-xs font-bold uppercase tracking-widest mb-1">Fumble!</div>}
+            {(result.rolls.length > 1 || result.modifier !== 0) && (
+              <div className="text-center text-xs text-[#666]">[{result.rolls.join(', ')}]{result.modifier !== 0 ? (result.modifier > 0 ? ` +${result.modifier}` : ` ${result.modifier}`) : ''} = {result.total}</div>
+            )}
+            <div className="flex justify-center gap-1.5 mt-2"><CopyBtn text={String(result.total)} /><SaveBtn text={`Rolled ${result.qty}d${result.die}${result.modifier ? (result.modifier > 0 ? `+${result.modifier}` : result.modifier) : ''} = ${result.total}`} /></div>
+          </ResultCard>
+          {history.length > 1 && (
+            <div className="mt-2 space-y-0.5 max-h-24 overflow-y-auto">
+              {history.slice(1).map(h => (
+                <div key={h.id} className="flex justify-between text-xs px-2 py-0.5 rounded hover:bg-[#332922] transition-colors">
+                  <span className="text-[#666] font-mono">{h.qty}d{h.die}{h.modifier !== 0 ? (h.modifier > 0 ? `+${h.modifier}` : h.modifier) : ''}</span>
+                  <span className="text-[#d4d4d4] font-bold">{h.total}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    />
   )
 }
 
 // ─── NPC Personality Generator ────────────────────────────────────────────────
 function NPCPersonalityGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
-
-  function generate() {
-    setResult({ adj: pick(npcAdjectives), prof: pick(npcProfessions), quirk: pick(npcQuirks) })
-  }
+  function generate() { setResult({ adj: pick(npcAdjectives), prof: pick(npcProfessions), quirk: pick(npcQuirks) }) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🧍 NPC Personality</h3>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate NPC</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
-          <div className="text-base font-bold text-[#f0f0f0] mb-1">
-            {result.adj} {result.prof}
-          </div>
+    <ToolShell
+      icon="🧍" title="NPC Personality" buttonLabel="Generate NPC" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
+          <div className="text-base font-bold text-[#f0f0f0] mb-1">{result.adj} {result.prof}</div>
           <div className="text-sm text-[#999999] italic">{result.quirk}</div>
-          <div className="flex justify-end mt-2">
-            <CopyBtn text={`${result.adj} ${result.prof} ${result.quirk}`} />
-          </div>
+          <div className="flex justify-end gap-1.5 mt-2"><CopyBtn text={`${result.adj} ${result.prof} ${result.quirk}`} /><SaveBtn text={`${result.adj} ${result.prof} — ${result.quirk}`} /></div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Weather Generator ────────────────────────────────────────────────────────
 function WeatherGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(pick(weatherTable)) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🌤 Weather Generator</h3>
-      <button onClick={() => setResult(pick(weatherTable))} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Weather</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="🌤" title="Weather Generator" buttonLabel="Generate Weather" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <div className="font-bold text-[#f0f0f0] mb-1">{result.condition}</div>
           <p className="text-sm text-[#999999] leading-relaxed">{result.detail}</p>
-          <div className="flex justify-end mt-2"><CopyBtn text={`${result.condition}: ${result.detail}`} /></div>
+          <div className="flex justify-end gap-1.5 mt-2"><CopyBtn text={`${result.condition}: ${result.detail}`} /><SaveBtn text={`${result.condition}: ${result.detail}`} /></div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Encounter Complication ───────────────────────────────────────────────────
 function EncounterComplicationGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(pick(encounterComplications)) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">⚠️ Encounter Complication</h3>
-      <button onClick={() => setResult(pick(encounterComplications))} className="w-full py-2 bg-[#b24545] text-white rounded font-bold text-sm hover:bg-[#922b2b] transition-colors mb-3">Roll Complication</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="⚠️" title="Encounter Complication" buttonLabel="Roll Complication" accent="red" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <p className="text-sm text-[#f0f0f0] leading-relaxed">{result}</p>
-          <div className="flex justify-end mt-2"><CopyBtn text={result} /></div>
+          <div className="flex justify-end gap-1.5 mt-2"><CopyBtn text={result} /><SaveBtn text={result} /></div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Tavern / Shop Generator ──────────────────────────────────────────────────
 function TavernGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(generateTavern()) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🍺 Tavern / Shop Generator</h3>
-      <button onClick={() => setResult(generateTavern())} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Establishment</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="🍺" title="Tavern / Shop Generator" buttonLabel="Generate Establishment" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <div className="font-bold text-[#d4a574] text-base mb-1">{result.name}</div>
           <p className="text-xs text-[#999999] italic mb-3 leading-relaxed">{result.vibe}</p>
           <div className="space-y-2">
             {result.npcs.map((n, i) => (
-              <div key={i} className="border-t border-[#2d2d2d] pt-2">
+              <div key={i} className="border-t border-[#211b17] pt-2">
                 <span className="text-xs font-semibold text-[#d4a574]">{n.role}:</span>
                 <span className="text-xs text-[#f0f0f0]"> {n.adj} {n.role.toLowerCase()} </span>
                 <span className="text-xs text-[#666]">{n.quirk}</span>
               </div>
             ))}
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={`${result.name}\n${result.vibe}\n${result.npcs.map(n => `- ${n.adj} ${n.role} ${n.quirk}`).join('\n')}`} />
+            <SaveBtn text={`${result.name} — ${result.vibe}`} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
@@ -362,23 +419,17 @@ function mod(score) {
 
 function AbilityScoreGenerator() {
   const [stats, setStats] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, stats ? () => setStats(null) : null)
-
-  function generate() {
-    setStats(STAT_NAMES.map(name => ({ name, ...rollStat() })))
-  }
+  function generate() { setStats(STAT_NAMES.map(name => ({ name, ...rollStat() }))) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🎯 Ability Score Generator</h3>
-      <p className="text-xs text-[#666] mb-3">4d6, drop lowest — for quick NPC stat blocks</p>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Roll Stats</button>
-      {stats && (
-        <ResultCard onClear={() => setStats(null)}>
+    <ToolShell
+      icon="🎯" title="Ability Score Generator" buttonLabel="Roll Stats" onGenerate={generate} hasResult={!!stats}
+      renderConfig={() => <p className="text-xs text-[#666]">4d6, drop lowest — for quick NPC stat blocks</p>}
+      renderResult={() => (
+        <ResultCard>
           <div className="grid grid-cols-3 gap-2">
             {stats.map(s => (
-              <div key={s.name} className="text-center bg-[#2d2d2d] rounded p-2">
+              <div key={s.name} className="text-center bg-[#211b17] rounded p-2">
                 <div className="text-xs text-[#999999] mb-0.5">{s.name}</div>
                 <div className="text-xl font-bold text-[#f0f0f0]">{s.total}</div>
                 <div className="text-xs text-[#d4a574]">{mod(s.total)}</div>
@@ -386,32 +437,31 @@ function AbilityScoreGenerator() {
               </div>
             ))}
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={stats.map(s => `${s.name}: ${s.total} (${mod(s.total)})`).join(' | ')} />
+            <SaveBtn text={stats.map(s => `${s.name}: ${s.total} (${mod(s.total)})`).join(' | ')} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Random Event Table ───────────────────────────────────────────────────────
 function RandomEventGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(pick(eventTable)) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🌍 Random World Event</h3>
-      <button onClick={() => setResult(pick(eventTable))} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Roll Event</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="🌍" title="Random World Event" buttonLabel="Roll Event" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <p className="text-sm text-[#f0f0f0] leading-relaxed">{result}</p>
-          <div className="flex justify-end mt-2"><CopyBtn text={result} /></div>
+          <div className="flex justify-end gap-1.5 mt-2"><CopyBtn text={result} /><SaveBtn text={result} /></div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
@@ -421,31 +471,32 @@ const TIER_COLOURS = { Common:'#999999', Uncommon:'#6b8e6b', Rare:'#4a7ab2', 'Ve
 function MagicItemGenerator() {
   const [tier, setTier] = useState('Uncommon')
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
-
   function generate() { setResult({ tier, ...pick(magicItemTiers[tier]) }) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">✨ Magic Item Generator</h3>
-      <div className="flex flex-wrap gap-1 mb-3">
-        {MAGIC_TIERS.map(t => (
-          <button key={t} onClick={() => setTier(t)} style={tier === t ? { background: TIER_COLOURS[t] + '33', borderColor: TIER_COLOURS[t], color: TIER_COLOURS[t] } : {}} className={`px-2 py-1 rounded text-xs border transition-colors ${tier === t ? '' : 'border-[#3d3d3d] text-[#666] hover:text-[#f0f0f0] hover:border-[#555]'}`}>{t}</button>
-        ))}
-      </div>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Item</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="✨" title="Magic Item Generator" buttonLabel="Generate Item" onGenerate={generate} hasResult={!!result}
+      renderConfig={() => (
+        <div className="flex flex-wrap gap-1">
+          {MAGIC_TIERS.map(t => (
+            <button key={t} onClick={() => setTier(t)} style={tier === t ? { background: TIER_COLOURS[t] + '33', borderColor: TIER_COLOURS[t], color: TIER_COLOURS[t] } : {}} className={`px-2 py-1 rounded text-xs border transition-colors ${tier === t ? '' : 'border-[#332922] text-[#666] hover:text-[#f0f0f0] hover:border-[#555]'}`}>{t}</button>
+          ))}
+        </div>
+      )}
+      renderResult={() => (
+        <ResultCard>
           <div className="flex items-start justify-between gap-2 mb-1">
             <div className="font-bold text-[#f0f0f0]">{result.name}</div>
             <span className="text-xs px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: TIER_COLOURS[result.tier] + '33', color: TIER_COLOURS[result.tier] }}>{result.tier}</span>
           </div>
           <p className="text-xs text-[#999999] leading-relaxed">{result.desc}</p>
-          <div className="flex justify-end mt-2"><CopyBtn text={`${result.name} (${result.tier}): ${result.desc}`} /></div>
+          <div className="flex justify-end gap-1.5 mt-2">
+            <CopyBtn text={`${result.name} (${result.tier}): ${result.desc}`} />
+            <SaveBtn text={`${result.name} (${result.tier}): ${result.desc}`} />
+          </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
@@ -477,45 +528,50 @@ function CustomTableRoller() {
   }
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-[#d4a574] text-sm">📋 Custom Table Roller</h3>
-        <button onClick={() => setAdding(!adding)} className="text-xs text-[#d4a574] hover:underline">{adding ? 'Cancel' : '+ New Table'}</button>
-      </div>
-
-      {adding && (
-        <div className="bg-[#1a1a1a] rounded p-3 mb-3 space-y-2">
-          <input className={inp + ' w-full text-xs py-1.5'} value={newName} onChange={e => setNewName(e.target.value)} placeholder="Table name…" />
-          <textarea className={inp + ' w-full text-xs resize-none'} rows={5} value={newEntries} onChange={e => setNewEntries(e.target.value)} placeholder={"One entry per line:\nEntry one\nEntry two\nEntry three"} />
-          <button onClick={saveTable} disabled={!newName.trim() || !newEntries.trim()} className="w-full py-1.5 bg-[#6b8e6b] text-white rounded text-xs font-medium hover:bg-[#5a7a5a] transition-colors disabled:opacity-40">Save Table</button>
-        </div>
-      )}
-
-      {tables.length === 0 && !adding && (
-        <p className="text-xs text-[#555] text-center py-4">No custom tables yet. Create one to get started.</p>
-      )}
-
-      <div className="space-y-2 max-h-80 overflow-y-auto">
-        {tables.map(t => (
-          <div key={t.id} className="bg-[#1a1a1a] rounded p-2.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-[#f0f0f0]">{t.name}</span>
-              <div className="flex gap-1.5">
-                <span className="text-xs text-[#555]">{t.entries.length} entries</span>
-                <button onClick={() => rollTable(t)} className="text-xs px-2 py-0.5 bg-[#d4a574] text-[#1a1a1a] rounded font-medium hover:bg-[#c49464] transition-colors">Roll</button>
-                <button onClick={() => deleteTable(t.id)} className="text-xs text-[#555] hover:text-[#b24545] transition-colors">×</button>
-              </div>
-            </div>
-            {results[t.id] && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#d4d4d4] italic">"{results[t.id]}"</span>
-                <CopyBtn text={results[t.id]} />
-              </div>
-            )}
+    <ToolShell
+      icon="📋" title="Custom Table Roller" buttonLabel="+ New Table"
+      fullBody={() => (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[#999999]">Your own tables to roll on.</p>
+            <button onClick={() => setAdding(!adding)} className="text-xs text-[#d4a574] hover:underline">{adding ? 'Cancel' : '+ New Table'}</button>
           </div>
-        ))}
-      </div>
-    </div>
+
+          {adding && (
+            <div className="bg-[#161310] rounded p-3 space-y-2">
+              <input className={inp + ' w-full text-xs py-1.5'} value={newName} onChange={e => setNewName(e.target.value)} placeholder="Table name…" />
+              <textarea className={inp + ' w-full text-xs resize-none'} rows={5} value={newEntries} onChange={e => setNewEntries(e.target.value)} placeholder={"One entry per line:\nEntry one\nEntry two\nEntry three"} />
+              <button onClick={saveTable} disabled={!newName.trim() || !newEntries.trim()} className="w-full py-1.5 bg-[#6b8e6b] text-white rounded text-xs font-medium hover:bg-[#5a7a5a] transition-colors disabled:opacity-40">Save Table</button>
+            </div>
+          )}
+
+          {tables.length === 0 && !adding && (
+            <p className="text-xs text-[#555] text-center py-4">No custom tables yet. Create one to get started.</p>
+          )}
+
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {tables.map(t => (
+              <div key={t.id} className="bg-[#161310] rounded p-2.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium text-[#f0f0f0]">{t.name}</span>
+                  <div className="flex gap-1.5">
+                    <span className="text-xs text-[#555]">{t.entries.length} entries</span>
+                    <button onClick={() => rollTable(t)} className="text-xs px-2 py-0.5 bg-[#d4a574] text-[#161310] rounded font-medium hover:bg-[#c49464] transition-colors">Roll</button>
+                    <button onClick={() => deleteTable(t.id)} className="text-xs text-[#555] hover:text-[#b24545] transition-colors">×</button>
+                  </div>
+                </div>
+                {results[t.id] && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#d4d4d4] italic">"{results[t.id]}"</span>
+                    <div className="flex gap-1.5"><CopyBtn text={results[t.id]} /><SaveBtn text={results[t.id]} /></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    />
   )
 }
 
@@ -526,20 +582,16 @@ const RUMOR_LABELS = { true: 'True', false: 'False', herring: 'Red Herring' }
 function RumorGenerator() {
   const [result, setResult] = useState(null)
   const [showType, setShowType] = useState(false)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => { setResult(null); setShowType(false) } : null)
-
   function generate() { setResult(pick(rumors)); setShowType(false) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🗣 Rumor / Gossip Mill</h3>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Rumor</button>
-      {result && (
-        <ResultCard onClear={() => { setResult(null); setShowType(false) }}>
+    <ToolShell
+      icon="🗣" title="Rumor / Gossip Mill" buttonLabel="Generate Rumor" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <p className="text-sm text-[#f0f0f0] leading-relaxed mb-2">{result.text}</p>
           <div className="flex items-center gap-2 mt-2">
-            <button onClick={() => setShowType(t => !t)} className="text-xs px-2 py-0.5 bg-[#3d3d3d] text-[#999999] rounded hover:text-[#f0f0f0] transition-colors">
+            <button onClick={() => setShowType(t => !t)} className="text-xs px-2 py-0.5 bg-[#332922] text-[#999999] rounded hover:text-[#f0f0f0] transition-colors">
               {showType ? 'Hide' : 'Reveal'} Truth
             </button>
             {showType && (
@@ -547,19 +599,17 @@ function RumorGenerator() {
                 {RUMOR_LABELS[result.type]}
               </span>
             )}
-            <div className="ml-auto"><CopyBtn text={result.text} /></div>
+            <div className="ml-auto flex gap-1.5"><CopyBtn text={result.text} /><SaveBtn text={result.text} /></div>
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Trap Generator ───────────────────────────────────────────────────────────
 function TrapGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
 
   function generate() {
     const type = pick(trapTypes)
@@ -571,47 +621,41 @@ function TrapGenerator() {
   }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">⚙️ Trap Generator</h3>
-      <button onClick={generate} className="w-full py-2 bg-[#b24545] text-white rounded font-bold text-sm hover:bg-[#922b2b] transition-colors mb-3">Generate Trap</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="⚙️" title="Trap Generator" buttonLabel="Generate Trap" accent="red" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <div className="font-bold text-[#b24545] mb-2">{result.type}</div>
           <div className="space-y-1.5 text-xs">
             <div><span className="text-[#999999]">Trigger: </span><span className="text-[#f0f0f0]">{result.trigger}</span></div>
             <div><span className="text-[#999999]">Effect: </span><span className="text-[#f0f0f0] font-medium">{result.consequence.effect}</span></div>
-            <div className="text-[#d4d4d4] leading-relaxed pl-2 border-l border-[#3d3d3d]">{result.consequence.detail}</div>
+            <div className="text-[#d4d4d4] leading-relaxed pl-2 border-l border-[#332922]">{result.consequence.detail}</div>
             <div className="flex gap-4 pt-1">
               <span className="text-[#999999]">Detect DC: <span className="text-[#d4a574] font-bold">{result.detectDC}</span></span>
               <span className="text-[#999999]">Disarm DC: <span className="text-[#d4a574] font-bold">{result.disarmDC}</span></span>
             </div>
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={`${result.type} | Trigger: ${result.trigger} | ${result.consequence.effect}: ${result.consequence.detail} | Detect DC ${result.detectDC}, Disarm DC ${result.disarmDC}`} />
+            <SaveBtn text={`${result.type} — Detect DC ${result.detectDC}, Disarm DC ${result.disarmDC}`} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── NPC Quirk Generator (Speech/Mannerism) ───────────────────────────────────
 function NPCQuirkGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
-
-  function generate() {
-    setResult({ speech: pick(speechPatterns), mannerism: pick(mannerisms), habit: pick(habits) })
-  }
+  function generate() { setResult({ speech: pick(speechPatterns), mannerism: pick(mannerisms), habit: pick(habits) }) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">💬 NPC Quirk Generator</h3>
-      <p className="text-xs text-[#666] mb-3">Speech pattern + mannerism + habit</p>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Quirks</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="💬" title="NPC Quirk Generator" buttonLabel="Generate Quirks" onGenerate={generate} hasResult={!!result}
+      renderConfig={() => <p className="text-xs text-[#666]">Speech pattern + mannerism + habit</p>}
+      renderResult={() => (
+        <ResultCard>
           <div className="space-y-2 text-xs">
             {[['Speech', result.speech], ['Mannerism', result.mannerism], ['Habit', result.habit]].map(([label, val]) => (
               <div key={label}>
@@ -620,12 +664,13 @@ function NPCQuirkGenerator() {
               </div>
             ))}
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={`Speech: ${result.speech}\nMannerism: ${result.mannerism}\nHabit: ${result.habit}`} />
+            <SaveBtn text={`Speech: ${result.speech}; Mannerism: ${result.mannerism}; Habit: ${result.habit}`} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
@@ -663,95 +708,95 @@ function ConditionReminder() {
   const filtered = CONDITIONS.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">📋 Condition Reference</h3>
-      <input
-        className={inp + ' w-full text-xs py-1.5 mb-2'}
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Search conditions…"
-      />
-      <div className="space-y-0.5 max-h-64 overflow-y-auto">
-        {filtered.map(c => (
-          <div key={c.name} className="rounded overflow-hidden">
-            <button
-              onClick={() => setOpen(open === c.name ? null : c.name)}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-[#3d3d3d] transition-colors text-left"
-            >
-              <span className="text-sm font-medium text-[#f0f0f0]">{c.name}</span>
-              <span className="text-[#555] text-xs">{open === c.name ? '▲' : '▼'}</span>
-            </button>
-            {open === c.name && (
-              <div className="px-2.5 py-2 bg-[#1a1a1a] text-xs text-[#d4d4d4] leading-relaxed">
-                {c.effect}
+    <ToolShell
+      icon="📋" title="Condition Reference" buttonLabel="Browse Conditions"
+      fullBody={() => (
+        <>
+          <input
+            className={inp + ' w-full text-xs py-1.5'}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search conditions…"
+            autoFocus
+          />
+          <div className="space-y-0.5 max-h-96 overflow-y-auto">
+            {filtered.map(c => (
+              <div key={c.name} className="rounded overflow-hidden">
+                <button
+                  onClick={() => setOpen(open === c.name ? null : c.name)}
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 hover:bg-[#332922] transition-colors text-left"
+                >
+                  <span className="text-sm font-medium text-[#f0f0f0]">{c.name}</span>
+                  <span className="text-[#555] text-xs">{open === c.name ? '▲' : '▼'}</span>
+                </button>
+                {open === c.name && (
+                  <div className="px-2.5 py-2 bg-[#161310] text-xs text-[#d4d4d4] leading-relaxed">
+                    {c.effect}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
+            {filtered.length === 0 && <p className="text-xs text-[#555] px-2 py-2">No match.</p>}
           </div>
-        ))}
-        {filtered.length === 0 && <p className="text-xs text-[#555] px-2 py-2">No match.</p>}
-      </div>
-    </div>
+        </>
+      )}
+    />
   )
 }
 
 // ─── Cliffhanger Generator ────────────────────────────────────────────────────
 function CliffhangerGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(pick(cliffhangers)) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🎬 Cliffhanger Generator</h3>
-      <button onClick={() => setResult(pick(cliffhangers))} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Ending</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="🎬" title="Cliffhanger Generator" buttonLabel="Generate Ending" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <p className="text-sm text-[#f0f0f0] leading-relaxed italic">"{result}"</p>
-          <div className="flex justify-end mt-2"><CopyBtn text={result} /></div>
+          <div className="flex justify-end gap-1.5 mt-2"><CopyBtn text={result} /><SaveBtn text={result} /></div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Guild / Faction Generator ────────────────────────────────────────────────
 function FactionGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(generateFaction()) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">⚑ Guild / Faction Generator</h3>
-      <button onClick={() => setResult(generateFaction())} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Faction</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="⚑" title="Guild / Faction Generator" buttonLabel="Generate Faction" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <div className="font-bold text-[#d4a574] text-base mb-2">{result.name}</div>
           <div className="space-y-1.5 text-xs">
             <div><span className="text-[#999999]">Purpose: </span><span className="text-[#f0f0f0]">{result.purpose}</span></div>
             <div><span className="text-[#999999]">Nature: </span><span className="text-[#f0f0f0]">{result.trait}</span></div>
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={`${result.name}\nPurpose: ${result.purpose}\nNature: ${result.trait}`} />
+            <SaveBtn text={`${result.name} — ${result.purpose}`} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── NPC Appearance Generator ─────────────────────────────────────────────────
 function AppearanceGenerator() {
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
+  function generate() { setResult(generateAppearance()) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">👤 NPC Appearance</h3>
-      <button onClick={() => setResult(generateAppearance())} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Generate Appearance</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+    <ToolShell
+      icon="👤" title="NPC Appearance" buttonLabel="Generate Appearance" onGenerate={generate} hasResult={!!result}
+      renderResult={() => (
+        <ResultCard>
           <div className="space-y-1 text-xs">
             {[['Height', result.height], ['Build', result.build], ['Hair', result.hair], ['Eyes', result.eyes], ['Age impression', result.age]].map(([k, v]) => (
               <div key={k}><span className="text-[#999999]">{k}: </span><span className="text-[#f0f0f0]">{v}</span></div>
@@ -763,12 +808,13 @@ function AppearanceGenerator() {
               ))}
             </div>
           </div>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={`${result.height}, ${result.build}. Hair: ${result.hair}. Eyes: ${result.eyes}. ${result.features.join('; ')}. ${result.age}.`} />
+            <SaveBtn text={`${result.height}, ${result.build}, ${result.hair} hair, ${result.eyes} eyes`} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
@@ -777,29 +823,27 @@ function ShopInventoryGenerator() {
   const [shopType, setShopType] = useState('General Store')
   const [count, setCount] = useState(5)
   const [result, setResult] = useState(null)
-  const ref = useRef(null)
-  useClickOutside(ref, result ? () => setResult(null) : null)
-
   function generate() { setResult(generateShopInventory(shopType, count)) }
 
   return (
-    <div ref={ref} className="bg-[#2d2d2d] rounded-lg p-4">
-      <h3 className="font-bold text-[#d4a574] mb-3 text-sm">🏪 Shop Inventory</h3>
-      <div className="space-y-2 mb-3">
-        <div>
-          <label className="block text-xs text-[#999999] mb-1">Vendor Type</label>
-          <select className={inp + ' w-full text-xs py-1.5'} value={shopType} onChange={e => setShopType(e.target.value)}>
-            {shopTypes.map(t => <option key={t}>{t}</option>)}
-          </select>
+    <ToolShell
+      icon="🏪" title="Shop Inventory" buttonLabel="Stock the Shelves" onGenerate={generate} hasResult={!!result}
+      renderConfig={() => (
+        <div className="space-y-2">
+          <div>
+            <label className="block text-xs text-[#999999] mb-1">Vendor Type</label>
+            <select className={inp + ' w-full text-xs py-1.5'} value={shopType} onChange={e => setShopType(e.target.value)}>
+              {shopTypes.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-[#999999] mb-1">Items to show: {count}</label>
+            <input type="range" min={3} max={10} value={count} onChange={e => setCount(+e.target.value)} className="w-full accent-amber" />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs text-[#999999] mb-1">Items to show: {count}</label>
-          <input type="range" min={3} max={10} value={count} onChange={e => setCount(+e.target.value)} className="w-full accent-amber" />
-        </div>
-      </div>
-      <button onClick={generate} className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-bold text-sm hover:bg-[#c49464] transition-colors mb-3">Stock the Shelves</button>
-      {result && (
-        <ResultCard onClear={() => setResult(null)}>
+      )}
+      renderResult={() => (
+        <ResultCard>
           <p className="text-xs text-[#d4a574] font-semibold uppercase tracking-wide mb-2">{shopType}</p>
           <ul className="space-y-0.5">
             {result.map((item, i) => (
@@ -808,41 +852,61 @@ function ShopInventoryGenerator() {
               </li>
             ))}
           </ul>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end gap-1.5 mt-2">
             <CopyBtn text={result.join('\n')} />
+            <SaveBtn text={`${shopType}: ${result.join(', ')}`} />
           </div>
         </ResultCard>
       )}
-    </div>
+    />
   )
 }
 
 // ─── Main Toolkit ─────────────────────────────────────────────────────────────
+const TOOLS = [
+  { title: 'Name Generator', Component: NameGenerator },
+  { title: 'NPC Personality', Component: NPCPersonalityGenerator },
+  { title: 'NPC Quirk Generator', Component: NPCQuirkGenerator },
+  { title: 'NPC Appearance', Component: AppearanceGenerator },
+  { title: 'Loot Generator', Component: LootGenerator },
+  { title: 'Magic Item Generator', Component: MagicItemGenerator },
+  { title: 'Tavern / Shop Generator', Component: TavernGenerator },
+  { title: 'Shop Inventory', Component: ShopInventoryGenerator },
+  { title: 'Dice Roller', Component: DiceRoller },
+  { title: 'Ability Score Generator', Component: AbilityScoreGenerator },
+  { title: 'Encounter Complication', Component: EncounterComplicationGenerator },
+  { title: 'Trap Generator', Component: TrapGenerator },
+  { title: 'Condition Reference', Component: ConditionReminder },
+  { title: 'Weather Generator', Component: WeatherGenerator },
+  { title: 'Random World Event', Component: RandomEventGenerator },
+  { title: 'Rumor / Gossip Mill', Component: RumorGenerator },
+  { title: 'Guild / Faction Generator', Component: FactionGenerator },
+  { title: 'Cliffhanger Generator', Component: CliffhangerGenerator },
+  { title: 'Custom Table Roller', Component: CustomTableRoller },
+]
+
 export default function Toolkit() {
+  const [search, setSearch] = useState('')
+  const filtered = TOOLS.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      <h2 className="text-[#d4a574] font-semibold text-sm uppercase tracking-wider mb-4">DM Toolkit</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <NameGenerator />
-        <LootGenerator />
-        <DiceRoller />
-        <NPCPersonalityGenerator />
-        <WeatherGenerator />
-        <EncounterComplicationGenerator />
-        <TavernGenerator />
-        <AbilityScoreGenerator />
-        <RandomEventGenerator />
-        <MagicItemGenerator />
-        <RumorGenerator />
-        <TrapGenerator />
-        <NPCQuirkGenerator />
-        <ConditionReminder />
-        <CliffhangerGenerator />
-        <FactionGenerator />
-        <AppearanceGenerator />
-        <ShopInventoryGenerator />
-        <CustomTableRoller />
+    <div className="p-4 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h2 className="text-[#d4a574] font-semibold text-sm uppercase tracking-wider flex-shrink-0">DM Toolkit</h2>
+        <input
+          className={inp + ' text-xs py-1.5 w-56'}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Zoek een tool..."
+        />
       </div>
+      {filtered.length === 0 ? (
+        <p className="text-xs text-[#555] text-center py-10">No tools match "{search}".</p>
+      ) : (
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {filtered.map(({ title, Component }) => <Component key={title} />)}
+        </div>
+      )}
     </div>
   )
 }

@@ -16,8 +16,11 @@ public class GlobalCharacter
     public double PortraitPanY { get; set; }
     public string? QuestHooks { get; set; }
 
+    public bool IsNpc { get; set; }
+
     // Stored as JSONB
     public List<CharacterRelationship> Relationships { get; set; } = [];
+    public NpcStatBlock? StatBlock { get; set; }
 
     public ICollection<Character> SessionCharacters { get; set; } = [];
 }

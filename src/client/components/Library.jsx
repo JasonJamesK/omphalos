@@ -3,9 +3,10 @@ import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
 import CropModal from './CropModal'
+import { readImageFile } from '../utils/imageUpload'
 
 // ─── shared styles ───────────────────────────────────────────────────────────
-const inputCls = 'w-full bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
+const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
 const labelCls = 'block text-xs text-[#999999] mb-1'
 
 // ─── uid helpers ─────────────────────────────────────────────────────────────
@@ -23,6 +24,9 @@ function emptyGlobalLocation() {
 function GlobalLocationModal({ loc, onSave, onClose }) {
   const [form, setForm] = useState({ ...loc })
   const [saving, setSaving] = useState(false)
+  const [cropSrc, setCropSrc] = useState(null)
+  const [uploadError, setUploadError] = useState('')
+  const fileRef = useRef(null)
 
   async function handleSave() {
     if (!form.name.trim()) return
@@ -30,14 +34,44 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
     try { await onSave(form) } finally { setSaving(false) }
   }
 
+  function handleImage(e) {
+    const f = e.target.files[0]
+    if (!f) return
+    setUploadError('')
+    readImageFile(f,
+      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
+      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="bg-[#2d2d2d] rounded-lg w-[580px] max-h-[90vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-[#2d2d2d] border-b border-[#3d3d3d] px-5 py-4 flex items-center justify-between z-10">
+      <div className="bg-[#211b17] rounded-lg w-[580px] max-h-[90vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-[#211b17] border-b border-[#332922] px-5 py-4 flex items-center justify-between z-10">
           <h2 className="font-bold text-[#d4a574]">{form.name || 'New Location'}</h2>
           <button onClick={onClose} className="text-[#999999] hover:text-[#f0f0f0] text-xl">×</button>
         </div>
         <div className="p-5 space-y-4">
+          <div>
+            <label className={labelCls}>Image (4:3)</label>
+            {form.imageBase64 ? (
+              <div className="space-y-2">
+                <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 320, aspectRatio: '4 / 3' }}>
+                  <img src={form.imageBase64} alt={form.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => fileRef.current?.click()} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
+                  <button onClick={() => { setForm(p => ({ ...p, imageBase64: null })); if (fileRef.current) fileRef.current.value = '' }} className="text-xs text-[#b24545] hover:underline">Remove</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => fileRef.current?.click()} className="w-full h-28 border-2 border-dashed border-[#332922] rounded text-[#666] hover:border-[#d4a574] hover:text-[#d4a574] transition-colors text-sm">
+                Click to upload image
+              </button>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
+            {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className={labelCls}>Name *</label>
@@ -60,14 +94,24 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
             <label className={labelCls}>Notes</label>
             <textarea className={inputCls} rows={3} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Additional DM notes..." />
           </div>
-          <div className="flex gap-3 justify-end pt-2 border-t border-[#3d3d3d]">
-            <button onClick={onClose} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Cancel</button>
-            <button onClick={handleSave} disabled={!form.name.trim() || saving} className="px-4 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium hover:bg-[#c49464] transition-colors disabled:opacity-40">
+          <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
+            <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
+            <button onClick={handleSave} disabled={!form.name.trim() || saving} className="px-4 py-2 bg-[#d4a574] text-[#161310] rounded font-medium hover:bg-[#c49464] transition-colors disabled:opacity-40">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
         </div>
       </div>
+      {cropSrc && (
+        <CropModal
+          imageData={cropSrc}
+          aspectW={4}
+          aspectH={3}
+          title="Crop Location Image"
+          onSave={cropped => { setForm(p => ({ ...p, imageBase64: cropped })); setCropSrc(null) }}
+          onClose={() => setCropSrc(null)}
+        />
+      )}
     </div>
   )
 }
@@ -75,14 +119,19 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
 function GlobalLocationCard({ loc, onEdit, onDelete }) {
   const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
   return (
-    <div className="bg-[#2d2d2d] border border-[#3d3d3d] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
-      <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#3d3d3d]">
+    <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
+      {loc.imageBase64 && (
+        <div className="w-full overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
+          <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
+      <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#332922]">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-[#f0f0f0] truncate">{loc.name}</h3>
           {loc.type && <span className="text-xs text-[#d4a574]">{loc.type}</span>}
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-          <button onClick={onEdit} className="px-2 py-0.5 text-xs bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Edit</button>
+          <button onClick={onEdit} className="px-2 py-0.5 text-xs bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Edit</button>
           <button onClick={onDelete} className="px-2 py-0.5 text-xs bg-[#b24545]/20 text-[#b24545] rounded hover:bg-[#b24545]/40 transition-colors">Del</button>
         </div>
       </div>
@@ -92,7 +141,7 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
         </div>
       )}
       {hazardLines.length > 0 && (
-        <div className="px-4 py-3 border-t border-[#3d3d3d]">
+        <div className="px-4 py-3 border-t border-[#332922]">
           <p className="text-xs text-[#b24545] font-semibold mb-1.5 uppercase tracking-wide">Secrets / Hazards</p>
           <ul className="space-y-1">
             {hazardLines.slice(0, 3).map((line, i) => (
@@ -149,14 +198,14 @@ function LocationsTab() {
     <>
       <div className="flex items-center justify-between mb-6">
         <p className="text-[#999999] text-sm">Shared locations reusable across all sessions</p>
-        <button onClick={() => setEditing(emptyGlobalLocation())} className="px-4 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium text-sm hover:bg-[#c49464] transition-colors">
+        <button onClick={() => setEditing(emptyGlobalLocation())} className="px-4 py-2 bg-[#d4a574] text-[#161310] rounded font-medium text-sm hover:bg-[#c49464] transition-colors">
           + New Location
         </button>
       </div>
 
       {locations.length > 5 && (
         <div className="mb-4">
-          <input className="w-full max-w-sm bg-[#2d2d2d] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]" placeholder="Search locations..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="w-full max-w-sm bg-[#211b17] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]" placeholder="Search locations..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       )}
 
@@ -181,12 +230,12 @@ function LocationsTab() {
 
       {deleteError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[#2d2d2d] rounded-lg w-[420px] p-6 fade-in">
+          <div className="bg-[#211b17] rounded-lg w-[420px] p-6 fade-in">
             <h3 className="font-bold text-[#d4a574] mb-2">Location In Use</h3>
             <p className="text-sm text-[#d4d4d4] mb-1">{deleteError.message}</p>
             <p className="text-xs text-[#999999] mb-5">As an admin, you can force delete it. Session locations will keep their data but lose the library link.</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => { setDeleteError(null); setDeleteTarget(null) }} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Cancel</button>
+              <button onClick={() => { setDeleteError(null); setDeleteTarget(null) }} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
               <button onClick={() => handleDelete(deleteError.loc, true)} className="px-4 py-2 bg-[#b24545] text-white rounded font-medium hover:bg-[#922b2b] transition-colors">Force Delete</button>
             </div>
           </div>
@@ -214,7 +263,7 @@ function LibraryPortrait({ char, size = 'sm' }) {
   const h = size === 'sm' ? 107 : 160
   if (!char.portraitBase64) {
     return (
-      <div className="flex items-center justify-center bg-[#3d3d3d] text-[#666] font-bold flex-shrink-0 rounded" style={{ width: w, height: h }}>
+      <div className="flex items-center justify-center bg-[#332922] text-[#666] font-bold flex-shrink-0 rounded" style={{ width: w, height: h }}>
         <span style={{ fontSize: size === 'sm' ? 28 : 42 }}>{char.name?.[0]?.toUpperCase() || '?'}</span>
       </div>
     )
@@ -230,6 +279,7 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
   const [form, setForm] = useState({ ...char })
   const [saving, setSaving] = useState(false)
   const [cropSrc, setCropSrc] = useState(null)
+  const [uploadError, setUploadError] = useState('')
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
@@ -237,9 +287,11 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
   function handlePortrait(e) {
     const f = e.target.files[0]
     if (!f) return
-    const r = new FileReader()
-    r.onload = ev => { setCropSrc(ev.target.result); if (fileRef.current) fileRef.current.value = '' }
-    r.readAsDataURL(f)
+    setUploadError('')
+    readImageFile(f,
+      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
+      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
+    )
   }
 
   async function handleSave() {
@@ -250,8 +302,8 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="bg-[#2d2d2d] rounded-lg w-[720px] max-h-[92vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-[#2d2d2d] border-b border-[#3d3d3d] px-5 py-4 flex items-center justify-between z-10">
+      <div className="bg-[#211b17] rounded-lg w-[720px] max-h-[92vh] overflow-y-auto fade-in" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-[#211b17] border-b border-[#332922] px-5 py-4 flex items-center justify-between z-10">
           <h2 className="font-bold text-[#d4a574]">{form.name || 'New Character'}</h2>
           <button onClick={onClose} className="text-[#999999] hover:text-[#f0f0f0] text-xl">×</button>
         </div>
@@ -309,11 +361,12 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => fileRef.current?.click()} className="w-full h-28 border-2 border-dashed border-[#3d3d3d] rounded text-[#666] hover:border-[#d4a574] hover:text-[#d4a574] transition-colors text-sm">
+                  <button onClick={() => fileRef.current?.click()} className="w-full h-28 border-2 border-dashed border-[#332922] rounded text-[#666] hover:border-[#d4a574] hover:text-[#d4a574] transition-colors text-sm">
                     Click to upload portrait
                   </button>
                 )}
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePortrait} />
+                {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
               </div>
               <div>
                 <label className={labelCls}>Description</label>
@@ -342,9 +395,9 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
               </div>
             </div>
           </div>
-          <div className="flex gap-3 justify-end mt-5 pt-4 border-t border-[#3d3d3d]">
-            <button onClick={onClose} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Cancel</button>
-            <button onClick={handleSave} disabled={!form.name.trim() || saving} className="px-4 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium hover:bg-[#c49464] transition-colors disabled:opacity-40">
+          <div className="flex gap-3 justify-end mt-5 pt-4 border-t border-[#332922]">
+            <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
+            <button onClick={handleSave} disabled={!form.name.trim() || saving} className="px-4 py-2 bg-[#d4a574] text-[#161310] rounded font-medium hover:bg-[#c49464] transition-colors disabled:opacity-40">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -357,7 +410,7 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
 
 function GlobalCharacterCard({ char, onEdit, onDelete }) {
   return (
-    <div className="bg-[#2d2d2d] border border-[#3d3d3d] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
+    <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
       <div className="p-3 flex gap-3">
         <LibraryPortrait char={char} size="sm" />
         <div className="flex-1 min-w-0">
@@ -367,7 +420,7 @@ function GlobalCharacterCard({ char, onEdit, onDelete }) {
               <span className="text-xs text-[#d4a574]">{[char.race, char.class].filter(Boolean).join(' · ')}</span>
             </div>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-              <button onClick={onEdit} className="px-2 py-0.5 text-xs bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Edit</button>
+              <button onClick={onEdit} className="px-2 py-0.5 text-xs bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Edit</button>
               <button onClick={onDelete} className="px-2 py-0.5 text-xs bg-[#b24545]/20 text-[#b24545] rounded hover:bg-[#b24545]/40 transition-colors">Del</button>
             </div>
           </div>
@@ -376,7 +429,7 @@ function GlobalCharacterCard({ char, onEdit, onDelete }) {
         </div>
       </div>
       {char.description && (
-        <div className="px-3 pb-3 text-xs text-[#d4d4d4] leading-relaxed border-t border-[#3d3d3d] pt-2">
+        <div className="px-3 pb-3 text-xs text-[#d4d4d4] leading-relaxed border-t border-[#332922] pt-2">
           {char.description.length > 160 ? char.description.slice(0, 160) + '…' : char.description}
         </div>
       )}
@@ -444,14 +497,14 @@ function CharactersTab() {
     <>
       <div className="flex items-center justify-between mb-6">
         <p className="text-[#999999] text-sm">Shared NPCs reusable across all sessions</p>
-        <button onClick={() => setEditing(emptyGlobalCharacter())} className="px-4 py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium text-sm hover:bg-[#c49464] transition-colors">
+        <button onClick={() => setEditing(emptyGlobalCharacter())} className="px-4 py-2 bg-[#d4a574] text-[#161310] rounded font-medium text-sm hover:bg-[#c49464] transition-colors">
           + New Character
         </button>
       </div>
 
       {characters.length > 5 && (
         <div className="mb-4">
-          <input className="w-full max-w-sm bg-[#2d2d2d] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]" placeholder="Search characters..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="w-full max-w-sm bg-[#211b17] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]" placeholder="Search characters..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       )}
 
@@ -476,12 +529,12 @@ function CharactersTab() {
 
       {deleteError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[#2d2d2d] rounded-lg w-[420px] p-6 fade-in">
+          <div className="bg-[#211b17] rounded-lg w-[420px] p-6 fade-in">
             <h3 className="font-bold text-[#d4a574] mb-2">Character In Use</h3>
             <p className="text-sm text-[#d4d4d4] mb-1">{deleteError.message}</p>
             <p className="text-xs text-[#999999] mb-5">As an admin, you can force delete it. Session characters will keep their data but lose the library link.</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => { setDeleteError(null); setDeleteTarget(null) }} className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors">Cancel</button>
+              <button onClick={() => { setDeleteError(null); setDeleteTarget(null) }} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
               <button onClick={() => handleDelete(deleteError.char, true)} className="px-4 py-2 bg-[#b24545] text-white rounded font-medium hover:bg-[#922b2b] transition-colors">Force Delete</button>
             </div>
           </div>
@@ -504,7 +557,7 @@ export default function Library() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <h1 className="text-[#d4a574] font-bold text-xl mb-3">Library</h1>
-        <div className="flex border-b border-[#3d3d3d]">
+        <div className="flex border-b border-[#332922]">
           {TABS.map((tab, i) => (
             <button
               key={tab}

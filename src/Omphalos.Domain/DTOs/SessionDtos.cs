@@ -30,7 +30,8 @@ public record SessionDto(
     SessionMetadataDto Metadata,
     List<CharacterDto> Characters,
     List<LocationDto> Locations,
-    List<EncounterDto> Encounters
+    List<EncounterDto> Encounters,
+    JsonDocument? PrepData = null
 );
 
 public record UpsertSessionRequest(
@@ -43,5 +44,6 @@ public record UpsertSessionRequest(
     SessionMetadataDto? Metadata,
     List<CharacterDto>? Characters,
     List<LocationDto>? Locations,
-    List<EncounterDto>? Encounters
+    List<EncounterDto>? Encounters,
+    JsonDocument? PrepData = null
 );

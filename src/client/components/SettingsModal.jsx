@@ -15,7 +15,7 @@ export default function SettingsModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
-        className="bg-[#2d2d2d] rounded-lg w-[480px] p-6 fade-in"
+        className="bg-[#211b17] rounded-lg w-[480px] p-6 fade-in"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -31,7 +31,7 @@ export default function SettingsModal({ onClose }) {
             </p>
             <input
               type="password"
-              className="w-full bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] font-mono"
+              className="w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] font-mono"
               value={key}
               onChange={e => setKey(e.target.value)}
               placeholder="AIza..."
@@ -39,7 +39,7 @@ export default function SettingsModal({ onClose }) {
             />
           </div>
 
-          <div className="border-t border-[#3d3d3d] pt-4">
+          <div className="border-t border-[#332922] pt-4">
             <h3 className="text-sm font-medium text-[#f0f0f0] mb-2">Keyboard Shortcuts</h3>
             <div className="grid grid-cols-2 gap-1 text-xs text-[#999999]">
               {[
@@ -52,7 +52,7 @@ export default function SettingsModal({ onClose }) {
                 ['Alt+1–5', 'Switch tabs'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-2">
-                  <kbd className="bg-[#3d3d3d] px-1.5 py-0.5 rounded font-mono text-[#d4a574]">{k}</kbd>
+                  <kbd className="bg-[#332922] px-1.5 py-0.5 rounded font-mono text-[#d4a574]">{k}</kbd>
                   <span>{v}</span>
                 </div>
               ))}
@@ -63,7 +63,7 @@ export default function SettingsModal({ onClose }) {
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-[#3d3d3d] text-[#f0f0f0] rounded hover:bg-[#4d4d4d] transition-colors"
+            className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors"
           >
             Close
           </button>
@@ -72,7 +72,7 @@ export default function SettingsModal({ onClose }) {
             className={`px-4 py-2 rounded font-medium transition-colors ${
               saved
                 ? 'bg-[#6b8e6b] text-white'
-                : 'bg-[#d4a574] text-[#1a1a1a] hover:bg-[#c49464]'
+                : 'bg-[#d4a574] text-[#161310] hover:bg-[#c49464]'
             }`}
           >
             {saved ? 'Saved!' : 'Save'}

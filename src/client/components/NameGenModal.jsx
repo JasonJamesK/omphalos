@@ -12,12 +12,12 @@ export default function NameGenModal({ onSelect, onClose }) {
 
   const fullName = result ? `${result.first} ${result.last}` : null
 
-  const inputCls = 'bg-[#1a1a1a] border border-[#3d3d3d] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] w-full'
+  const inputCls = 'bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] w-full'
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
-        className="bg-[#2d2d2d] rounded-lg w-80 p-5 fade-in"
+        className="bg-[#211b17] rounded-lg w-80 p-5 fade-in"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -35,8 +35,8 @@ export default function NameGenModal({ onSelect, onClose }) {
                   onClick={() => setGender(g.value)}
                   className={`flex-1 py-1.5 rounded text-sm transition-colors ${
                     gender === g.value
-                      ? 'bg-[#d4a574] text-[#1a1a1a] font-medium'
-                      : 'bg-[#3d3d3d] text-[#f0f0f0] hover:bg-[#4d4d4d]'
+                      ? 'bg-[#d4a574] text-[#161310] font-medium'
+                      : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'
                   }`}
                 >
                   {g.label}
@@ -55,13 +55,13 @@ export default function NameGenModal({ onSelect, onClose }) {
 
         <button
           onClick={generate}
-          className="w-full py-2 bg-[#d4a574] text-[#1a1a1a] rounded font-medium hover:bg-[#c49464] transition-colors mb-3"
+          className="w-full py-2 bg-[#d4a574] text-[#161310] rounded font-medium hover:bg-[#c49464] transition-colors mb-3"
         >
           Generate
         </button>
 
         {fullName && (
-          <div className="bg-[#1a1a1a] rounded p-3 mb-3 text-center">
+          <div className="bg-[#161310] rounded p-3 mb-3 text-center">
             <div className="text-[#f0f0f0] text-lg font-semibold">{fullName}</div>
             <div className="text-[#999999] text-xs mt-0.5">{GENDERS.find(g => g.value === gender)?.label} {race}</div>
           </div>
@@ -72,7 +72,7 @@ export default function NameGenModal({ onSelect, onClose }) {
             <>
               <button
                 onClick={generate}
-                className="flex-1 py-1.5 bg-[#3d3d3d] text-[#f0f0f0] rounded text-sm hover:bg-[#4d4d4d] transition-colors"
+                className="flex-1 py-1.5 bg-[#332922] text-[#f0f0f0] rounded text-sm hover:bg-[#40332a] transition-colors"
               >
                 Generate Another
               </button>

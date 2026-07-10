@@ -20,5 +20,7 @@ public record CharacterDto(
     string? Description,
     List<CharacterRelationshipDto>? Relationships,
     string? GlobalCharacterId = null,
-    string? SessionNotes = null
+    string? SessionNotes = null,
+    bool IsNpc = false,
+    NpcStatBlockDto? StatBlock = null
 );

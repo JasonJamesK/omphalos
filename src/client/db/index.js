@@ -20,6 +20,10 @@ export const db = {
     return request('/sessions')
   },
 
+  async getSession(id) {
+    return request(`/sessions/${id}`)
+  },
+
   async getAllGlobalLocations() {
     return request('/locations')
   },

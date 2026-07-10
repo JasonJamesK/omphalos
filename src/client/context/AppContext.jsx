@@ -27,6 +27,14 @@ function reducer(state, action) {
     case 'SET_ACTIVE_SESSION':
       return { ...state, activeSessionId: action.payload, activeTab: 0 }
 
+    case 'MERGE_SESSION_DETAIL':
+      return {
+        ...state,
+        sessions: state.sessions.map(s =>
+          s.id === action.payload.id ? { ...s, ...action.payload } : s
+        ),
+      }
+
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTab: action.payload }
 
@@ -219,6 +227,18 @@ export function AppProvider({ children }) {
   const saveSession = useCallback((session) => {
     db.saveSession(session).catch(() => {})
   }, [])
+
+  // Sessions from the list endpoint are summaries only (no characters/locations/
+  // encounters/prepData/log). Lazily fetch the full record the first time a
+  // session becomes active — otherwise a page refresh appears to wipe its contents.
+  useEffect(() => {
+    if (!state.loaded || !state.activeSessionId) return
+    const session = state.sessions.find(s => s.id === state.activeSessionId)
+    if (!session || session.characters !== undefined) return
+    db.getSession(state.activeSessionId)
+      .then(full => { if (full) dispatch({ type: 'MERGE_SESSION_DETAIL', payload: full }) })
+      .catch(() => {})
+  }, [state.loaded, state.activeSessionId, state.sessions])
 
   // After React re-renders with updated sessions, flush any pending sub-resource save.
   // This ensures we always send the post-mutation state, not the pre-dispatch snapshot.

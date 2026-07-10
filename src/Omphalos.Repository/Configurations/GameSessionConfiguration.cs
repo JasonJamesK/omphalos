@@ -11,6 +11,7 @@ public class GameSessionConfiguration : IEntityTypeConfiguration<GameSession>
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Title).IsRequired().HasMaxLength(500);
         builder.Property(s => s.SessionLog).HasColumnType("jsonb");
+        builder.Property(s => s.PrepData).HasColumnType("jsonb");
 
         builder.OwnsOne(s => s.Metadata, m =>
         {
