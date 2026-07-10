@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import SettingsModal from './components/SettingsModal'
 import AdminModal from './components/AdminModal'
+import SaveFailureToast from './components/SaveFailureToast'
 import LoginPage from './components/LoginPage'
 import Library from './components/Library'
 import SessionLog from './components/tabs/SessionLog'
@@ -154,6 +155,7 @@ export default function App() {
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showAdmin && <AdminModal onClose={() => setShowAdmin(false)} />}
+      <SaveFailureToast />
     </div>
   )
 }
