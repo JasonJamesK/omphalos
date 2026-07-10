@@ -56,7 +56,7 @@ Exceptions: none — component fits entirely within the 4/8/16 scale already use
 | Display | not applicable | — | — | not used — no display-scale text in a corner toast |
 | Dismiss glyph | 24px (`text-2xl`) | 400 (regular) | `leading-none` | the `×` close control — reused verbatim from existing convention (`SettingsModal.jsx:23`, `DeleteConfirm.jsx` pattern) |
 
-Exactly 2 weights declared: 400 (body message) and 600 (heading line + emphasis). Exactly 3 sizes in active use: 14px, 24px (dismiss glyph, borrowed as-is from existing modal convention, not a new size introduced for this phase).
+Exactly 2 weights declared: 400 (body message) and 600 (heading line + emphasis). Exactly 2 sizes in active use: 14px, 24px (dismiss glyph, borrowed as-is from existing modal convention, not a new size introduced for this phase).
 
 ---
 
