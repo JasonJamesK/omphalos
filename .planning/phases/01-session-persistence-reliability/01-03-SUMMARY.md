@@ -134,3 +134,7 @@ None - no external service configuration required.
 ---
 *Phase: 01-session-persistence-reliability*
 *Completed: 2026-07-10*
+
+## Self-Check: PASSED
+
+All 4 modified source files and this SUMMARY.md verified present on disk; all 3 task/docs commit hashes (`fc4b55f`, `9bafb69`, `e1022c0`) verified present in git log.
