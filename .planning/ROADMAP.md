@@ -23,11 +23,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal**: A DM's session data — prep content, session log, top bar title/metadata, and toolkit — reliably persists across save and reload, with no silent data loss from partial saves.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
-**Requirements**: PERSIST-01, PERSIST-02
+**Requirements**: PERSIST-01, PERSIST-02, PERSIST-03, PERSIST-04
 **Success Criteria** (what must be TRUE):
   1. DM writes Overview & Hook and Notes/Callout/Loot prep-block content, saves, reloads the page, and the content is still present (`SessionRepository.UpsertAsync` now assigns `PrepData` on update).
   2. DM edits the Session Log, top bar title/metadata, or Toolkit independently, and no other session data (Title, Characters, Locations, Encounters) is wiped out as a side effect of that save.
   3. Partial-payload `UPDATE_SESSION` dispatches from any of the existing call sites (`SessionPrep.jsx`, `SessionLog.jsx`, `TopBar.jsx`, `Toolkit.jsx`) no longer unconditionally overwrite unrelated session fields with empty/default values.
+  4. `SessionRepository.UpsertAsync` updates a session's Characters/Locations/Encounters by diffing against existing rows (add/update/remove only what changed) instead of deleting and reinserting the full collections on every save.
+  5. DM sees a visible indicator (e.g. toast/banner) when a session save request fails, instead of the failure being silently swallowed.
 **Plans**: TBD
 
 Plans:

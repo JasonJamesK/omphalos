@@ -11,6 +11,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [ ] **PERSIST-01**: Session Prep content (Overview & Hook, Notes/Callout/Loot blocks) actually persists after save and page reload — fixes `SessionRepository.UpsertAsync` never assigning `PrepData` on update
 - [ ] **PERSIST-02**: Session Log, top bar (title/metadata), and Toolkit saves no longer risk silently wiping other session fields (`Title`/`Characters`/`Locations`/`Encounters`) due to partial-payload `UPDATE_SESSION` dispatches being unconditionally overwritten server-side
+- [ ] **PERSIST-03**: `SessionRepository.UpsertAsync` diffs and merges `Character`/`Location`/`Encounter` child collections by ID instead of deleting and reinserting all rows on every save
+- [ ] **PERSIST-04**: DM sees a visible indicator when a session save fails (currently swallowed silently via `.catch(() => {})`), instead of the UI silently showing the change as applied while the server never received it
 
 ### Markdown Editing
 
@@ -78,6 +80,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | PERSIST-01 | Phase 1 | Pending |
 | PERSIST-02 | Phase 1 | Pending |
+| PERSIST-03 | Phase 1 | Pending |
+| PERSIST-04 | Phase 1 | Pending |
 | MDED-01 | Phase 3 | Pending |
 | MDED-02 | Phase 3 | Pending |
 | MDED-03 | Phase 2 | Pending |
@@ -105,8 +109,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMG-07 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 27 total
-- Mapped to phases: 27
+- v1 requirements: 29 total
+- Mapped to phases: 29
 - Unmapped: 0 ✓
 
 ---
