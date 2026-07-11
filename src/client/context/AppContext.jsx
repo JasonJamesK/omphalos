@@ -190,6 +190,11 @@ export function AppProvider({ children }) {
   // Refs so dispatchWithPersist never closes over stale state
   const loadedRef = useRef(false)
   const dirtySessionRef = useRef(null)
+  // Sessions whose full detail (characters/locations/encounters/prepData/
+  // sessionLog) has loaded. A summary-only session is missing those keys
+  // entirely, so UPDATE_SESSION must not persist until the id is in here —
+  // otherwise the partial payload wipes them server-side.
+  const detailLoadedIds = useRef(new Set())
 
   useEffect(() => { loadedRef.current = state.loaded }, [state.loaded])
 
@@ -245,7 +250,12 @@ export function AppProvider({ children }) {
     const session = state.sessions.find(s => s.id === state.activeSessionId)
     if (!session || session.characters !== undefined) return
     db.getSession(state.activeSessionId)
-      .then(full => { if (full) dispatch({ type: 'MERGE_SESSION_DETAIL', payload: full }) })
+      .then(full => {
+        if (full) {
+          detailLoadedIds.current.add(full.id)
+          dispatch({ type: 'MERGE_SESSION_DETAIL', payload: full })
+        }
+      })
       .catch(() => {})
   }, [state.loaded, state.activeSessionId, state.sessions])
 
@@ -270,10 +280,22 @@ export function AppProvider({ children }) {
 
     switch (action.type) {
       case 'ADD_SESSION':
-      case 'UPDATE_SESSION':
+        // A freshly created session is always fully-shaped (see App.jsx
+        // createSession) — no server fetch needed to consider it loaded.
+        detailLoadedIds.current.add(action.payload.id)
         saveSession(action.payload)
         break
+      case 'UPDATE_SESSION':
+        // Refuse to persist until the full record has loaded — a summary-only
+        // session is missing characters/locations/encounters/prepData/
+        // sessionLog, and every edit surface spreads the full session object,
+        // so persisting early would wipe those fields server-side.
+        if (detailLoadedIds.current.has(action.payload.id)) {
+          saveSession(action.payload)
+        }
+        break
       case 'DELETE_SESSION':
+        detailLoadedIds.current.delete(action.payload)
         db.deleteSession(action.payload).catch(() => {})
         break
       case 'ADD_CHARACTER':
