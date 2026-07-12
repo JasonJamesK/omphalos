@@ -60,14 +60,14 @@ Plans:
   3. Existing plain-text content typed with literal line breaks still renders with those line breaks preserved, not collapsed into a run-on paragraph.
   4. The field grows taller to fit typed content instead of staying a fixed-height scrollable box.
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 **UI hint**: yes
 
 Plans:
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Core markdown stack (MarkdownField/MarkdownPreview/markdownToolbar/stripMarkdown + dark-theme CSS + 4 deps) wired end-to-end into the in-session Character modal (MDED-03, MDED-05, MDED-06, MDED-07, MDED-08; D-01, D-02, D-05, D-06, D-07, D-08, D-09, D-10, D-11)
+- [x] 02-01-PLAN.md — Core markdown stack (MarkdownField/MarkdownPreview/markdownToolbar/stripMarkdown + dark-theme CSS + 4 deps) wired end-to-end into the in-session Character modal (MDED-03, MDED-05, MDED-06, MDED-07, MDED-08; D-01, D-02, D-05, D-06, D-07, D-08, D-09, D-10, D-11)
 
 **Wave 2** *(parallel; both depend on 02-01)*
 
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
-| 2. Markdown Editing — Character & Location Fields | 0/3 | Not started | - |
+| 2. Markdown Editing — Character & Location Fields | 1/3 | In Progress|  |
 | 3. Markdown Editing — Session Prep Fields | 0/TBD | Not started | - |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
 
