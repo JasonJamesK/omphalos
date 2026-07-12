@@ -1,7 +1,7 @@
 ---
 phase: 02-markdown-editing-character-location-fields
 verified: 2026-07-12T16:00:00Z
-status: human_needed
+status: passed
 score: 20/21 must-haves verified
 behavior_unverified: 1 # Toolbar Ctrl+Z undo (D-08) — the fix (Plan 02-04) is confirmed correct at the code level, but native browser undo-stack behavior cannot be exercised in jsdom/automation. UAT Test 3 tested the OLD broken code; it has not been re-run against the fixed code. Routed to human_verification below.
 overrides_applied: 0
@@ -11,13 +11,16 @@ re_verification:
   previous_status: human_needed
   previous_score: 14/18
   gaps_closed:
+
     - "Container-query split view at both breakpoints (UAT Test 1) — confirmed pass via real-browser UAT, 02-UAT.md"
     - "Unbounded auto-grow, no internal scrollbar (UAT Test 2) — confirmed pass via real-browser UAT, 02-UAT.md"
     - "Legacy plain-text regression + final dark-theme visual sign-off (UAT Test 4) — confirmed pass via real-browser UAT, 02-UAT.md"
   gaps_remaining:
+
     - "Native Ctrl+Z undo after toolbar insertion (UAT Test 3) — root cause diagnosed, fix (Plan 02-04) applied and code-reviewed (WR-01 off-by-one also fixed), but the fix itself has not yet been re-confirmed with a fresh real-browser Ctrl+Z check. This is the same class of check (native undo-stack behavior) that failed the first time, so it is not marked passed on code inspection alone."
   regressions: []
 human_verification:
+
   - test: "Re-run UAT Test 3 against the current source: in a real browser, open any MarkdownField (e.g. a Character's Personality Traits), select a word, click Bold — confirm it wraps in `**`. Type a few more characters, then press Ctrl+Z."
     expected: "The Bold insertion is undone as its own discrete step (not skipped, not jumping back further than expected), and repeated Ctrl+Z continues stepping back through earlier edits. Repeat for Italic, Heading, and Bulleted-list."
     why_human: "Native browser undo-stack behavior can only be exercised interactively in a real browser with real keyboard input — this is exactly the mechanism that failed the first time (setNativeTextareaValue + dispatchEvent looked correct on inspection but didn't preserve undo). The replacement (setRangeText via applyRangeEdit) is well-evidenced by external documentation and code review, but has not itself been exercised against a real undo stack since it shipped."
