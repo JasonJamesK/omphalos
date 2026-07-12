@@ -2,44 +2,44 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: Markdown Editing — Character & Location Fields
-status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-07-12T14:19:34.426Z"
+current_phase: 3
+current_phase_name: Markdown Editing — Session Prep Fields
+status: ready
+stopped_at: Phase 2 complete, transitioned to Phase 3
+last_updated: "2026-07-12T21:21:31.657Z"
 last_activity: 2026-07-12
-last_activity_desc: Phase 2 execution resumed (wave continue)
+last_activity_desc: Phase 2 complete, transitioned to Phase 3
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
-  percent: 25
+  completed_plans: 8
+  percent: 50
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-10)
+See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** A DM can prep everything needed for a session and reference/edit it live during play without fighting broken editing tools or losing content.
-**Current focus:** Phase 2 — Markdown Editing — Character & Location Fields
+**Current focus:** Phase 3 — Markdown Editing — Session Prep Fields
 
 ## Current Position
 
-Phase: 2 (Markdown Editing — Character & Location Fields) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 2
-Last activity: 2026-07-12 — Phase 2 execution resumed (wave continue)
+Phase: 3 — Markdown Editing — Session Prep Fields
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-07-12 — Phase 2 complete, transitioned to Phase 3
 
-Progress: [█████░░░░░░░░░░░░░░] 25% (1/4 phases)
+Progress: [██████████░░░░░░░░░] 50% (2/4 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 8
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -48,6 +48,7 @@ Progress: [█████░░░░░░░░░░░░░░] 25% (1/4 p
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
+| 2 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - Roadmap revision (2026-07-10): Phase 4 expanded from a frontend-only crop-library swap to also cover a full image storage/serving overhaul (IMG-01..07) — dual original/cropped columns per image-bearing entity, served via dedicated HTTP-cached binary endpoints, `HasImage` DTO flag instead of embedded base64. Kept as a single phase (not split into backend/frontend phases) because the new requirements have no independently observable value without the crop UI wired to them — see ROADMAP.md's "Roadmap Revision Log" for full reasoning. Phase 4 is expected to need ~5 plans instead of 1, finalized at `/gsd-plan-phase 4` time.
 - Phase 1 (2026-07-12): Code review found a Critical post-planning gap (CR-01) — a session-load race window where editing before the background full-detail fetch resolved could still wipe server-side data, a variant of the exact bug class Phase 1 targeted. Fixed via a `detailLoadedIds` tracking ref in `AppContext.jsx` gating `UPDATE_SESSION` persistence on full detail having loaded (commit `d00d8f7`). Verified via a deliberately reproduced race condition (fetch-delay patch + live testing) — confirmed no partial-payload saves reach the server during the window.
 - Phase 1 (2026-07-12): Found and fixed an unrelated Docker build regression — `docker compose up --build` was broken since Plan 01-01 added test projects to the solution without updating the Dockerfile's restore step (commit `e2fb0a2`). Only surfaced now because Docker wasn't available during the original execution session.
+- Phase 2 (2026-07-12): Shipped markdown editing for character/location fields (MDED-03..08) across all 6 usage sites, with a shared `MarkdownField`/`markdownToolbar.js`/`stripMarkdown` component set that Phase 3 (Session Prep fields) is expected to reuse directly rather than reimplement.
+- Phase 2 (2026-07-12): UAT surfaced a native Ctrl+Z undo regression in the toolbar (Bold/Heading/List buttons) that took 3 fix attempts to fully resolve: native `.value` setter + `dispatchEvent` (original bug) → `textarea.setRangeText(...)` (still failed live re-testing) → `document.execCommand('insertText', ...)` (confirmed working, commit `92e4370`). If any future toolbar-style programmatic textarea mutation is needed elsewhere in the app, use `execCommand('insertText', ...)` from the start — it matches the approach used by the battle-tested `fregante/text-field-edit` library and is the only one of the three that reliably preserves native undo in real-browser testing.
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-12T11:44:02.957Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-markdown-editing-character-location-fields/02-UI-SPEC.md
+Last session: 2026-07-12T21:21:31.657Z
+Stopped at: Phase 2 complete, transitioned to Phase 3 — ready to plan
+Resume file: .planning/ROADMAP.md

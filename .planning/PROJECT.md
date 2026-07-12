@@ -19,6 +19,9 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - ✓ Portrait/location image uploads with a (currently hand-rolled) crop step — existing
 - ✓ JWT cookie-based authentication with first-boot admin seeding — existing
 - ✓ Self-hosted deployment via Docker Compose (Postgres 17 + single API container) — existing
+- ✓ DM can write character bios/notes using markdown syntax, with a rendered preview (split-view/tab toggle, legacy line-break rendering, dark-theme preview styling) — Phase 2
+- ✓ DM can write location descriptions using markdown syntax, with a rendered preview (split-view/tab toggle, legacy line-break rendering, dark-theme preview styling) — Phase 2
+- ✓ Markdown-enabled fields (character/location) auto-grow to fit their content instead of being fixed-height boxes — Phase 2
 
 ### Active
 
@@ -27,9 +30,6 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - [ ] Images are served via dedicated binary endpoints instead of being embedded as base64 in session/character/location JSON payloads, so pages load without waiting on image bytes
 - [ ] DM can write the Session "Overview & Hook" field using markdown syntax, with a rendered preview
 - [ ] DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax, with a rendered preview
-- [ ] DM can write character bios/notes using markdown syntax, with a rendered preview
-- [ ] DM can write location descriptions using markdown syntax, with a rendered preview
-- [ ] Markdown-enabled fields auto-grow to fit their content instead of being fixed-height boxes
 
 ### Out of Scope
 
@@ -59,13 +59,14 @@ A DM can prep everything needed for a session and reference/edit it live during 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| True markdown editing (raw syntax + render) rather than extending the existing TipTap WYSIWYG to new fields | Matches quest-board's proven, working pattern the user wants to bring over; keeps stored content as portable plain text | — Pending |
-| Client-side markdown rendering (`react-markdown` + `remark-gfm`) over server-side Markdig | No Razor/server-rendering pipeline exists in Omphalos; avoids a new backend dependency and endpoint changes; markdown source stays portable either way | — Pending |
+| True markdown editing (raw syntax + render) rather than extending the existing TipTap WYSIWYG to new fields | Matches quest-board's proven, working pattern the user wants to bring over; keeps stored content as portable plain text | Shipped — Phase 2 |
+| Client-side markdown rendering (`react-markdown` + `remark-gfm`) over server-side Markdig | No Razor/server-rendering pipeline exists in Omphalos; avoids a new backend dependency and endpoint changes; markdown source stays portable either way | Shipped — Phase 2 |
+| Toolbar text mutation via `document.execCommand('insertText', ...)` rather than `setRangeText` or native-setter+`dispatchEvent` | Only method that reliably preserved native Ctrl+Z undo in real-browser testing, despite being spec-deprecated; matches the approach used by `fregante/text-field-edit` | Shipped — Phase 2 |
 | Replace `CropModal.jsx` with Cropper.js v2 at all three existing usage sites | Matches quest-board's proven, EXIF-safe crop pipeline; consolidates on one crop implementation instead of a hand-rolled one | — Pending |
 | Store both original and cropped image per entity, served via dedicated binary endpoints (all 4 image fields: Character, GlobalCharacter, Location, GlobalLocation) | Matches quest-board's proven pattern exactly; enables re-crop without re-upload, GIF fallback, and instant page loads (images load async instead of blocking on inline base64 in the JSON payload) | — Pending |
 | Add HTTP caching (ETag/Cache-Control) to the new image endpoints | quest-board has none; images are immutable once saved so caching is a safe, cheap improvement over the reference implementation | — Pending |
-| Auto-grow scoped to the new markdown fields only, not app-wide | Auto-grow comes bundled with the new markdown editor component; avoids unrelated scope creep into stat blocks/random tables | — Pending |
-| Session Log (TipTap WYSIWYG) left untouched | Already works and already auto-grows; converting it wasn't requested and isn't broken | — Pending |
+| Auto-grow scoped to the new markdown fields only, not app-wide | Auto-grow comes bundled with the new markdown editor component; avoids unrelated scope creep into stat blocks/random tables | Shipped — Phase 2 |
+| Session Log (TipTap WYSIWYG) left untouched | Already works and already auto-grows; converting it wasn't requested and isn't broken | Holds |
 
 ## Evolution
 
@@ -85,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-12 after Phase 1*
+*Last updated: 2026-07-12 after Phase 2*
