@@ -14,7 +14,7 @@ This milestone fixes a pre-existing session-persistence bug, then delivers two i
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Session Persistence Reliability** - Session prep content, log, top bar, and toolkit saves reliably persist without silently wiping other session data (completed 2026-07-10)
-- [ ] **Phase 2: Markdown Editing — Character & Location Fields** - DM writes character bios/notes and location descriptions in markdown with live, auto-growing, dark-themed preview
+- [x] **Phase 2: Markdown Editing — Character & Location Fields** - DM writes character bios/notes and location descriptions in markdown with live, auto-growing, dark-themed preview (completed 2026-07-12)
 - [ ] **Phase 3: Markdown Editing — Session Prep Fields** - DM writes the Overview & Hook and Notes/Callout/Loot prep blocks in markdown with live preview, content persists on reload
 - [ ] **Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout** - DM crops portraits and location images with Cropper.js v2 (zoom, EXIF-safe, touch) at all three upload sites, backed by a new dual original/cropped storage model served via dedicated cached endpoints
 
@@ -60,7 +60,7 @@ Plans:
   3. Existing plain-text content typed with literal line breaks still renders with those line breaks preserved, not collapsed into a run-on paragraph.
   4. The field grows taller to fit typed content instead of staying a fixed-height scrollable box.
 
-**Plans**: 1/3 plans executed
+**Plans**: 3/3 plans complete
 **UI hint**: yes
 
 Plans:
@@ -71,8 +71,8 @@ Plans:
 
 **Wave 2** *(parallel; both depend on 02-01)*
 
-- [ ] 02-02-PLAN.md — Library rollout: GlobalCharacterModal + GlobalLocationModal markdown fields, card previews strip-cleaned (MDED-03, MDED-04; D-01, D-02, D-03, D-04, D-13)
-- [ ] 02-03-PLAN.md — In-session location + library-link rollout: Locations tab, AddLocationModal, AddFromLibraryModal (MDED-03, MDED-04; D-04, D-05, D-12, D-13, D-14)
+- [x] 02-02-PLAN.md — Library rollout: GlobalCharacterModal + GlobalLocationModal markdown fields, card previews strip-cleaned (MDED-03, MDED-04; D-01, D-02, D-03, D-04, D-13)
+- [x] 02-03-PLAN.md — In-session location + library-link rollout: Locations tab, AddLocationModal, AddFromLibraryModal (MDED-03, MDED-04; D-04, D-05, D-12, D-13, D-14)
 
 ### Phase 3: Markdown Editing — Session Prep Fields
 
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
-| 2. Markdown Editing — Character & Location Fields | 1/3 | In Progress|  |
+| 2. Markdown Editing — Character & Location Fields | 3/3 | Complete   | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 0/TBD | Not started | - |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
 
