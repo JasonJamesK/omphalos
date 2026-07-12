@@ -80,6 +80,8 @@ The insert-syntax toolbar (D-08) is standard `textarea.selectionStart`/`selectio
 | `remark-gfm` | npm | published 4.0.1 2025-02-10 | 30.9M/wk | github.com/remarkjs/remark-gfm | OK | Approved |
 | `remark-breaks` | npm | published 4.0.0 2023-09-22 | 3.15M/wk | github.com/remarkjs/remark-breaks | OK | Approved |
 | `@tailwindcss/container-queries` (candidate, see below — not the chosen path) | npm | published 2023-03-31, 0.1.1 | 1.78M/wk | github.com/tailwindlabs/tailwindcss-container-queries | OK | Approved but NOT recommended — see Architecture Patterns (native CSS `@container` preferred, zero new dependency) |
+| `strip-markdown` | npm | published 2023-10-25, 508K/wk downloads | github.com/remarkjs/strip-markdown | OK | Approved — D-13, for card-preview/secondary read-only sites (post-research addition, see Open Questions resolution) |
+| `remove-markdown` (considered, REJECTED) | npm | published 2026-05-09, 1.0M/wk downloads | github.com/zuchka/remove-markdown | OK (registry-clean) but NOT recommended — different, non-`remarkjs`-org maintainer, regex-based (not AST-based) — would not correctly distinguish "C# is great" from "# Heading" |
 
 **Packages removed due to [SLOP] verdict:** none
 **Packages flagged as suspicious [SUS]:** none
@@ -100,7 +102,8 @@ All four packages verified `OK` via `gsd-tools query package-legitimacy check --
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| *(none)* | — | — | No syntax highlighter, no `rehype-sanitize`, no `rehype-raw` needed — this phase's markdown is plain prose (headings/lists/bold/italic/blockquote/code), not embedded HTML or fenced code with language-aware highlighting per the success criteria |
+| `strip-markdown` | `^6.0.0` | Unified/remark plugin that strips markdown AST formatting nodes down to plain text, preserving literal characters that were never real syntax (e.g. mid-sentence `#`) | D-13 — card-preview truncated snippets and other secondary read-only text outside D-05's named "Shared Info" scope (`LocationCard`, `GlobalLocationCard`, `GlobalCharacterCard`, `AddFromLibraryModal.jsx`'s `CharacterPreview`). Use via `remark().use(stripMarkdown).processSync(source).toString()`. `[VERIFIED: npm registry + package-legitimacy tool + github.com/remarkjs/strip-markdown README]` |
+| *(none else)* | — | — | No syntax highlighter, no `rehype-sanitize`, no `rehype-raw` needed — this phase's markdown is plain prose (headings/lists/bold/italic/blockquote/code), not embedded HTML or fenced code with language-aware highlighting per the success criteria |
 
 ### Alternatives Considered
 
@@ -113,7 +116,7 @@ All four packages verified `OK` via `gsd-tools query package-legitimacy check --
 
 **Installation:**
 ```bash
-npm install react-markdown remark-gfm remark-breaks
+npm install react-markdown remark-gfm remark-breaks strip-markdown
 ```
 
 **Version verification:** Confirmed via `npm view <package> version` against the live npm registry on 2026-07-12: `react-markdown@10.1.0` (published 2025-03-07), `remark-gfm@4.0.1` (published 2025-02-10), `remark-breaks@4.0.0` (published 2023-09-22). All three declare `react: '>=18'` / `@types/react: '>=18'` as peer requirements — compatible with this project's React `^18.3.1`. All three are pure ESM (`"type": "module"` in their own `package.json`s, confirmed via their `dependencies` graph resting on `unified@^11`), which Vite 6 (used here) handles natively — no CJS interop shims required.
@@ -164,8 +167,10 @@ src/client/components/
 │   ├── MarkdownField.jsx       # edit+preview mode, drop-in <textarea> replacement
 │   ├── MarkdownPreview.jsx     # shared render-only component (used by MarkdownField's
 │   │                           # preview pane AND the read-only "Shared Info" boxes, D-05)
-│   └── markdownToolbar.js      # pure functions: wrapSelection(), insertAtCursor(),
-│                                # applyNativeValue() — no JSX, easily unit-testable
+│   ├── markdownToolbar.js      # pure functions: wrapSelection(), insertAtCursor(),
+│   │                            # applyNativeValue() — no JSX, easily unit-testable
+│   └── stripMarkdown.js        # thin wrapper around remark().use(stripMarkdown), D-13 —
+│                                # used by card previews and other secondary read-only sites
 ├── RichTextEditor.jsx          # unchanged — Session Log only
 ```
 
@@ -399,26 +404,26 @@ import remarkBreaks from 'remark-breaks'
 |---|-------|---------|---------------|
 | A1 | A ~480px `@container` threshold is the right split point between the measured ~330px character-field containers and ~520-640px location-field containers | Pattern 2 | Low — this is a tunable CSS value, not a structural decision; if 480px feels wrong during visual QA it's a one-line CSS edit, not a rework |
 | A2 | Native CSS `@container` (vs. the `@tailwindcss/container-queries` plugin) is the better fit for this codebase | Architecture Patterns / Alternatives Considered | Low — both are legitimate `[OK]`-verdict options; if the planner/team prefers Tailwind utility-class ergonomics over hand-written CSS, swapping to the plugin is a drop-in change, not a redesign |
-| A3 | Read-only "Shared Info" `secretsAndHazards` rendering should either keep its current custom bullet-per-line renderer or accept a visual change to true markdown list rendering — no single "correct" answer was locked by CONTEXT.md's D-05 | Common Pitfalls #3 / Open Questions | Medium — if the planner picks the wrong default, a DM's existing hazard notes (typed as one-per-line, no markdown syntax) will visually change from a bulleted red-marker list to a single paragraph; needs explicit planner/user decision, not a research-time guess |
+| A3 | ~~Read-only "Shared Info" `secretsAndHazards` rendering...~~ **RESOLVED:** locked as D-12 (keep custom bullet renderer, no markdown rendering for this one field) after post-research user review | Common Pitfalls #3 / Open Questions | Resolved — no longer a risk |
 
-**If this table is empty:** N/A — see rows above; all three are low-to-medium risk tuning/design decisions, not verification gaps on the core stack (which is fully `[VERIFIED]`).
+**If this table is empty:** N/A — see rows above; A1/A2 remain low-risk tuning decisions; A3 was resolved via user decision (D-12) after this research was written.
 
-## Open Questions
+## Open Questions — RESOLVED (post-research user review, 2026-07-12)
 
-1. **Should card-level truncated description previews (outside the two explicitly-decided D-05 "Shared Info" boxes) also render markdown?**
-   - What we know: `LocationCard` (`tabs/Locations.jsx` lines 111-115), `GlobalLocationCard` (`Library.jsx` lines 138-142, and dead-code `LocationsLibrary.jsx` lines 136-140), and `GlobalCharacterCard` (`Library.jsx` lines 431-435) all render a **truncated raw string** of `description` (`.slice(0, 200/220/160) + '…'`) directly in card list/grid views. CONTEXT.md's D-05 only names the two specific read-only "Shared Info" boxes (`CharacterModal.jsx` linked branch, `Locations.jsx` `EditLocationModal`) as requiring markdown rendering — these card previews are a separate, broader set of sites not in the given Integration Points list.
-   - What's unclear: If a DM writes `**Ravenhollow**` in a location's Description, will the card preview on the Locations tab / Library grid show literal asterisks (current behavior, unchanged) or rendered bold (if scope silently expands)? CONTEXT.md doesn't decide this.
-   - Recommendation: Treat these card previews as explicitly **out of scope** for this phase (raw truncated text stays raw truncated text) unless the planner/user extends scope during plan review — truncating markdown mid-syntax (e.g. cutting a string at "…te **bo" ) is itself a rendering hazard worth avoiding, so leaving raw-text truncation as-is is the lower-risk default. Flag visually as a known, accepted inconsistency (literal `**` may appear in card previews even though the same content renders properly in the edit/read-only-detail view) rather than silently fixing or silently leaving broken.
+All four open questions below were raised by this research and then resolved directly with the user in a follow-up review round. Resolutions are locked in CONTEXT.md as D-04 (corrected), D-12, and D-13 — restated here for traceability between research and decisions.
 
-2. **Read-only rendering in `AddFromLibraryModal.jsx`'s `CharacterPreview`**
-   - What we know: This component (lines 22-82) renders `personalityTraits`, `flaw`, `description`, `questHooks` read-only with `whitespace-pre-wrap` (a plain-text line-preservation trick, not markdown) when a DM is picking a character to add to a session. This site is not named in CONTEXT.md's Integration Points list (only `AddFromLibraryModal.jsx`'s "Session Notes" *editable* field is named).
-   - What's unclear: Same category of question as #1 — should this preview-before-adding view also get `MarkdownPreview` treatment for consistency, or is it acceptable that a DM previewing a library character before adding them to a session sees raw markdown syntax here but rendered markdown once added?
-   - Recommendation: Same as #1 — treat as out of scope by default (lowest-risk, matches the explicit Integration Points list), but call out for the planner to make an explicit in/out decision rather than defaulting silently either way.
+1. **Card-level truncated description previews — RESOLVED as D-13.**
+   - Original question: should `LocationCard` (`tabs/Locations.jsx`), `GlobalLocationCard`/`GlobalCharacterCard` (`Library.jsx`) truncated previews render markdown?
+   - Resolution: Use `strip-markdown` (official `remarkjs`-org plugin, AST-based) to render clean plain text — not raw markdown source, not full HTML rendering. User specifically requested this after recalling quest-board uses the same "parse correctly, then strip only real syntax" pattern (verified: `strip-markdown` correctly preserves `#` in "C# is great" while stripping it from "# Real Heading", since it operates on the parsed AST, not regex). See "strip-markdown" addition to Standard Stack below.
 
-3. **`LocationsLibrary.jsx` is currently dead code — not imported anywhere in the app**
-   - What we know: `grep`-confirmed and `App.jsx`-confirmed — the only routed Library view is `src/client/components/Library.jsx` (`view === 'library' ? <Library /> : ...` in `App.jsx`). `LocationsLibrary.jsx` exists on disk with its own `GlobalLocationModal`/`GlobalLocationCard`/full CRUD implementation (largely duplicating `Library.jsx`'s `LocationsTab`), but nothing imports it — `[VERIFIED: codebase read — grep for "from '.*LocationsLibrary'" and App.jsx import list both return zero references]`.
-   - What's unclear: CONTEXT.md's D-04/Integration Points list names `LocationsLibrary.jsx` as a usage site requiring `MarkdownField`. Since the file is unreachable from the running app, updating it has zero user-visible effect today.
-   - Recommendation: The planner should decide whether to (a) update `LocationsLibrary.jsx` anyway for consistency/future-proofing (low cost, zero risk since it's unreachable), (b) delete it as unrelated dead-code cleanup (out of this phase's stated scope, but worth flagging to the user separately), or (c) skip it and note the discrepancy. This research does not second-guess D-04's field-scope decision — it surfaces the dead-code fact so the planner doesn't spend effort wiring `MarkdownField` into a component the app never renders without at least a conscious call.
+2. **`AddFromLibraryModal.jsx`'s `CharacterPreview` — RESOLVED as D-13.**
+   - Same resolution as #1: uses `strip-markdown`, not full markdown rendering, not raw text.
+
+3. **`LocationsLibrary.jsx` dead code — RESOLVED, D-04 corrected.**
+   - User initially pushed back on the dead-code claim, recalling "a library button that opens a list for locations and characters." Re-verified: that button routes to `Library.jsx`, which has its own **internal** two-tab `LocationsTab`/`CharactersTab` switcher (`activeTab` state, `TABS` array) — a different file that happens to serve the same user-facing purpose. `LocationsLibrary.jsx` remains confirmed dead code (no import anywhere in `src/client`). Resolution: **excluded from this phase** — CONTEXT.md's D-04 now points to `Library.jsx`'s internal `LocationsTab` as the real usage site instead.
+
+4. **Read-only `secretsAndHazards` custom bullet-line styling — RESOLVED as D-12.**
+   - Resolution: `SecretsAndHazards`' read-only display keeps its current custom `▸`-per-line bullet renderer, unchanged. Only `Description`/`Notes` get true markdown rendering per D-05. Avoids visually breaking existing hazard notes typed one-per-line without markdown list syntax.
 
 ## Environment Availability
 

@@ -19,7 +19,7 @@ This phase delivers markdown editing (raw syntax + live, dark-themed, auto-growi
 
 ### Field Scope — Location
 - **D-03:** MarkdownField applies to these `Location`/`GlobalLocation` fields: `Description`, `Notes`, `SecretsAndHazards`. Note `SecretsAndHazards` only exists on `GlobalLocation`, not the session-scoped `Location` entity — see Code Context below for where this actually surfaces.
-- **D-04:** Same "both library and in-session" scope as characters — applies to `AddLocationModal.jsx`, `Library.jsx` (location form), `LocationsLibrary.jsx`, and `Locations.jsx` tab (session-scoped `SessionNotes` field), wherever these fields are editable.
+- **D-04 (corrected during research review):** Same "both library and in-session" scope as characters — applies to `AddLocationModal.jsx`, `Library.jsx`'s internal `LocationsTab` (the actual global-location-library form, reached via the sidebar's Library button → Locations tab), and `Locations.jsx` tab (session-scoped `SessionNotes` field), wherever these fields are editable. **`LocationsLibrary.jsx` is EXCLUDED** — confirmed during research review to be a standalone, unreachable duplicate of `Library.jsx`'s `LocationsTab` (nothing imports or routes to it; `App.jsx` only imports `Library` from `./components/Library`, and `Library.jsx` has its own internal two-tab `LocationsTab`/`CharactersTab` switcher that is the real, user-facing library view). Do not wire `MarkdownField` into `LocationsLibrary.jsx`.
 
 ### Read-Only "Shared Info" Rendering (new finding, not in original requirements text)
 - **D-05:** For **linked** characters/locations (sourced from the library, `char.globalCharacterId` / `loc.globalLocationId` set), the in-session UI shows a read-only "Shared Info" summary box instead of an editable field (`CharacterModal.jsx` linked branch ~line 41-78; `Locations.jsx` `EditLocationModal` ~line 24-45). These currently render the raw string directly (e.g. `{form.personalityTraits}`, `{loc.description}`). **Decision: these read-only summaries must render as markdown too**, not stay as raw text — otherwise a DM who wrote `**bold**` in the Library sees literal asterisks in the session view. `MarkdownField` (or a lighter render-only sibling) needs a read-only/display-only mode, distinct from its edit+preview mode.
@@ -35,6 +35,10 @@ This phase delivers markdown editing (raw syntax + live, dark-themed, auto-growi
 ### Auto-Grow (MDED-07)
 - **D-10:** The editor grows **unbounded** with content — no max-height cap or internal scroll on the field itself. The containing modal/page scrolls instead, matching MDED-07's literal wording ("grows to fit content instead of being fixed-height").
 - **D-11:** In side-by-side mode, the preview pane's height **matches the editor pane's height** (not independent/natural heights) — keeps the two-column layout visually balanced.
+
+### Read-Only Rendering Outside Named Scope (new findings from research review)
+- **D-12:** `SecretsAndHazards`' existing read-only display (the custom per-line `▸` bullet renderer in `Locations.jsx`'s `EditLocationModal` and `AddLocationModal.jsx`'s confirm step) is **kept as-is, NOT switched to markdown rendering** — unlike `Description`/`Notes`, which do get true markdown rendering per D-05. This preserves the current visual behavior for existing hazard notes typed one-per-line without markdown syntax (switching to markdown would collapse them into a single paragraph via `remark-breaks`' single-`<br>`-per-newline behavior, losing the bulleted look).
+- **D-13:** Read-only/truncated display sites **outside** D-05's named "Shared Info" boxes — card-preview snippets (`LocationCard` in `Locations.jsx`, `GlobalLocationCard`/`GlobalCharacterCard` in `Library.jsx`) and `AddFromLibraryModal.jsx`'s pre-add `CharacterPreview` — use **`strip-markdown`** (official `remarkjs`-org unified plugin, AST-based) to render clean plain text, not raw markdown source and not full rendered HTML. `strip-markdown` parses the markdown correctly first (so `#` mid-sentence, e.g. "C# is great", is never mistaken for heading syntax and stays in the output) and only strips characters that were actually parsed as markdown syntax (e.g. the `#`/`**` in "# Real Heading"/"**bold**"). This avoids both raw-syntax clutter (literal `**`/`#` visible) and the truncation-mid-render risk of full HTML rendering in a short snippet. Verified via `gsd_run query package-legitimacy check`: `strip-markdown` — OK verdict, `github.com/remarkjs/strip-markdown`, 508K weekly downloads, not deprecated. Explicitly do NOT use the unrelated `remove-markdown` npm package (different, non-`remarkjs`-org maintainer, regex-based approach) for this.
 
 ### Claude's Discretion
 - Exact split-view breakpoint value/mechanism (D-06) — pick based on actual measured widths of the modals this ships in, favoring a container-based approach if it's not materially more complex than a viewport media query.
@@ -63,6 +67,9 @@ This phase delivers markdown editing (raw syntax + live, dark-themed, auto-growi
 ### Styling/chrome reference
 - `src/client/components/RichTextEditor.jsx` — dark-theme toolbar chrome (`btnCls` pattern, `bg-[#332922]`/`bg-[#d4a574]` active state) to visually match for D-08's toolbar and the overall field container styling
 
+### Research
+- `.planning/phases/02-markdown-editing-character-location-fields/02-RESEARCH.md` — full technical research: package legitimacy, container-query breakpoint measurements, auto-grow pattern, toolbar undo-preservation pitfall, `strip-markdown` package for D-13
+
 </canonical_refs>
 
 <code_context>
@@ -79,11 +86,12 @@ This phase delivers markdown editing (raw syntax + live, dark-themed, auto-growi
 
 ### Integration Points — full usage-site list (confirmed via code read, not just requirement text)
 - `src/client/components/character/CharacterModal.jsx` — `Description`, `PersonalityTraits`, `Flaw`, `QuestHooks` (unlinked/editable branch); `PersonalityTraits`/`Description` read-only in linked branch
-- `src/client/components/Library.jsx` — global character form: `Description`, `PersonalityTraits`, `Flaw`, `QuestHooks`; global location form: `Description`, `Notes`, `SecretsAndHazards`
+- `src/client/components/Library.jsx` — global character form: `Description`, `PersonalityTraits`, `Flaw`, `QuestHooks`; internal `LocationsTab`'s global location form: `Description`, `Notes`, `SecretsAndHazards` (this is the actual routed location-library UI, reached via the sidebar's Library button)
 - `src/client/components/location/AddLocationModal.jsx` — create-step form: `Description`, `Notes`, `SecretsAndHazards`; "Session Notes" field in the confirm/link step
-- `src/client/components/LocationsLibrary.jsx` — `Description`, `Notes`, `SecretsAndHazards` (mirrors `Library.jsx`'s location form)
-- `src/client/components/tabs/Locations.jsx` — `EditLocationModal`: read-only `Description`/`SecretsAndHazards` (D-05), editable `SessionNotes`
-- `src/client/components/character/AddFromLibraryModal.jsx` — "Session Notes" field when linking a library character into a session
+- `src/client/components/tabs/Locations.jsx` — `EditLocationModal`: read-only `Description` (markdown, D-05) / `SecretsAndHazards` (custom bullet renderer kept as-is, D-12), editable `SessionNotes`
+- `src/client/components/character/AddFromLibraryModal.jsx` — "Session Notes" field when linking a library character into a session; `CharacterPreview`'s read-only `personalityTraits`/`flaw`/`description`/`questHooks` display uses `strip-markdown` per D-13 (not full markdown rendering — this is a pre-add preview, outside D-05's named scope)
+- **`src/client/components/LocationsLibrary.jsx` — EXCLUDED (D-04 correction).** Confirmed unreachable dead code: not imported by `App.jsx` or anywhere else in `src/client`. Do not modify for this phase.
+- **Card-preview sites using `strip-markdown` per D-13:** `LocationCard` (`tabs/Locations.jsx` truncated `description`), `GlobalLocationCard` and `GlobalCharacterCard` (`Library.jsx` truncated `description`)
 
 </code_context>
 
