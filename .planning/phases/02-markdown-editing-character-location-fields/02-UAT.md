@@ -11,7 +11,7 @@ updated: 2026-07-12T15:10:00Z
 number: 3
 name: Native Ctrl+Z undo after toolbar insertion (RE-TEST after gap-closure fix)
 expected: |
-  Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step. This was previously reported as not working (see prior report below); plan 02-04 replaced the mutation mechanism with `textarea.setRangeText(...)` specifically to fix this. Requires a rebuild (`start.bat`) to pick up the fix before testing.
+  Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step. This was previously reported as not working (see prior report below); plan 02-04 replaced the mutation mechanism with `textarea.setRangeText(...)` specifically to fix this. A follow-up fix (commit 528c6c9) also changed the selection-restore from requestAnimationFrame to synchronous, since the async version was silently losing a race against React's own re-render — this was found while investigating a separate reported caret-position bug, and it means Bold/Italic wrapping now also correctly re-selects just the wrapped text (e.g. "hello" inside "**hello**"), not the whole "**hello**" span as before. Requires a rebuild (`start.bat`) to pick up the fix before testing.
 awaiting: user response
 
 ## Tests
