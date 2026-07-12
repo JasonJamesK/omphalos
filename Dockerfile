@@ -11,12 +11,14 @@ RUN npm run build
 # Stage 2: Build .NET backend
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
 WORKDIR /src
-COPY Omphalos.slnx ./
 COPY src/Omphalos.Domain/Omphalos.Domain.csproj src/Omphalos.Domain/
 COPY src/Omphalos.Repository/Omphalos.Repository.csproj src/Omphalos.Repository/
 COPY src/Omphalos.Services/Omphalos.Services.csproj src/Omphalos.Services/
 COPY src/Omphalos.Web/Omphalos.Web.csproj src/Omphalos.Web/
-RUN dotnet restore
+# Restore just the runtime project graph — the solution also contains
+# Omphalos.UnitTests/Omphalos.IntegrationTests, which aren't needed to
+# publish Omphalos.Web and whose .csproj files aren't copied into this stage.
+RUN dotnet restore src/Omphalos.Web/Omphalos.Web.csproj
 COPY src/ src/
 RUN dotnet publish src/Omphalos.Web/Omphalos.Web.csproj -c Release -o /app/publish
 
