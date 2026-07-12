@@ -115,3 +115,14 @@ None — no external service configuration required.
 ---
 *Phase: 02-markdown-editing-character-location-fields*
 *Completed: 2026-07-12*
+
+## Self-Check: PASSED
+
+- FOUND: src/client/components/markdown/markdownToolbar.js
+- FOUND: .planning/phases/02-markdown-editing-character-location-fields/02-RESEARCH.md
+- FOUND: .planning/phases/02-markdown-editing-character-location-fields/02-04-SUMMARY.md
+- FOUND commit: 527a4ad (Task 1)
+- FOUND commit: d3cba1f (Task 2)
+- FOUND commit: 476fd28 (SUMMARY)
+- PASS: `setNativeTextareaValue` no longer present in markdownToolbar.js
+- PASS: `setRangeText` present in markdownToolbar.js
