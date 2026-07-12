@@ -9,9 +9,11 @@ updated: 2026-07-12T15:10:00Z
 ## Current Test
 
 number: 3
-name: Native Ctrl+Z undo after toolbar insertion (RE-TEST after gap-closure fix)
+name: Native Ctrl+Z undo after toolbar insertion (RE-TEST #2, execCommand rewrite)
 expected: |
-  Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step. This was previously reported as not working (see prior report below); plan 02-04 replaced the mutation mechanism with `textarea.setRangeText(...)` specifically to fix this. A follow-up fix (commit 528c6c9) also changed the selection-restore from requestAnimationFrame to synchronous, since the async version was silently losing a race against React's own re-render — this was found while investigating a separate reported caret-position bug, and it means Bold/Italic wrapping now also correctly re-selects just the wrapped text (e.g. "hello" inside "**hello**"), not the whole "**hello**" span as before. Requires a rebuild (`start.bat`) to pick up the fix before testing.
+  Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step.
+
+  History: plan 02-04 first replaced the native-value-setter mutation with `textarea.setRangeText(...)`, believed at the time to integrate with native undo. User re-tested against the rebuilt app (commit 3428e0c or later) and confirmed Ctrl+Z still did nothing. Commit 92e4370 replaced setRangeText with `document.execCommand('insertText', ...)`, following the pattern used by a proven cross-browser library (text-field-edit) built specifically for this problem — execCommand goes through the same editing pipeline real keystrokes use. This project's own browser-automation tooling cannot exercise native Ctrl+Z at all (confirmed via a control test: plain real-keystroke-typed text with zero toolbar involvement also does not undo through it), so this could only be verified for content/selection correctness, not the actual undo behavior — that still needs your real keyboard. Requires a rebuild (`start.bat`) to pick up commit 92e4370 before testing.
 awaiting: user response
 
 ## Tests
