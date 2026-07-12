@@ -5,19 +5,27 @@
 // be focused first, since the native editing/undo pipeline only tracks edits on the
 // active element.
 //
-// A synthetic "input" event is dispatched afterward purely so React's controlled
-// component reconciliation notices the value change and fires onChange to keep
-// React state in sync — setRangeText is not guaranteed to emit an input event on
+// The caller-supplied selectionStart/selectionEnd are restored synchronously, right
+// after setRangeText and before the input event below — not via requestAnimationFrame.
+// setRangeText's own 'preserve' select-mode only shifts a selection that sat strictly
+// after the edited range; a selection sitting exactly at the edit boundary (e.g. an
+// empty cursor at the insertion point) is left untouched, which is wrong for every
+// caller here. A requestAnimationFrame-deferred restore doesn't reliably fix this
+// either: by the time it runs, React's own re-render (triggered by the dispatched
+// input event) has already re-committed the textarea and reset selectionStart/End,
+// discarding the deferred restore. Restoring synchronously, before React even knows
+// about the change, is what actually sticks.
+//
+// The synthetic "input" event dispatched afterward exists purely so React's
+// controlled-component reconciliation notices the value change and fires onChange to
+// keep React state in sync — setRangeText is not guaranteed to emit an input event on
 // its own. This dispatch is only a notification; it does not touch the undo stack.
 function applyRangeEdit(textarea, start, end, replacement, selectionStart, selectionEnd) {
   if (!textarea) return
   textarea.focus()
   textarea.setRangeText(replacement, start, end, 'preserve')
+  textarea.setSelectionRange(selectionStart, selectionEnd)
   textarea.dispatchEvent(new Event('input', { bubbles: true }))
-  requestAnimationFrame(() => {
-    textarea.focus()
-    textarea.setSelectionRange(selectionStart, selectionEnd)
-  })
 }
 
 // Wraps the current selection with `before`/`after` markdown syntax (e.g. bold, italic).
