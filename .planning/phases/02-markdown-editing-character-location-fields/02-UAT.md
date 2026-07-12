@@ -3,18 +3,12 @@ status: testing
 phase: 02-markdown-editing-character-location-fields
 source: [02-VERIFICATION.md]
 started: 2026-07-12T00:00:00Z
-updated: 2026-07-12T15:10:00Z
+updated: 2026-07-12T15:30:00Z
 ---
 
 ## Current Test
 
-number: 3
-name: Native Ctrl+Z undo after toolbar insertion (RE-TEST #2, execCommand rewrite)
-expected: |
-  Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step.
-
-  History: plan 02-04 first replaced the native-value-setter mutation with `textarea.setRangeText(...)`, believed at the time to integrate with native undo. User re-tested against the rebuilt app (commit 3428e0c or later) and confirmed Ctrl+Z still did nothing. Commit 92e4370 replaced setRangeText with `document.execCommand('insertText', ...)`, following the pattern used by a proven cross-browser library (text-field-edit) built specifically for this problem — execCommand goes through the same editing pipeline real keystrokes use. This project's own browser-automation tooling cannot exercise native Ctrl+Z at all (confirmed via a control test: plain real-keystroke-typed text with zero toolbar involvement also does not undo through it), so this could only be verified for content/selection correctness, not the actual undo behavior — that still needs your real keyboard. Requires a rebuild (`start.bat`) to pick up commit 92e4370 before testing.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -28,8 +22,8 @@ result: pass
 
 ### 3. Native Ctrl+Z undo after toolbar insertion
 expected: Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step.
-result: [pending]
-note: RE-TEST after gap-closure fix (plan 02-04, commit 527a4ad + follow-up WR-01 fix in commit 3428e0c). Original report below is preserved for history.
+result: pass
+note: Confirmed working by user against the rebuilt app after the execCommand rewrite (commit 92e4370). Took 3 attempts to land: (1) setNativeTextareaValue → setRangeText fix (plan 02-04, commit 527a4ad) plus a line-start off-by-one fix (commit 3428e0c) — still failed live. (2) Fixed a separate rAF-timing selection-restore race (commit 528c6c9) — still failed live. (3) Replaced setRangeText with document.execCommand('insertText', ...), matching the proven text-field-edit library's approach (commit 92e4370) — this one worked. Original report preserved below for history.
 previously_reported: "ctrl + z doesn't seem to do anything inside a markdown text field"
 previous_severity: major
 
@@ -40,27 +34,25 @@ result: pass
 ## Summary
 
 total: 4
-passed: 3
+passed: 4
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
 - truth: "Clicking Bold to wrap a selection, typing more text, then pressing Ctrl+Z undoes the Bold insertion as its own discrete step."
-  status: fix_applied_pending_reconfirmation
+  status: resolved
   reason: "User reported: ctrl + z doesn't seem to do anything inside a markdown text field"
   severity: major
   test: 3
-  root_cause: "markdownToolbar.js's setNativeTextareaValue() mutates the textarea via the native HTMLTextAreaElement.prototype.value setter + dispatchEvent(new Event('input')). This fixes React's controlled-input reconciliation but does NOT preserve the browser's native undo stack — browsers only track undo history through the real editing pipeline (keystrokes, IME, cut/paste, execCommand), not synthetic 'input' events. Confirmed via Mozilla Bugzilla #1523270 and code inspection: the pattern documented in 02-RESEARCH.md Pattern 4 / 02-CONTEXT.md D-08 as 'preserving native undo' does not actually do so. Not a global keyboard-shortcut interception issue (ruled out: no onKeyDown/preventDefault/stopPropagation anywhere in MarkdownField.jsx, markdownToolbar.js, or App.jsx's global shortcut handler). Plain typing is unaffected since it never calls setNativeTextareaValue."
+  root_cause: "markdownToolbar.js's setNativeTextareaValue() mutated the textarea via the native HTMLTextAreaElement.prototype.value setter + dispatchEvent(new Event('input')). This satisfies React's controlled-input reconciliation but does NOT preserve the browser's native undo stack. The first replacement attempt (textarea.setRangeText(...), matching Mozilla/MDN guidance and Mozilla Bugzilla #1523270's framing of the problem) also failed live user re-testing — setRangeText did not reliably register with the undo manager for this scenario either, despite being the commonly-recommended modern API. The working fix was document.execCommand('insertText', ...), matching the approach used by text-field-edit (github.com/fregante/text-field-edit), a cross-browser library maintained specifically for reliable undo-preserving programmatic text insertion — execCommand goes through the same editing-command pipeline real keystrokes use, unlike setRangeText."
   artifacts:
     - path: "src/client/components/markdown/markdownToolbar.js"
-      issue: "setNativeTextareaValue() (native setter + dispatchEvent) does not register with the browser's native undo manager"
-    - path: "src/client/components/markdown/MarkdownField.jsx"
-      issue: "Wires all 4 toolbar buttons to the flawed wrapSelection()/insertAtCursor() functions — no bug here itself, but this is where the fix's call sites live"
+      issue: "Rewritten twice: setNativeTextareaValue() -> setRangeText() (commit 527a4ad, insufficient) -> document.execCommand('insertText', ...) (commit 92e4370, confirmed working)"
     - path: ".planning/phases/02-markdown-editing-character-location-fields/02-RESEARCH.md"
-      issue: "Pattern 4 / Pitfall 1 contains the incorrect undo-preservation rationale — should be corrected alongside the code fix"
-  missing:
-    - "Replace the native-setter + dispatchEvent approach in wrapSelection()/insertAtCursor() with textarea.setRangeText(replacement, start, end, selectMode) — goes through the browser's real editing pipeline, is undo-tracked, and still fires a genuine 'input' event React's reconciliation picks up naturally (supported in all modern evergreen browsers including Safari 14.1+)"
+      issue: "Pattern 4 / Pitfall 1 corrected once (commit d3cba1f) to describe setRangeText as the fix; that correction is now itself superseded by the execCommand switch and should be corrected again in a follow-up pass"
+  missing: []
   debug_session: .planning/debug/DEBUG-markdown-toolbar-undo.md
+  resolution_commits: [527a4ad, 3428e0c, d3cba1f, 528c6c9, 92e4370]
