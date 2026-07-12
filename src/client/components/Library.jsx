@@ -119,7 +119,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
 }
 
 function GlobalLocationCard({ loc, onEdit, onDelete }) {
-  const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
+  const hazardLines = stripMarkdown(loc.secretsAndHazards || '').split('\n').filter(Boolean)
   const cleanDescription = stripMarkdown(loc.description)
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">

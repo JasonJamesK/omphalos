@@ -40,7 +40,7 @@ function EditLocationModal({ loc, onSave, onClose }) {
             {loc.secretsAndHazards && (
               <div className="pt-1">
                 <p className="text-xs text-[#b24545] font-semibold uppercase tracking-wide mb-1">Secrets / Hazards</p>
-                {loc.secretsAndHazards.split('\n').filter(Boolean).map((line, i) => (
+                {stripMarkdown(loc.secretsAndHazards).split('\n').filter(Boolean).map((line, i) => (
                   <p key={i} className="text-xs text-[#f0f0f0] flex gap-1.5"><span className="text-[#b24545]">▸</span>{line}</p>
                 ))}
               </div>
@@ -72,7 +72,7 @@ function EditLocationModal({ loc, onSave, onClose }) {
 
 // ─── Location card ────────────────────────────────────────────────────────────
 function LocationCard({ loc, onEdit, onDelete }) {
-  const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
+  const hazardLines = stripMarkdown(loc.secretsAndHazards || '').split('\n').filter(Boolean)
   const isFromLibrary = !!loc.globalLocationId
 
   return (

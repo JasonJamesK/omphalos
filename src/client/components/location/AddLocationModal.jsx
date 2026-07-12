@@ -4,6 +4,7 @@ import CropModal from '../CropModal'
 import { readImageFile } from '../../utils/imageUpload'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
+import { stripMarkdown } from '../markdown/stripMarkdown'
 
 function uid() {
   return `loc-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -256,7 +257,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
               {selected.secretsAndHazards && (
                 <div className="pt-1">
                   <p className="text-xs text-[#b24545] font-semibold uppercase tracking-wide mb-1">Secrets / Hazards</p>
-                  {selected.secretsAndHazards.split('\n').filter(Boolean).map((line, i) => (
+                  {stripMarkdown(selected.secretsAndHazards).split('\n').filter(Boolean).map((line, i) => (
                     <p key={i} className="text-xs text-[#f0f0f0] flex gap-1.5"><span className="text-[#b24545]">▸</span>{line}</p>
                   ))}
                 </div>
