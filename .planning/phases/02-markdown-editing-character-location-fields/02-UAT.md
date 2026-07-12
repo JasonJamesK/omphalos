@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-markdown-editing-character-location-fields
 source: [02-VERIFICATION.md]
 started: 2026-07-12T00:00:00Z
-updated: 2026-07-12T13:00:00Z
+updated: 2026-07-12T13:05:00Z
 ---
 
 ## Current Test
@@ -46,5 +46,14 @@ blocked: 0
   reason: "User reported: ctrl + z doesn't seem to do anything inside a markdown text field"
   severity: major
   test: 3
-  artifacts: []
-  missing: []
+  root_cause: "markdownToolbar.js's setNativeTextareaValue() mutates the textarea via the native HTMLTextAreaElement.prototype.value setter + dispatchEvent(new Event('input')). This fixes React's controlled-input reconciliation but does NOT preserve the browser's native undo stack — browsers only track undo history through the real editing pipeline (keystrokes, IME, cut/paste, execCommand), not synthetic 'input' events. Confirmed via Mozilla Bugzilla #1523270 and code inspection: the pattern documented in 02-RESEARCH.md Pattern 4 / 02-CONTEXT.md D-08 as 'preserving native undo' does not actually do so. Not a global keyboard-shortcut interception issue (ruled out: no onKeyDown/preventDefault/stopPropagation anywhere in MarkdownField.jsx, markdownToolbar.js, or App.jsx's global shortcut handler). Plain typing is unaffected since it never calls setNativeTextareaValue."
+  artifacts:
+    - path: "src/client/components/markdown/markdownToolbar.js"
+      issue: "setNativeTextareaValue() (native setter + dispatchEvent) does not register with the browser's native undo manager"
+    - path: "src/client/components/markdown/MarkdownField.jsx"
+      issue: "Wires all 4 toolbar buttons to the flawed wrapSelection()/insertAtCursor() functions — no bug here itself, but this is where the fix's call sites live"
+    - path: ".planning/phases/02-markdown-editing-character-location-fields/02-RESEARCH.md"
+      issue: "Pattern 4 / Pitfall 1 contains the incorrect undo-preservation rationale — should be corrected alongside the code fix"
+  missing:
+    - "Replace the native-setter + dispatchEvent approach in wrapSelection()/insertAtCursor() with textarea.setRangeText(replacement, start, end, selectMode) — goes through the browser's real editing pipeline, is undo-tracked, and still fires a genuine 'input' event React's reconciliation picks up naturally (supported in all modern evergreen browsers including Safari 14.1+)"
+  debug_session: .planning/debug/DEBUG-markdown-toolbar-undo.md
