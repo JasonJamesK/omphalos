@@ -19,7 +19,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **MDED-01**: DM can write the Session "Overview & Hook" field using markdown syntax with live rendering
 - [ ] **MDED-02**: DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax with live rendering
 - [x] **MDED-03**: DM can write character bios/notes using markdown syntax with live rendering
-- [ ] **MDED-04**: DM can write location descriptions using markdown syntax with live rendering
+- [x] **MDED-04**: DM can write location descriptions using markdown syntax with live rendering
 - [x] **MDED-05**: Markdown fields show a side-by-side edit+preview split view on wide viewports, falling back to an Edit/Preview tab toggle on narrow viewports
 - [x] **MDED-06**: Existing plain-text content (typed with literal line breaks) renders correctly without collapsing into run-on paragraphs (`remark-breaks` shipped alongside `remark-gfm`)
 - [x] **MDED-07**: Markdown fields auto-grow to fit their content instead of being fixed-height boxes
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MDED-01 | Phase 3 | Pending |
 | MDED-02 | Phase 3 | Pending |
 | MDED-03 | Phase 2 | Complete |
-| MDED-04 | Phase 2 | Pending |
+| MDED-04 | Phase 2 | Complete |
 | MDED-05 | Phase 2 | Complete |
 | MDED-06 | Phase 2 | Complete |
 | MDED-07 | Phase 2 | Complete |
