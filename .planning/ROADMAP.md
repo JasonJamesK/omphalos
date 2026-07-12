@@ -60,7 +60,7 @@ Plans:
   3. Existing plain-text content typed with literal line breaks still renders with those line breaks preserved, not collapsed into a run-on paragraph.
   4. The field grows taller to fit typed content instead of staying a fixed-height scrollable box.
 
-**Plans**: 3/3 complete + 1 gap-closure plan (04 — UAT Test 3 undo fix)
+**Plans**: 4/4 plans complete
 **UI hint**: yes
 
 Plans:
@@ -76,7 +76,7 @@ Plans:
 
 **Gap closure** *(UAT Test 3 — depends on 02-01)*
 
-- [ ] 02-04-PLAN.md — Toolbar undo fix: replace native-value-setter mutation with `textarea.setRangeText(...)` so Ctrl+Z undoes toolbar insertions; correct 02-RESEARCH.md Pattern 4/Pitfall 1 rationale (MDED-03, MDED-04; D-08)
+- [x] 02-04-PLAN.md — Toolbar undo fix: replace native-value-setter mutation with `textarea.setRangeText(...)` so Ctrl+Z undoes toolbar insertions; correct 02-RESEARCH.md Pattern 4/Pitfall 1 rationale (MDED-03, MDED-04; D-08)
 
 ### Phase 3: Markdown Editing — Session Prep Fields
 
@@ -128,7 +128,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
-| 2. Markdown Editing — Character & Location Fields | 3/3 | Complete   | 2026-07-12 |
+| 2. Markdown Editing — Character & Location Fields | 4/4 | Complete   | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 0/TBD | Not started | - |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
 
