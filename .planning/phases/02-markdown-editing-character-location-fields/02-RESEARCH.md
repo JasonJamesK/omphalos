@@ -283,39 +283,42 @@ For D-11 (preview pane height matches editor pane height in side-by-side mode): 
 
 ### Pattern 4: Insert-syntax toolbar preserving native undo (D-08)
 
-**What:** Wrap/insert markdown syntax at the current selection using the native `<textarea>` value setter + a real `input` event, not a naive `setState` splice.
+**What:** Wrap/insert markdown syntax at the current selection using `textarea.setRangeText(...)`, not a naive `setState` splice and not a native `value`-property-setter assignment.
 
-**Why it matters:** A naive `onClick` handler that does `set('description', before + '**' + selected + '**' + after)` updates the *React* state and the *displayed* value correctly, but the browser's native undo stack (Ctrl+Z) is tied to the DOM's internal `_valueTracker`, which only updates on a real `input` event dispatched through the element. Skipping this means the user's next Ctrl+Z after clicking "Bold" silently does nothing (or worse, jumps back further than expected) — a subtle, hard-to-notice bug class specific to controlled React inputs.
+**Why it matters:** A naive `onClick` handler that does `set('description', before + '**' + selected + '**' + after)` updates the *React* state and the *displayed* value correctly, but the browser's native undo stack (Ctrl+Z) is driven by the browser's own internal text-editing command pipeline — real keystrokes, IME composition, cut/paste, drag-drop, `setRangeText`, or `document.execCommand` — not by any DOM event. Skipping the real editing pipeline means the user's next Ctrl+Z after clicking "Bold" silently does nothing — a subtle, hard-to-notice bug class specific to controlled React inputs.
 
-**Example:**
+*Correction (2026-07-12): an earlier version of this pattern used the native `HTMLTextAreaElement.prototype.value` property-descriptor setter plus `dispatchEvent(new Event('input'))`, on the claim that it "preserves native undo." That claim was wrong and was caught by real-browser UAT (see `.planning/debug/DEBUG-markdown-toolbar-undo.md`). The native-setter + `dispatchEvent` pattern only makes React's controlled-component reconciliation notice a programmatic value change so `onChange` fires and React state stays in sync — it does nothing for the browser's own undo manager, because that manager is not driven by the `input` DOM event. Any script-driven `.value` assignment, even through the native property setter, clears/breaks the field's undo history (corroborated by Mozilla Bugzilla #1523270). The corrected pattern below uses `setRangeText`, which routes the edit through the browser's real editing pipeline and is genuinely undo-tracked.*
+
+**Example (corrected):**
 ```jsx
-// Source: documented workaround pattern for React controlled-input native value setters
-// (originates from Facebook's own test-utils "simulate native input" trick, widely referenced,
-// e.g. dev.to/poeticgeek/in-react-component-controls-you-4ed8) — no library needed
-function setNativeTextareaValue(textarea, value) {
-  const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
-  setter.call(textarea, value)
+// setRangeText routes the edit through the browser's real text-editing pipeline
+// (the same pipeline keystrokes/IME/cut-paste use), so the change is recorded on
+// the native undo stack as a discrete, undoable step.
+function applyRangeEdit(textarea, start, end, replacement, selectionStart, selectionEnd) {
+  textarea.focus()
+  textarea.setRangeText(replacement, start, end, 'preserve')
+  // Retained purely so React's controlled-component reconciliation notices the
+  // change and fires onChange — this dispatch does not touch the undo stack.
   textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  requestAnimationFrame(() => {
+    textarea.focus()
+    textarea.setSelectionRange(selectionStart, selectionEnd)
+  })
 }
 
 function wrapSelection(textareaRef, before, after = before) {
   const el = textareaRef.current
   const { selectionStart: start, selectionEnd: end, value } = el
   const selected = value.slice(start, end)
-  const next = value.slice(0, start) + before + selected + after + value.slice(end)
-  setNativeTextareaValue(el, next)
-  // restore cursor/selection after React re-renders the controlled value
-  requestAnimationFrame(() => {
-    el.focus()
-    el.setSelectionRange(start + before.length, start + before.length + selected.length)
-  })
+  applyRangeEdit(el, start, end, before + selected + after, start + before.length, start + before.length + selected.length)
 }
 ```
-`document.execCommand('insertText', …)` is a documented deprecated API (still functional in evergreen browsers but formally deprecated in the HTML spec) and is explicitly avoided here in favor of the native-setter approach, which works identically across all supported browsers without depending on a deprecated command.
+`textarea.setRangeText(...)` is broadly supported in modern evergreen browsers and is not deprecated. `document.execCommand('insertText', …)` is also undo-tracked (it goes through the same real editing pipeline) but is formally deprecated in the HTML Living Standard; `setRangeText` is the non-deprecated equivalent and is what the shipped fix uses.
 
 ### Anti-Patterns to Avoid
 
 - **Naive `setState` splice for toolbar buttons:** breaks native undo (Ctrl+Z) — see Pattern 4.
+- **Native `value`-property-setter + `dispatchEvent` for toolbar buttons:** *(Correction, 2026-07-12)* also breaks native undo (Ctrl+Z), despite earlier guidance in this document claiming otherwise — the DOM `input` event does not drive the browser's undo manager. Use `setRangeText` (Pattern 4) instead.
 - **`@tailwindcss/typography` (`prose` classes) for the preview pane:** not installed, and this codebase already has an established hand-rolled scoped-CSS convention (`.tiptap-editor .ProseMirror`) for exactly this kind of styling — adding a second, different styling mechanism (a Tailwind plugin) for a visually similar problem (dark rich-text-like typography) is inconsistent with the existing pattern and pulls in an unused-elsewhere dependency.
 - **`window`-width or Tailwind `md:`/`lg:` viewport breakpoints for split-view:** measurably wrong for this phase — see Pattern 2's width table. A DM on a 4K monitor with `CharacterModal.jsx` open still only has ~330px of field width for `Description`/`PersonalityTraits`; a global viewport breakpoint would incorrectly force side-by-side there.
 - **`max-height` + internal scroll on the textarea or preview pane:** explicitly excluded by D-10 — the modal already scrolls.
@@ -336,9 +339,9 @@ function wrapSelection(textareaRef, before, after = before) {
 ### Pitfall 1: Toolbar buttons silently breaking Ctrl+Z
 
 **What goes wrong:** DM clicks "Bold", types more text, then hits Ctrl+Z expecting to undo their last keystrokes — instead nothing happens, or the undo jumps unexpectedly.
-**Why it happens:** A naive React `setState`-based text splice never dispatches a real DOM `input` event, so the browser's native undo stack never registers the change as an undoable step.
-**How to avoid:** Use the native-setter + `dispatchEvent(new Event('input'))` pattern (Pattern 4) for every toolbar-triggered mutation.
-**Warning signs:** During manual testing, click a toolbar button then immediately press Ctrl+Z — if the button's insertion isn't undone, the pitfall is present.
+**Why it happens:** Any script-driven assignment to a controlled textarea's `.value` — whether via a naive React `setState` splice or via the native `value`-property-descriptor setter plus `dispatchEvent(new Event('input'))` — bypasses the browser's real internal text-editing command pipeline, so the native undo manager never registers the change as an undoable step. The `input` DOM event only notifies JS listeners (including React); it does not drive the browser's own undo stack.
+**How to avoid:** Use `textarea.setRangeText(...)` (Pattern 4) for every toolbar-triggered mutation — it routes the edit through the browser's real editing pipeline, so it is genuinely undo-tracked, and pair it with a synthetic `input` dispatch afterward purely to keep React's controlled value in sync.
+**Warning signs:** During manual testing, click a toolbar button then immediately press Ctrl+Z — if the button's insertion isn't undone, the pitfall is present. *(Correction, 2026-07-12: this is exactly what UAT Test 3 caught after the earlier native-setter version of Pattern 4 shipped — see `.planning/debug/DEBUG-markdown-toolbar-undo.md`.)*
 
 ### Pitfall 2: `remark-breaks` does not fix multi-blank-line collapsing
 
@@ -396,7 +399,7 @@ import remarkBreaks from 'remark-breaks'
 | `@tailwindcss/container-queries` plugin required for any container query in Tailwind projects | Tailwind v4 ships `@container` support in core; **this project is on v3.4.17**, so the plugin (or native CSS) is still required | Tailwind v4 (2025) | Not directly relevant unless/until this project upgrades to Tailwind v4 — noted so the plan doesn't assume core support that doesn't exist at v3.4 |
 
 **Deprecated/outdated:**
-- `document.execCommand('insertText', …)`: formally deprecated in the HTML Living Standard (still implemented in evergreen browsers but not future-proof); avoided here in favor of the native-value-setter + `dispatchEvent` pattern (Pattern 4).
+- `document.execCommand('insertText', …)`: formally deprecated in the HTML Living Standard (still implemented in evergreen browsers but not future-proof); the shipped fix uses `textarea.setRangeText(...)` instead (Pattern 4) — the non-deprecated equivalent that also routes through the real editing pipeline and is undo-tracked. *(Correction, 2026-07-12: an earlier version of this note recommended the native `value`-property-setter + `dispatchEvent` pattern over both of these on undo-preservation grounds; that recommendation was factually wrong — see Pattern 4's correction note.)*
 
 ## Assumptions Log
 
