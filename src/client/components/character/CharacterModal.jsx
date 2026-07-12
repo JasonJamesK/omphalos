@@ -5,6 +5,8 @@ import StatBlockView from './StatBlockView'
 import CropModal from '../CropModal'
 import NameGenModal from '../NameGenModal'
 import { readImageFile } from '../../utils/imageUpload'
+import MarkdownField from '../markdown/MarkdownField'
+import MarkdownPreview from '../markdown/MarkdownPreview'
 
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard']
 const RACES = ['Human', 'Elf', 'Dwarf', 'Halfling', 'Gnome', 'Half-Orc', 'Tiefling', 'Dragonborn', 'Half-Elf']
@@ -70,7 +72,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                           <div key={k}><span className="text-[#666]">{k}: </span><span className="text-[#d4d4d4]">{v}</span></div>
                         ))}
                       </div>
-                      {form.personalityTraits && <p className="text-xs text-[#999999] leading-relaxed">{form.personalityTraits}</p>}
+                      <MarkdownPreview value={form.personalityTraits} className="text-xs text-[#999999]" />
                     </>
                   )}
                 </div>
@@ -95,7 +97,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
               )}
               <div>
                 <label className={lbl}>Session Notes</label>
-                <textarea className={inp + ' resize-none'} rows={4} value={form.sessionNotes || ''} onChange={e => set('sessionNotes', e.target.value || null)} placeholder="Notes specific to this session — what happened, status changes, etc." />
+                <MarkdownField value={form.sessionNotes || ''} onChange={v => set('sessionNotes', v || null)} placeholder="Notes specific to this session — what happened, status changes, etc." />
               </div>
             </div>
 
@@ -180,18 +182,18 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                   </div>
                   <div>
                     <label className={lbl}>Personality Traits</label>
-                    <textarea className={inp + ' resize-none'} rows={3} value={form.personalityTraits} onChange={e => set('personalityTraits', e.target.value)} />
+                    <MarkdownField value={form.personalityTraits} onChange={v => set('personalityTraits', v)} className={inp} />
                   </div>
                   <div>
                     <label className={lbl}>Flaw</label>
-                    <textarea className={inp + ' resize-none'} rows={2} value={form.flaw} onChange={e => set('flaw', e.target.value)} />
+                    <MarkdownField value={form.flaw} onChange={v => set('flaw', v)} className={inp} />
                   </div>
                 </>
               )}
 
               <div>
                 <label className={lbl}>{form.isNpc ? 'Flavor Text / Notes' : 'Description'}</label>
-                <textarea className={inp + ' resize-none'} rows={form.isNpc ? 4 : 3} value={form.description} onChange={e => set('description', e.target.value)} placeholder={form.isNpc ? 'Appearance, behavior, DM notes...' : 'Physical appearance, background...'} />
+                <MarkdownField value={form.description} onChange={v => set('description', v)} className={inp} placeholder={form.isNpc ? 'Appearance, behavior, DM notes...' : 'Physical appearance, background...'} />
               </div>
             </div>
             <div className="space-y-3">
@@ -224,7 +226,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                   </div>
                   <div>
                     <label className={lbl}>Quest Hooks</label>
-                    <textarea className={inp + ' resize-none'} rows={3} value={form.questHooks} onChange={e => set('questHooks', e.target.value)} placeholder="Personal quests, goals, secrets..." />
+                    <MarkdownField value={form.questHooks} onChange={v => set('questHooks', v)} className={inp} placeholder="Personal quests, goals, secrets..." />
                   </div>
                 </>
               )}
