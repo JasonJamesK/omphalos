@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 phase: 01-session-persistence-reliability
 source: [01-VERIFICATION.md]
 started: 2026-07-11T00:00:00Z
@@ -8,10 +8,7 @@ updated: 2026-07-12T00:00:00Z
 
 ## Current Test
 
-number: 4
-name: Full test suite on a Docker-capable machine
-expected: 7/7 tests pass (4 unit + 3 integration)
-awaiting: none — all tests complete
+[testing complete]
 
 ## Tests
 
