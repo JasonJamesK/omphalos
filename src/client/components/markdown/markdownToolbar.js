@@ -1,31 +1,29 @@
 // Replaces the `[start, end)` range of a textarea's text with `replacement` using
-// setRangeText, which routes the edit through the browser's real text-editing
-// pipeline (the same pipeline keystrokes, IME, and cut/paste use) so the change is
-// recorded on the native undo stack as a discrete, undoable step. The textarea must
-// be focused first, since the native editing/undo pipeline only tracks edits on the
-// active element.
+// document.execCommand('insertText', ...) rather than setRangeText. setRangeText is
+// the newer, spec-recommended API, but in real-browser testing here it did not
+// reliably register with the native undo (Ctrl+Z) stack for this toolbar's use case.
+// execCommand('insertText') goes through the same editing-command pipeline real
+// keystrokes use, which is why battle-tested cross-browser text-editing libraries
+// (e.g. https://github.com/fregante/text-field-edit, used across many browser
+// extensions specifically for reliable undo-preserving programmatic text insertion)
+// use it over setRangeText despite it being marked deprecated in the HTML spec —
+// deprecated-in-spec has not meant unreliable-in-practice here. execCommand also
+// fires a genuine (non-synthetic) input event as part of its own operation, so no
+// manual dispatchEvent call is needed for React's onChange to fire.
 //
-// The caller-supplied selectionStart/selectionEnd are restored synchronously, right
-// after setRangeText and before the input event below — not via requestAnimationFrame.
-// setRangeText's own 'preserve' select-mode only shifts a selection that sat strictly
-// after the edited range; a selection sitting exactly at the edit boundary (e.g. an
-// empty cursor at the insertion point) is left untouched, which is wrong for every
-// caller here. A requestAnimationFrame-deferred restore doesn't reliably fix this
-// either: by the time it runs, React's own re-render (triggered by the dispatched
-// input event) has already re-committed the textarea and reset selectionStart/End,
-// discarding the deferred restore. Restoring synchronously, before React even knows
-// about the change, is what actually sticks.
-//
-// The synthetic "input" event dispatched afterward exists purely so React's
-// controlled-component reconciliation notices the value change and fires onChange to
-// keep React state in sync — setRangeText is not guaranteed to emit an input event on
-// its own. This dispatch is only a notification; it does not touch the undo stack.
-function applyRangeEdit(textarea, start, end, replacement, selectionStart, selectionEnd) {
+// execCommand operates on the field's *current selection*, so the range to replace
+// is first selected, then execCommand replaces it. The textarea must be focused —
+// clicking a toolbar button moves focus to the button first, so focus is restored
+// to the textarea before execCommand runs.
+function replaceRange(textarea, start, end, replacement) {
   if (!textarea) return
-  textarea.focus()
-  textarea.setRangeText(replacement, start, end, 'preserve')
-  textarea.setSelectionRange(selectionStart, selectionEnd)
-  textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  textarea.setSelectionRange(start, end)
+  if (document.activeElement !== textarea) textarea.focus()
+  if (replacement === '') {
+    document.execCommand('delete')
+  } else {
+    document.execCommand('insertText', false, replacement)
+  }
 }
 
 // Wraps the current selection with `before`/`after` markdown syntax (e.g. bold, italic).
@@ -34,7 +32,10 @@ export function wrapSelection(textareaRef, before, after = before) {
   if (!el) return
   const { selectionStart: start, selectionEnd: end, value } = el
   const selected = value.slice(start, end)
-  applyRangeEdit(el, start, end, before + selected + after, start + before.length, start + before.length + selected.length)
+  replaceRange(el, start, end, before + selected + after)
+  // Reselect the originally-selected text, now sitting inside the markers.
+  el.selectionStart = start + before.length
+  el.selectionEnd = start + before.length + selected.length
 }
 
 // Inserts `text` at the start of the current line (e.g. heading, bullet-list prefixes).
@@ -43,5 +44,7 @@ export function insertAtCursor(textareaRef, text) {
   if (!el) return
   const { selectionStart: start, value } = el
   const lineStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1
-  applyRangeEdit(el, lineStart, lineStart, text, start + text.length, start + text.length)
+  replaceRange(el, lineStart, lineStart, text)
+  el.selectionStart = start + text.length
+  el.selectionEnd = start + text.length
 }
