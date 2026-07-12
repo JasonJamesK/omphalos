@@ -2,6 +2,8 @@ import { useState, useMemo, useRef } from 'react'
 import { db } from '../../db/index.js'
 import CropModal from '../CropModal'
 import { readImageFile } from '../../utils/imageUpload'
+import MarkdownField from '../markdown/MarkdownField'
+import MarkdownPreview from '../markdown/MarkdownPreview'
 
 function uid() {
   return `loc-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -206,15 +208,30 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
             </div>
             <div>
               <label className={labelCls}>Description</label>
-              <textarea className={inputCls} rows={4} value={createForm.description} onChange={e => setCreateForm(p => ({ ...p, description: e.target.value }))} placeholder="Appearance, atmosphere, notable features..." />
+              <MarkdownField
+                value={createForm.description}
+                onChange={v => setCreateForm(p => ({ ...p, description: v }))}
+                className={inputCls}
+                placeholder="Appearance, atmosphere, notable features..."
+              />
             </div>
             <div>
               <label className={labelCls}>Secrets & Hazards</label>
-              <textarea className={inputCls} rows={3} value={createForm.secretsAndHazards} onChange={e => setCreateForm(p => ({ ...p, secretsAndHazards: e.target.value }))} placeholder="Traps, hidden passages, lore secrets... (one per line)" />
+              <MarkdownField
+                value={createForm.secretsAndHazards}
+                onChange={v => setCreateForm(p => ({ ...p, secretsAndHazards: v }))}
+                className={inputCls}
+                placeholder="Traps, hidden passages, lore secrets... (one per line)"
+              />
             </div>
             <div>
               <label className={labelCls}>Notes</label>
-              <textarea className={inputCls} rows={2} value={createForm.notes} onChange={e => setCreateForm(p => ({ ...p, notes: e.target.value }))} placeholder="Additional DM notes..." />
+              <MarkdownField
+                value={createForm.notes}
+                onChange={v => setCreateForm(p => ({ ...p, notes: v }))}
+                className={inputCls}
+                placeholder="Additional DM notes..."
+              />
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
               <button onClick={() => setStep('pick')} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Back</button>
@@ -235,7 +252,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
             {/* Read-only preview of the global location */}
             <div className="bg-[#161310] rounded p-3 space-y-1.5">
               {selected.type && <p className="text-xs text-[#d4a574]">{selected.type}</p>}
-              {selected.description && <p className="text-sm text-[#d4d4d4] leading-relaxed">{selected.description}</p>}
+              {selected.description && <MarkdownPreview value={selected.description} className="text-sm text-[#d4d4d4]" />}
               {selected.secretsAndHazards && (
                 <div className="pt-1">
                   <p className="text-xs text-[#b24545] font-semibold uppercase tracking-wide mb-1">Secrets / Hazards</p>
@@ -247,13 +264,11 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
             </div>
             <div>
               <label className={labelCls}>Session Notes <span className="text-[#555]">(optional)</span></label>
-              <textarea
-                className={inputCls}
-                rows={4}
+              <MarkdownField
                 value={sessionNotes}
-                onChange={e => setSessionNotes(e.target.value)}
+                onChange={setSessionNotes}
+                className={inputCls}
                 placeholder="What happened here this session? Player discoveries, events, changes..."
-                autoFocus
               />
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
