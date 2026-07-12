@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Portrait from './Portrait'
 import StatBlockView from './StatBlockView'
+import MarkdownField from '../markdown/MarkdownField'
+import { stripMarkdown } from '../markdown/stripMarkdown'
 
 const inp = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
 
@@ -60,7 +62,7 @@ function CharacterPreview({ char, compact = false }) {
       ].filter(([, v]) => v).map(([label, value]) => (
         <div key={label} className="mb-2">
           <p className="text-xs text-[#666] uppercase tracking-wide mb-0.5">{label}</p>
-          <p className="text-xs text-[#d4d4d4] leading-relaxed whitespace-pre-wrap">{value}</p>
+          <p className="text-xs text-[#d4d4d4] leading-relaxed whitespace-pre-wrap">{stripMarkdown(value)}</p>
         </div>
       ))}
 
@@ -175,13 +177,11 @@ export default function AddFromLibraryModal({ globalCharacters, onAdd, onClose, 
               </div>
               <div>
                 <label className="block text-xs text-[#999999] mb-1">Session Notes <span className="text-[#555]">(optional)</span></label>
-                <textarea
-                  className={inp + ' resize-none'}
-                  rows={5}
+                <MarkdownField
                   value={sessionNotes}
-                  onChange={e => setSessionNotes(e.target.value)}
+                  onChange={setSessionNotes}
+                  className={inp}
                   placeholder="Notes specific to this session — how you met them, their current status, etc."
-                  autoFocus
                 />
               </div>
             </div>

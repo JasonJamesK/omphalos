@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import DeleteConfirm from '../DeleteConfirm'
 import AddLocationModal from '../location/AddLocationModal'
+import MarkdownField from '../markdown/MarkdownField'
+import MarkdownPreview from '../markdown/MarkdownPreview'
+import { stripMarkdown } from '../markdown/stripMarkdown'
 
 const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
 const labelCls = 'block text-xs text-[#999999] mb-1'
@@ -33,7 +36,7 @@ function EditLocationModal({ loc, onSave, onClose }) {
               </div>
             )}
             {loc.type && <p className="text-xs text-[#d4a574]">{loc.type}</p>}
-            {loc.description && <p className="text-sm text-[#d4d4d4] leading-relaxed">{loc.description}</p>}
+            {loc.description && <MarkdownPreview value={loc.description} className="text-sm text-[#d4d4d4]" />}
             {loc.secretsAndHazards && (
               <div className="pt-1">
                 <p className="text-xs text-[#b24545] font-semibold uppercase tracking-wide mb-1">Secrets / Hazards</p>
@@ -45,13 +48,11 @@ function EditLocationModal({ loc, onSave, onClose }) {
           </div>
           <div>
             <label className={labelCls}>Session Notes</label>
-            <textarea
-              className={inputCls}
-              rows={5}
+            <MarkdownField
               value={sessionNotes}
-              onChange={e => setSessionNotes(e.target.value)}
+              onChange={setSessionNotes}
+              className={inputCls}
               placeholder="What happened here this session? Player discoveries, events, changes..."
-              autoFocus
             />
           </div>
           <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
@@ -110,7 +111,10 @@ function LocationCard({ loc, onEdit, onDelete }) {
       </div>
       {loc.description && (
         <div className="px-4 py-3 text-sm text-[#d4d4d4] leading-relaxed">
-          {loc.description.length > 220 ? loc.description.slice(0, 220) + '…' : loc.description}
+          {(() => {
+            const stripped = stripMarkdown(loc.description)
+            return stripped.length > 220 ? stripped.slice(0, 220) + '…' : stripped
+          })()}
         </div>
       )}
       {hazardLines.length > 0 && (
@@ -129,7 +133,7 @@ function LocationCard({ loc, onEdit, onDelete }) {
       {loc.sessionNotes && (
         <div className="px-4 py-3 border-t border-[#332922] bg-[#161310]/50">
           <p className="text-xs text-[#6b8e6b] font-semibold mb-1 uppercase tracking-wide">Session Notes</p>
-          <p className="text-xs text-[#d4d4d4] leading-relaxed">{loc.sessionNotes}</p>
+          <MarkdownPreview value={loc.sessionNotes} className="text-xs text-[#d4d4d4]" />
         </div>
       )}
     </div>
