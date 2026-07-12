@@ -159,3 +159,12 @@ None - no external service configuration required.
 ---
 *Phase: 02-markdown-editing-character-location-fields*
 *Completed: 2026-07-12*
+
+## Self-Check: PASSED
+
+- FOUND: src/client/components/Library.jsx
+- FOUND: src/client/components/markdown/stripMarkdown.js
+- FOUND: .planning/phases/02-markdown-editing-character-location-fields/02-02-SUMMARY.md
+- FOUND: commit cedcf4c
+- FOUND: commit 7879a70
+- FOUND: commit 2d36f89
