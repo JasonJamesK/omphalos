@@ -60,7 +60,7 @@ Plans:
   3. Existing plain-text content typed with literal line breaks still renders with those line breaks preserved, not collapsed into a run-on paragraph.
   4. The field grows taller to fit typed content instead of staying a fixed-height scrollable box.
 
-**Plans**: 3/3 plans complete
+**Plans**: 3/3 complete + 1 gap-closure plan (04 — UAT Test 3 undo fix)
 **UI hint**: yes
 
 Plans:
@@ -73,6 +73,10 @@ Plans:
 
 - [x] 02-02-PLAN.md — Library rollout: GlobalCharacterModal + GlobalLocationModal markdown fields, card previews strip-cleaned (MDED-03, MDED-04; D-01, D-02, D-03, D-04, D-13)
 - [x] 02-03-PLAN.md — In-session location + library-link rollout: Locations tab, AddLocationModal, AddFromLibraryModal (MDED-03, MDED-04; D-04, D-05, D-12, D-13, D-14)
+
+**Gap closure** *(UAT Test 3 — depends on 02-01)*
+
+- [ ] 02-04-PLAN.md — Toolbar undo fix: replace native-value-setter mutation with `textarea.setRangeText(...)` so Ctrl+Z undoes toolbar insertions; correct 02-RESEARCH.md Pattern 4/Pitfall 1 rationale (MDED-03, MDED-04; D-08)
 
 ### Phase 3: Markdown Editing — Session Prep Fields
 
