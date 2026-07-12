@@ -86,15 +86,15 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
           </div>
           <div>
             <label className={labelCls}>Description</label>
-            <textarea className={inputCls} rows={5} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Appearance, atmosphere, notable features..." />
+            <MarkdownField value={form.description} onChange={v => setForm(p => ({ ...p, description: v }))} className={inputCls} placeholder="Appearance, atmosphere, notable features..." />
           </div>
           <div>
             <label className={labelCls}>Secrets & Hazards</label>
-            <textarea className={inputCls} rows={4} value={form.secretsAndHazards} onChange={e => setForm(p => ({ ...p, secretsAndHazards: e.target.value }))} placeholder="Hidden passages, traps, lore secrets... (one per line)" />
+            <MarkdownField value={form.secretsAndHazards} onChange={v => setForm(p => ({ ...p, secretsAndHazards: v }))} className={inputCls} placeholder="Hidden passages, traps, lore secrets... (one per line)" />
           </div>
           <div>
             <label className={labelCls}>Notes</label>
-            <textarea className={inputCls} rows={3} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Additional DM notes..." />
+            <MarkdownField value={form.notes} onChange={v => setForm(p => ({ ...p, notes: v }))} className={inputCls} placeholder="Additional DM notes..." />
           </div>
           <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
             <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
@@ -120,6 +120,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
 
 function GlobalLocationCard({ loc, onEdit, onDelete }) {
   const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
+  const cleanDescription = stripMarkdown(loc.description)
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
       {loc.imageBase64 && (
@@ -137,9 +138,9 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
           <button onClick={onDelete} className="px-2 py-0.5 text-xs bg-[#b24545]/20 text-[#b24545] rounded hover:bg-[#b24545]/40 transition-colors">Del</button>
         </div>
       </div>
-      {loc.description && (
+      {cleanDescription && (
         <div className="px-4 py-3 text-sm text-[#d4d4d4] leading-relaxed">
-          {loc.description.length > 200 ? loc.description.slice(0, 200) + '…' : loc.description}
+          {cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription}
         </div>
       )}
       {hazardLines.length > 0 && (
