@@ -146,7 +146,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
                     {loc.type && <span className="text-xs text-[#d4a574]">{loc.type}</span>}
                   </div>
                   {loc.description && (
-                    <p className="text-xs text-[#999999] mt-0.5 truncate">{loc.description}</p>
+                    <p className="text-xs text-[#999999] mt-0.5 truncate">{stripMarkdown(loc.description)}</p>
                   )}
                 </button>
               ))}
