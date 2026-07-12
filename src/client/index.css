@@ -60,6 +60,30 @@ body {
 .markdown-preview pre { background: #161310; border: 1px solid #332922; padding: 8px; border-radius: 6px; overflow-x: auto; }
 .markdown-preview-empty { font-size: 12px; color: #999999; }
 
+/* Markdown field (edit + preview) */
+.markdown-field { container-type: inline-size; container-name: mdfield; }
+.markdown-field-tabs { display: flex; border-bottom: 1px solid #332922; }
+.markdown-field-body { display: flex; flex-direction: column; }
+.markdown-field-textarea {
+  font-size: 14px;
+  line-height: 1.6;
+  background: #161310;
+  color: #f0f0f0;
+  border: none;
+  outline: none;
+  resize: none;
+  width: 100%;
+  padding: 12px;
+}
+.markdown-field-preview-pane { padding: 12px; }
+.markdown-field-pane-hidden { display: none; }
+
+@container mdfield (min-width: 480px) {
+  .markdown-field-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  .markdown-field-tabs { display: none; }
+  .markdown-field-pane-hidden { display: block; }
+}
+
 /* DC button flash */
 @keyframes dcFlash {
   0% { transform: scale(1); background-color: #d4a574; }

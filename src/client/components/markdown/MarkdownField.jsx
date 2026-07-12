@@ -1,0 +1,72 @@
+import { useLayoutEffect, useRef, useState } from 'react'
+import MarkdownPreview from './MarkdownPreview'
+import { wrapSelection, insertAtCursor } from './markdownToolbar'
+
+const btnCls = 'px-2 py-1 text-xs rounded transition-colors bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'
+
+function useAutoGrow(value) {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+  return ref
+}
+
+export default function MarkdownField({ value, onChange, className = '', placeholder = '' }) {
+  const [activeTab, setActiveTab] = useState('edit')
+  const textareaRef = useAutoGrow(value)
+
+  return (
+    <div className={`markdown-field border border-[#332922] rounded-lg bg-[#161310] ${className}`}>
+      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[#332922] bg-[#211b17]">
+        <button type="button" onClick={() => wrapSelection(textareaRef, '**')} className={btnCls} title="Bold">
+          <strong>B</strong>
+        </button>
+        <button type="button" onClick={() => wrapSelection(textareaRef, '*')} className={btnCls} title="Italic">
+          <em>I</em>
+        </button>
+        <div className="w-px bg-[#332922] mx-1" />
+        <button type="button" onClick={() => insertAtCursor(textareaRef, '## ')} className={btnCls} title="Heading">
+          H
+        </button>
+        <button type="button" onClick={() => insertAtCursor(textareaRef, '- ')} className={btnCls} title="Bulleted list">
+          •
+        </button>
+        <span className="markdown-field-hint ml-auto text-xs text-[#999999]">Markdown supported</span>
+      </div>
+
+      <div className="markdown-field-tabs flex gap-1 px-2 pt-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('edit')}
+          className={`px-2 py-0.5 text-xs rounded transition-colors ${activeTab === 'edit' ? 'bg-[#d4a574] text-[#161310]' : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'}`}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('preview')}
+          className={`px-2 py-0.5 text-xs rounded transition-colors ${activeTab === 'preview' ? 'bg-[#d4a574] text-[#161310]' : 'bg-[#332922] text-[#f0f0f0] hover:bg-[#40332a]'}`}
+        >
+          Preview
+        </button>
+      </div>
+
+      <div className="markdown-field-body">
+        <textarea
+          ref={textareaRef}
+          className={`markdown-field-textarea ${activeTab === 'edit' ? '' : 'markdown-field-pane-hidden'}`}
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+        />
+        <div className={`markdown-field-preview-pane ${activeTab === 'preview' ? '' : 'markdown-field-pane-hidden'}`}>
+          <MarkdownPreview value={value} />
+        </div>
+      </div>
+    </div>
+  )
+}
