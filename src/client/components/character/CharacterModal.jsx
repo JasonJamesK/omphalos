@@ -182,18 +182,18 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                   </div>
                   <div>
                     <label className={lbl}>Personality Traits</label>
-                    <MarkdownField value={form.personalityTraits} onChange={v => set('personalityTraits', v)} className={inp} />
+                    <MarkdownField value={form.personalityTraits} onChange={v => set('personalityTraits', v)} textareaClassName={inp} />
                   </div>
                   <div>
                     <label className={lbl}>Flaw</label>
-                    <MarkdownField value={form.flaw} onChange={v => set('flaw', v)} className={inp} />
+                    <MarkdownField value={form.flaw} onChange={v => set('flaw', v)} textareaClassName={inp} />
                   </div>
                 </>
               )}
 
               <div>
                 <label className={lbl}>{form.isNpc ? 'Flavor Text / Notes' : 'Description'}</label>
-                <MarkdownField value={form.description} onChange={v => set('description', v)} className={inp} placeholder={form.isNpc ? 'Appearance, behavior, DM notes...' : 'Physical appearance, background...'} />
+                <MarkdownField value={form.description} onChange={v => set('description', v)} textareaClassName={inp} placeholder={form.isNpc ? 'Appearance, behavior, DM notes...' : 'Physical appearance, background...'} />
               </div>
             </div>
             <div className="space-y-3">
@@ -226,7 +226,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                   </div>
                   <div>
                     <label className={lbl}>Quest Hooks</label>
-                    <MarkdownField value={form.questHooks} onChange={v => set('questHooks', v)} className={inp} placeholder="Personal quests, goals, secrets..." />
+                    <MarkdownField value={form.questHooks} onChange={v => set('questHooks', v)} textareaClassName={inp} placeholder="Personal quests, goals, secrets..." />
                   </div>
                 </>
               )}

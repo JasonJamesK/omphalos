@@ -86,15 +86,15 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
           </div>
           <div>
             <label className={labelCls}>Description</label>
-            <MarkdownField value={form.description} onChange={v => setForm(p => ({ ...p, description: v }))} className={inputCls} placeholder="Appearance, atmosphere, notable features..." />
+            <MarkdownField value={form.description} onChange={v => setForm(p => ({ ...p, description: v }))} textareaClassName={inputCls} placeholder="Appearance, atmosphere, notable features..." />
           </div>
           <div>
             <label className={labelCls}>Secrets & Hazards</label>
-            <MarkdownField value={form.secretsAndHazards} onChange={v => setForm(p => ({ ...p, secretsAndHazards: v }))} className={inputCls} placeholder="Hidden passages, traps, lore secrets... (one per line)" />
+            <MarkdownField value={form.secretsAndHazards} onChange={v => setForm(p => ({ ...p, secretsAndHazards: v }))} textareaClassName={inputCls} placeholder="Hidden passages, traps, lore secrets... (one per line)" />
           </div>
           <div>
             <label className={labelCls}>Notes</label>
-            <MarkdownField value={form.notes} onChange={v => setForm(p => ({ ...p, notes: v }))} className={inputCls} placeholder="Additional DM notes..." />
+            <MarkdownField value={form.notes} onChange={v => setForm(p => ({ ...p, notes: v }))} textareaClassName={inputCls} placeholder="Additional DM notes..." />
           </div>
           <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
             <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
@@ -343,11 +343,11 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
               </div>
               <div>
                 <label className={labelCls}>Personality Traits</label>
-                <MarkdownField value={form.personalityTraits} onChange={v => set('personalityTraits', v)} className={inputCls} />
+                <MarkdownField value={form.personalityTraits} onChange={v => set('personalityTraits', v)} textareaClassName={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Flaw</label>
-                <MarkdownField value={form.flaw} onChange={v => set('flaw', v)} className={inputCls} />
+                <MarkdownField value={form.flaw} onChange={v => set('flaw', v)} textareaClassName={inputCls} />
               </div>
             </div>
             <div className="space-y-3">
@@ -373,11 +373,11 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
               </div>
               <div>
                 <label className={labelCls}>Description</label>
-                <MarkdownField value={form.description} onChange={v => set('description', v)} className={inputCls} placeholder="Physical appearance, background..." />
+                <MarkdownField value={form.description} onChange={v => set('description', v)} textareaClassName={inputCls} placeholder="Physical appearance, background..." />
               </div>
               <div>
                 <label className={labelCls}>Quest Hooks</label>
-                <MarkdownField value={form.questHooks} onChange={v => set('questHooks', v)} className={inputCls} placeholder="Personal quests, goals, secrets..." />
+                <MarkdownField value={form.questHooks} onChange={v => set('questHooks', v)} textareaClassName={inputCls} placeholder="Personal quests, goals, secrets..." />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">

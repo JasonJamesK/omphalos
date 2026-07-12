@@ -212,7 +212,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
               <MarkdownField
                 value={createForm.description}
                 onChange={v => setCreateForm(p => ({ ...p, description: v }))}
-                className={inputCls}
+                textareaClassName={inputCls}
                 placeholder="Appearance, atmosphere, notable features..."
               />
             </div>
@@ -221,7 +221,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
               <MarkdownField
                 value={createForm.secretsAndHazards}
                 onChange={v => setCreateForm(p => ({ ...p, secretsAndHazards: v }))}
-                className={inputCls}
+                textareaClassName={inputCls}
                 placeholder="Traps, hidden passages, lore secrets... (one per line)"
               />
             </div>
@@ -230,7 +230,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
               <MarkdownField
                 value={createForm.notes}
                 onChange={v => setCreateForm(p => ({ ...p, notes: v }))}
-                className={inputCls}
+                textareaClassName={inputCls}
                 placeholder="Additional DM notes..."
               />
             </div>
@@ -268,8 +268,9 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
               <MarkdownField
                 value={sessionNotes}
                 onChange={setSessionNotes}
-                className={inputCls}
+                textareaClassName={inputCls}
                 placeholder="What happened here this session? Player discoveries, events, changes..."
+                autoFocus
               />
             </div>
             <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">

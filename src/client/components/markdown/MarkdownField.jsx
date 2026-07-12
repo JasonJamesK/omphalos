@@ -15,24 +15,25 @@ function useAutoGrow(value) {
   return ref
 }
 
-export default function MarkdownField({ value, onChange, className = '', placeholder = '' }) {
+export default function MarkdownField({ value, onChange, className = '', textareaClassName = '', placeholder = '', autoFocus = false }) {
   const [activeTab, setActiveTab] = useState('edit')
   const textareaRef = useAutoGrow(value)
+  const toolbarDisabled = activeTab !== 'edit'
 
   return (
     <div className={`markdown-field border border-[#332922] rounded-lg bg-[#161310] ${className}`}>
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[#332922] bg-[#211b17]">
-        <button type="button" onClick={() => wrapSelection(textareaRef, '**')} className={btnCls} title="Bold">
+        <button type="button" disabled={toolbarDisabled} onClick={() => wrapSelection(textareaRef, '**')} className={`${btnCls} disabled:opacity-40 disabled:cursor-not-allowed`} title="Bold">
           <strong>B</strong>
         </button>
-        <button type="button" onClick={() => wrapSelection(textareaRef, '*')} className={btnCls} title="Italic">
+        <button type="button" disabled={toolbarDisabled} onClick={() => wrapSelection(textareaRef, '*')} className={`${btnCls} disabled:opacity-40 disabled:cursor-not-allowed`} title="Italic">
           <em>I</em>
         </button>
         <div className="w-px bg-[#332922] mx-1" />
-        <button type="button" onClick={() => insertAtCursor(textareaRef, '## ')} className={btnCls} title="Heading">
+        <button type="button" disabled={toolbarDisabled} onClick={() => insertAtCursor(textareaRef, '## ')} className={`${btnCls} disabled:opacity-40 disabled:cursor-not-allowed`} title="Heading">
           H
         </button>
-        <button type="button" onClick={() => insertAtCursor(textareaRef, '- ')} className={btnCls} title="Bulleted list">
+        <button type="button" disabled={toolbarDisabled} onClick={() => insertAtCursor(textareaRef, '- ')} className={`${btnCls} disabled:opacity-40 disabled:cursor-not-allowed`} title="Bulleted list">
           •
         </button>
         <span className="markdown-field-hint ml-auto text-xs text-[#999999]">Markdown supported</span>
@@ -58,10 +59,11 @@ export default function MarkdownField({ value, onChange, className = '', placeho
       <div className="markdown-field-body">
         <textarea
           ref={textareaRef}
-          className={`markdown-field-textarea ${activeTab === 'edit' ? '' : 'markdown-field-pane-hidden'}`}
+          className={`markdown-field-textarea ${textareaClassName} ${activeTab === 'edit' ? '' : 'markdown-field-pane-hidden'}`}
           value={value || ''}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
+          autoFocus={autoFocus}
         />
         <div className={`markdown-field-preview-pane ${activeTab === 'preview' ? '' : 'markdown-field-pane-hidden'}`}>
           <MarkdownPreview value={value} />

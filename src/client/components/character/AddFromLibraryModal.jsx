@@ -180,8 +180,9 @@ export default function AddFromLibraryModal({ globalCharacters, onAdd, onClose, 
                 <MarkdownField
                   value={sessionNotes}
                   onChange={setSessionNotes}
-                  className={inp}
+                  textareaClassName={inp}
                   placeholder="Notes specific to this session — how you met them, their current status, etc."
+                  autoFocus
                 />
               </div>
             </div>

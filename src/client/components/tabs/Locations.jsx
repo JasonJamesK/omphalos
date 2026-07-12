@@ -51,8 +51,9 @@ function EditLocationModal({ loc, onSave, onClose }) {
             <MarkdownField
               value={sessionNotes}
               onChange={setSessionNotes}
-              className={inputCls}
+              textareaClassName={inputCls}
               placeholder="What happened here this session? Player discoveries, events, changes..."
+              autoFocus
             />
           </div>
           <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
