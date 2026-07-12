@@ -34,6 +34,6 @@ export function insertAtCursor(textareaRef, text) {
   const el = textareaRef.current
   if (!el) return
   const { selectionStart: start, value } = el
-  const lineStart = value.lastIndexOf('\n', start - 1) + 1
+  const lineStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1
   applyRangeEdit(el, lineStart, lineStart, text, start + text.length, start + text.length)
 }
