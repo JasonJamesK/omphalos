@@ -189,7 +189,7 @@ export default function SessionLog() {
 
         <div>
           <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-2">Quick Notes</h2>
-          <p className="text-xs text-[#666] mb-2">DC button clicks are logged here automatically.</p>
+          <p className="text-xs text-[#666] mb-2">Click ★ Save on any Toolkit result to log it here.</p>
           <MarkdownField
             key={session.id}
             value={session.sessionNotes}
