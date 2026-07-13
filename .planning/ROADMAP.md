@@ -134,7 +134,7 @@ Plans:
   5. An animated GIF uploaded without going through the crop step (GIFs skip cropping) still displays correctly everywhere its portrait/image appears, via a cropped-or-original fallback.
   6. Character/location list and detail pages render immediately without waiting on embedded image bytes — images load asynchronously from dedicated, HTTP-cached (ETag/Cache-Control) binary endpoints, and the DTOs expose only a `HasImage` flag until an image is actually requested.
 
-**Plans**: 2/6 plans executed
+**Plans**: 3/6 plans executed
 **UI hint**: yes
 
 Plans:
@@ -146,7 +146,7 @@ Plans:
 
 **Wave 2** *(depends on 04-01)*
 
-- [ ] 04-03-PLAN.md — Cached binary image endpoints (all 4 kinds) + IImageService/ImageValidation + IDOR-safe ownership + upload validation + WebApplicationFactory test harness (IMG-04/05/07)
+- [x] 04-03-PLAN.md — Cached binary image endpoints (all 4 kinds) + IImageService/ImageValidation + IDOR-safe ownership + upload validation + WebApplicationFactory test harness (IMG-04/05/07)
 
 **Wave 3** *(depends on 04-01/02/03; disjoint files, parallel)*
 
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 1/1 | Complete    | 2026-07-13 |
-| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 2/6 | In Progress|  |
+| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 3/6 | In Progress|  |
 
 ## Roadmap Revision Log
 
