@@ -101,3 +101,6 @@ app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+// Referenceable entry point so WebApplicationFactory<Program> can host this app in tests.
+public partial class Program { }
