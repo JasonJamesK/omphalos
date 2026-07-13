@@ -22,14 +22,15 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - ✓ DM can write character bios/notes using markdown syntax, with a rendered preview (split-view/tab toggle, legacy line-break rendering, dark-theme preview styling) — Phase 2
 - ✓ DM can write location descriptions using markdown syntax, with a rendered preview (split-view/tab toggle, legacy line-break rendering, dark-theme preview styling) — Phase 2
 - ✓ Markdown-enabled fields (character/location) auto-grow to fit their content instead of being fixed-height boxes — Phase 2
+- ✓ DM can write the Session "Overview & Hook" field using markdown syntax, with a rendered preview — Phase 3
+- ✓ DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax, with a rendered preview — Phase 3
+- ✓ One shared `MarkdownField` component is reused across all 4 field locations (Overview & Hook, prep blocks, character bio/notes, location description) rather than divergent implementations — Phase 3
 
 ### Active
 
 - [ ] DM can crop portrait and location images using Cropper.js v2 instead of the current hand-rolled canvas crop tool, across all three usage sites (Character Library portraits, in-session Character portraits, Location images)
 - [ ] Both the original upload and the cropped result are stored per image (Character, GlobalCharacter, Location, GlobalLocation), so a DM can re-crop without re-uploading and animated GIFs still display correctly
 - [ ] Images are served via dedicated binary endpoints instead of being embedded as base64 in session/character/location JSON payloads, so pages load without waiting on image bytes
-- [ ] DM can write the Session "Overview & Hook" field using markdown syntax, with a rendered preview
-- [ ] DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax, with a rendered preview
 
 ### Out of Scope
 
@@ -48,6 +49,7 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - Image storage today is a single nullable base64 string column per entity — `Character.PortraitBase64`, `GlobalCharacter.PortraitBase64`, `Location.ImageBase64`, `GlobalLocation.ImageBase64` — embedded inline in the DTOs and returned as part of the main session/library JSON payloads.
 - quest-board's proven image pattern (confirmed by reading its source): a 1:1 image table per owning entity with `OriginalImageData`/`CroppedImageData` (both `byte[]`, cropped nullable), served via two separate binary endpoints per entity (e.g. `GetProfilePicture` for the original, `GetCroppedPicture` for the cropped result), with view models carrying only a `HasProfilePicture` bool — image bytes never touch the initial page/JSON payload. Read pattern is `CroppedImageData ?? OriginalImageData`. The user wants this pattern (both the dual-storage model and the separate-endpoint serving) ported to all 4 of Omphalos's image fields, for the same reasons quest-board has it: re-crop without re-upload, animated GIFs (which skip cropping) still display, and pages load without waiting on inline image bytes.
 - Unlike quest-board (no caching on its image endpoints), Omphalos's new image endpoints will add basic HTTP caching (ETag or Cache-Control) since cropped/original images are immutable once saved — a deliberate improvement over the reference implementation, not parity.
+- **"Session Notes" naming collision (discovered during Phase 3 UAT):** there are three distinct fields the app calls some variant of "Session Notes" — (1) `Character.sessionNotes`/`Location.sessionNotes`, in-session per-entity notes, markdown-enabled since Phase 2; (2) the Session Log tab's TipTap rich-text log itself, labeled "Session Notes" in the UI heading but backed by `session.sessionLog`; (3) the Session Log tab's separate "Quick Notes" section (labeled that in the UI, but the underlying field is `session.sessionNotes`), a DC-roll/reminder scratchpad — still a plain `<textarea>`, never in scope for any markdown-editing phase (not in REQUIREMENTS.md's MDED-01..09). If a future phase targets "session notes" markdown, clarify which of these three is meant before scoping.
 
 ## Constraints
 
@@ -67,6 +69,8 @@ A DM can prep everything needed for a session and reference/edit it live during 
 | Add HTTP caching (ETag/Cache-Control) to the new image endpoints | quest-board has none; images are immutable once saved so caching is a safe, cheap improvement over the reference implementation | — Pending |
 | Auto-grow scoped to the new markdown fields only, not app-wide | Auto-grow comes bundled with the new markdown editor component; avoids unrelated scope creep into stat blocks/random tables | Shipped — Phase 2 |
 | Session Log (TipTap WYSIWYG) left untouched | Already works and already auto-grows; converting it wasn't requested and isn't broken | Holds |
+| Callout block's `MarkdownField` built with default chrome, no `bare`/chromeless variant added | The contingent double-border-clutter concern (D-05) didn't materialize on visual QA; keeps `MarkdownField`'s API surface unchanged | Shipped — Phase 3 |
+| Repeatable lists nesting a stateful child component (e.g. `MarkdownField`) must key by a stable per-item id, not array index | Loot items were keyed by bare index, causing a stateful `MarkdownField`'s Edit/Preview tab to follow list *position* instead of the logical item across delete/reorder; fixed via an `itemUid()` generator mirroring `phaseUid()`/`blockUid()`. Applies to any future repeatable list holding stateful children | Shipped — Phase 3 |
 
 ## Evolution
 
@@ -86,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-12 after Phase 2*
+*Last updated: 2026-07-13 after Phase 3*
