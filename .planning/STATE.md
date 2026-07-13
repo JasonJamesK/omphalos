@@ -2,44 +2,44 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 3
-current_phase_name: Markdown Editing — Session Prep Fields
-status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-07-13T07:31:33.318Z"
+current_phase: 4
+current_phase_name: Image Cropping & Storage — Cropper.js v2 Rollout
+status: ready
+stopped_at: Phase 3 complete, transitioned to Phase 4
+last_updated: "2026-07-13T09:19:24.857Z"
 last_activity: 2026-07-13
-last_activity_desc: Phase 3 execution started
+last_activity_desc: Phase 3 complete, transitioned to Phase 4
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 50
+  completed_plans: 9
+  percent: 75
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-12)
+See: .planning/PROJECT.md (updated 2026-07-13)
 
 **Core value:** A DM can prep everything needed for a session and reference/edit it live during play without fighting broken editing tools or losing content.
-**Current focus:** Phase 3 — Markdown Editing — Session Prep Fields
+**Current focus:** Phase 4 — Image Cropping & Storage — Cropper.js v2 Rollout
 
 ## Current Position
 
-Phase: 3 (Markdown Editing — Session Prep Fields) — EXECUTING
-Plan: 1 of 1
-Status: Executing Phase 3
-Last activity: 2026-07-13 — Phase 3 execution started
+Phase: 4 — Image Cropping & Storage — Cropper.js v2 Rollout
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-07-13 — Phase 3 complete, transitioned to Phase 4
 
-Progress: [██████████░░░░░░░░░] 50% (2/4 phases)
+Progress: [███████████████░░░░] 75% (3/4 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -49,6 +49,7 @@ Progress: [██████████░░░░░░░░░] 50% (2/4 p
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
 | 2 | 4 | - | - |
+| 3 | 1 | - | - |
 
 **Recent Trend:**
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - Phase 1 (2026-07-12): Found and fixed an unrelated Docker build regression — `docker compose up --build` was broken since Plan 01-01 added test projects to the solution without updating the Dockerfile's restore step (commit `e2fb0a2`). Only surfaced now because Docker wasn't available during the original execution session.
 - Phase 2 (2026-07-12): Shipped markdown editing for character/location fields (MDED-03..08) across all 6 usage sites, with a shared `MarkdownField`/`markdownToolbar.js`/`stripMarkdown` component set that Phase 3 (Session Prep fields) is expected to reuse directly rather than reimplement.
 - Phase 2 (2026-07-12): UAT surfaced a native Ctrl+Z undo regression in the toolbar (Bold/Heading/List buttons) that took 3 fix attempts to fully resolve: native `.value` setter + `dispatchEvent` (original bug) → `textarea.setRangeText(...)` (still failed live re-testing) → `document.execCommand('insertText', ...)` (confirmed working, commit `92e4370`). If any future toolbar-style programmatic textarea mutation is needed elsewhere in the app, use `execCommand('insertText', ...)` from the start — it matches the approach used by the battle-tested `fregante/text-field-edit` library and is the only one of the three that reliably preserves native undo in real-browser testing.
+- Phase 3 (2026-07-13): Shipped markdown editing for Session Prep fields (MDED-01, MDED-02, MDED-09) — Overview & Hook plus Notes/Callout/Loot-description prep blocks — completing the 4-site `MarkdownField` rollout (6 sites from Phase 2 + these 4). Fixed a required Loot list-key stability bug (stateful `MarkdownField` nested in an index-keyed list scrambled Edit/Preview tab state across delete/reorder) via a stable `itemUid()`-generated `item.id` key, mirroring the existing `phaseUid()`/`blockUid()` pattern. Full UAT (4/4) confirmed live in a real browser via the Claude in Chrome extension against the running Docker stack, including a direct React-state inspection to rigorously verify the key-stability fix beyond visual approximation. Docker was available this session (unlike Phase 1/2's verification passes) — re-ran the previously `PRESENT_BEHAVIOR_UNVERIFIED` `PrepDataPersistsOnUpdate`/`CollectionDiffMerge` integration tests live against real Postgres; both now pass.
+- Phase 3 (2026-07-13): Discovered a "Session Notes" naming collision worth knowing before scoping any future work in that area — see PROJECT.md Context section for the full breakdown of the three distinct fields involved.
 
 ### Pending Todos
 
@@ -94,6 +97,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-13T07:04:18.945Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-markdown-editing-session-prep-fields/03-UI-SPEC.md
+Last session: 2026-07-13T09:21:43Z
+Stopped at: Phase 3 complete, ready to plan Phase 4
+Resume file: None
