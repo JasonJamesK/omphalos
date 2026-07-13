@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 4
 current_phase_name: Image Cropping & Storage — Cropper.js v2 Rollout
 status: ready
-stopped_at: Phase 4 context gathered
-last_updated: "2026-07-13T12:11:28.886Z"
+stopped_at: Phase 4 UI-SPEC approved
+last_updated: "2026-07-13T12:20:56.969Z"
 last_activity: 2026-07-13
 last_activity_desc: Phase 3.1 complete, transitioned to Phase 4
 progress:
@@ -103,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-13T12:11:28.867Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-image-cropping-storage-cropper-js-v2-rollout/04-CONTEXT.md
+Last session: 2026-07-13T12:20:56.960Z
+Stopped at: Phase 4 UI-SPEC approved
+Resume file: .planning/phases/04-image-cropping-storage-cropper-js-v2-rollout/04-UI-SPEC.md
