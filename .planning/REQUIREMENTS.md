@@ -16,15 +16,16 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Markdown Editing
 
-- [ ] **MDED-01**: DM can write the Session "Overview & Hook" field using markdown syntax with live rendering
-- [ ] **MDED-02**: DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax with live rendering
+- [x] **MDED-01**: DM can write the Session "Overview & Hook" field using markdown syntax with live rendering
+- [x] **MDED-02**: DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax with live rendering
 - [x] **MDED-03**: DM can write character bios/notes using markdown syntax with live rendering
 - [x] **MDED-04**: DM can write location descriptions using markdown syntax with live rendering
 - [x] **MDED-05**: Markdown fields show a side-by-side edit+preview split view on wide viewports, falling back to an Edit/Preview tab toggle on narrow viewports
 - [x] **MDED-06**: Existing plain-text content (typed with literal line breaks) renders correctly without collapsing into run-on paragraphs (`remark-breaks` shipped alongside `remark-gfm`)
 - [x] **MDED-07**: Markdown fields auto-grow to fit their content instead of being fixed-height boxes
 - [x] **MDED-08**: Markdown preview matches the app's dark theme (readable typography for headings, lists, bold/italic, blockquote, code)
-- [ ] **MDED-09**: One shared `MarkdownField` component is reused across all 4 field locations rather than four divergent implementations
+- [x] **MDED-09**: One shared `MarkdownField` component is reused across all 4 field locations rather than four divergent implementations
+- [ ] **MDED-11**: DM can write the Session Log's "Quick Notes" field (`session.sessionNotes`) using markdown syntax with live rendering, via the shared `MarkdownField`; unlike other markdown fields, this one always shows the Edit/Preview tab toggle (never the side-by-side split view), since it sits in the narrowest column of the Session tab's 3-column layout
 
 ### Image Cropping
 
@@ -47,6 +48,12 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **IMG-05**: Session/character/location DTOs expose a `HasImage` boolean instead of embedded image bytes, so list/detail views can show a placeholder-or-photo state without pulling image data
 - [ ] **IMG-06**: Pages that list or display characters/locations load without waiting on image bytes — images load asynchronously via their own endpoint requests
 - [ ] **IMG-07**: Image endpoints include HTTP caching (ETag or Cache-Control), since cropped/original images are immutable once saved — a deliberate improvement over quest-board's uncached reference implementation
+
+## v1.1 Requirements (urgent insertion, Phase 3.1)
+
+Discovered after Phase 3 shipped — the user asked whether the Session Log's "Quick Notes" field was already markdown; it wasn't, and was never covered by MDED-01..09. Tracked here rather than folded into the closed Phase 3.
+
+- MDED-11 (see Markdown Editing section above)
 
 ## v2 Requirements
 
@@ -82,15 +89,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERSIST-02 | Phase 1 | Complete |
 | PERSIST-03 | Phase 1 | Complete |
 | PERSIST-04 | Phase 1 | Complete |
-| MDED-01 | Phase 3 | Pending |
-| MDED-02 | Phase 3 | Pending |
+| MDED-01 | Phase 3 | Complete |
+| MDED-02 | Phase 3 | Complete |
 | MDED-03 | Phase 2 | Complete |
 | MDED-04 | Phase 2 | Complete |
 | MDED-05 | Phase 2 | Complete |
 | MDED-06 | Phase 2 | Complete |
 | MDED-07 | Phase 2 | Complete |
 | MDED-08 | Phase 2 | Complete |
-| MDED-09 | Phase 3 | Pending |
+| MDED-09 | Phase 3 | Complete |
+| MDED-11 | Phase 3.1 | Pending |
 | CROP-01 | Phase 4 | Pending |
 | CROP-02 | Phase 4 | Pending |
 | CROP-03 | Phase 4 | Pending |
@@ -111,9 +119,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 
 - v1 requirements: 29 total
-- Mapped to phases: 29
+- v1.1 requirements (urgent insertion): 1 total (MDED-11)
+- Mapped to phases: 30
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-10*
-*Last updated: 2026-07-10 after roadmap creation*
+*Last updated: 2026-07-13 after Phase 3.1 insertion*

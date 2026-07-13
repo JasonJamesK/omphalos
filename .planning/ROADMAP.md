@@ -99,6 +99,24 @@ Plans:
 
 - [x] 03-01-PLAN.md — Wire the shared `MarkdownField` into all 4 Session Prep prose fields (Overview & Hook, Notes body, Callout body, Loot item description) + required Loot list-key stability fix (MDED-01, MDED-02, MDED-09; D-01, D-02, D-03, D-04, D-05)
 
+### Phase 03.1: Quick Notes Markdown Conversion (INSERTED)
+
+**Goal**: A DM can write the Session Log tab's "Quick Notes" field (`session.sessionNotes`) using markdown syntax with live preview, via the same shared `MarkdownField` component — but this field always shows the Edit/Preview tab toggle rather than the side-by-side split view, since it sits in the narrowest column of the Session tab's 3-column layout.
+**Mode:** mvp
+**Depends on**: Phase 3 (reuses the shared `MarkdownField` component, its established call-site pattern, and the container-query CSS mechanism this phase extends with a "force tabs" opt-out)
+**Requirements**: MDED-11
+**Success Criteria** (what must be TRUE):
+
+  1. DM writes markdown in the Quick Notes field (Session tab, right column) and sees a live rendered preview.
+  2. Quick Notes always shows the Edit/Preview tab toggle, at any viewport/container width — it never switches to the side-by-side split view the other `MarkdownField` instances use.
+  3. Everything else about Quick Notes' `MarkdownField` (toolbar, rendering, auto-grow, empty state, dark-theme styling) is identical to every other instance — no divergent implementation.
+
+**Plans**: TBD
+
+Plans:
+
+- [ ] 03.1-01: TBD
+
 ### Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout
 
 **Goal**: A DM can crop portrait and location images end-to-end using a Cropper.js v2-based `ImageCropModal` — with zoom, EXIF-safe handling, and touch support — at all three existing upload sites, backed by a new image storage and serving model: both the original and cropped image are stored per entity (Character, GlobalCharacter, Location, GlobalLocation) and served via dedicated, HTTP-cached binary endpoints instead of embedded base64 in JSON payloads, so a DM can re-crop without re-uploading, animated GIFs still display, and character/location pages load without waiting on image bytes.
@@ -131,7 +149,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
-| 3. Markdown Editing — Session Prep Fields | 1/1 | Complete   | 2026-07-13 |
+| 3. Markdown Editing — Session Prep Fields | 1/1 | Complete    | 2026-07-13 |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
 
 ## Roadmap Revision Log

@@ -6,15 +6,15 @@ current_phase: 4
 current_phase_name: Image Cropping & Storage — Cropper.js v2 Rollout
 status: ready
 stopped_at: Phase 3 complete, transitioned to Phase 4
-last_updated: "2026-07-13T09:19:24.857Z"
+last_updated: "2026-07-13T09:28:44.491Z"
 last_activity: 2026-07-13
 last_activity_desc: Phase 3 complete, transitioned to Phase 4
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 3
   total_plans: 9
   completed_plans: 9
-  percent: 75
+  percent: 60
 ---
 
 # Project State
@@ -86,6 +86,10 @@ None yet.
 - Cropper.js v2 (Phase 4) uses native Web Components with no maintained React wrapper for v2; research flags the imperative ref/lifecycle integration as the highest-risk pattern in this milestone — worth extra care during planning/execution of Phase 4.
 - Phase 4 now also carries an EF Core migration across 4 entities (Character, GlobalCharacter, Location, GlobalLocation moving from a single base64 column to separate original/cropped columns) plus 8 new binary endpoints and an app-wide frontend refactor of every existing `<img src={base64}>` usage — not just the 3 crop call sites. This is a materially larger phase than originally scoped; plan it in stages (migration/DTOs → endpoints → shared crop component → wiring → app-wide `<img>` refactor) rather than as one large plan.
 - Minor UX gap found during Phase 1 UAT (non-blocking): an edit made during the session-load race window is silently discarded client-side once full detail loads, rather than retried or flagged — no data loss, but no warning either. Candidate for a future polish pass.
+
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: Convert session.sessionNotes ("Quick Notes" field, Session tab right column) to markdown via the shared MarkdownField, forced to always show the Edit/Preview tab toggle (never split-view) given its narrow column width. Discovered after Phase 3 UAT when the user asked whether Quick Notes was already markdown. (URGENT)
 
 ## Deferred Items
 
