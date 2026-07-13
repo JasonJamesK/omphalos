@@ -8,7 +8,7 @@ function useAutoGrow(value) {
   const ref = useRef(null)
   useLayoutEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || el.offsetParent === null) return
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
   }, [value])
