@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Omphalos.Domain.Entities;
@@ -24,19 +23,21 @@ public class WebAppFactory(string connectionString) : WebApplicationFactory<Prog
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DefaultConnection"] = connectionString,
-                ["Jwt:Secret"] = JwtSecret,
-                ["Jwt:Issuer"] = JwtIssuer,
-                ["Jwt:Audience"] = JwtAudience,
-                // Empty admin credentials skip first-boot admin seeding — tests seed their own users.
-                ["Admin:Username"] = "",
-                ["Admin:Password"] = "",
-            });
-        });
+        // Program.cs reads Jwt:Secret into a local variable via `builder.Configuration["Jwt:Secret"]`
+        // as an eager top-level statement, before any ConfigureAppConfiguration callback added here
+        // has been folded into that same live configuration snapshot -- an AddInMemoryCollection
+        // override lands too late and the app silently keeps signing/validating against
+        // appsettings.json's default secret while these tests sign with a different one, so every
+        // token fails signature validation. UseSetting writes into the host configuration that IS
+        // part of the WebApplicationBuilder's initial config before Program.cs's own code runs, so
+        // early eager reads pick it up correctly.
+        builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
+        builder.UseSetting("Jwt:Secret", JwtSecret);
+        builder.UseSetting("Jwt:Issuer", JwtIssuer);
+        builder.UseSetting("Jwt:Audience", JwtAudience);
+        // Empty admin credentials skip first-boot admin seeding -- tests seed their own users.
+        builder.UseSetting("Admin:Username", "");
+        builder.UseSetting("Admin:Password", "");
     }
 
     // Seeds a fresh user directly via the DbContext (bypassing the real registration/login
@@ -85,10 +86,13 @@ public class WebAppFactory(string connectionString) : WebApplicationFactory<Prog
     }
 
     // An HttpClient that attaches a valid omphalos_token cookie for the given user, so requests
-    // through it hit authorized routes exactly as a logged-in browser would.
+    // through it hit authorized routes exactly as a logged-in browser would. HandleCookies must
+    // be disabled here — the default WebApplicationFactory client wraps a CookieContainerHandler
+    // that recomputes the Cookie header from its (empty) container and silently drops any
+    // manually-added Cookie header otherwise.
     public HttpClient CreateAuthenticatedClient(Guid userId, string username = "test-user", string role = "Player")
     {
-        var client = CreateClient();
+        var client = CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
         var token = CreateJwtToken(userId, username, role);
         client.DefaultRequestHeaders.Add("Cookie", $"omphalos_token={token}");
         return client;

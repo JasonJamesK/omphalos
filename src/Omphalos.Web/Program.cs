@@ -95,6 +95,8 @@ app.MapAdminEndpoints();
 app.MapSettingsEndpoints();
 app.MapGlobalLocationEndpoints();
 app.MapGlobalCharacterEndpoints();
+app.MapCharacterImageEndpoints();
+app.MapLocationImageEndpoints();
 
 // Serve React SPA from wwwroot (production)
 app.UseDefaultFiles();

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Omphalos.Domain.DTOs;
 using Omphalos.Domain.Interfaces;
+using Omphalos.Services.Implementations;
 
 namespace Omphalos.Web.Endpoints;
 
@@ -26,6 +27,7 @@ public static class SessionEndpoints
         group.MapPut("/{id}", async (string id, UpsertSessionRequest req, ClaimsPrincipal user, ISessionService sessions, CancellationToken ct) =>
         {
             if (req.Id != id) return Results.BadRequest("ID mismatch");
+            if (HasInvalidImages(req)) return Results.BadRequest("Invalid image data.");
             var userId = GetUserId(user);
             var result = await sessions.UpsertAsync(req, userId, ct);
             return Results.Ok(result);
@@ -40,6 +42,7 @@ public static class SessionEndpoints
 
         group.MapPost("/import", async (List<UpsertSessionRequest> reqs, ClaimsPrincipal user, ISessionService sessions, CancellationToken ct) =>
         {
+            if (reqs.Any(HasInvalidImages)) return Results.BadRequest("Invalid image data.");
             var userId = GetUserId(user);
             var results = await sessions.ImportAsync(reqs, userId, ct);
             return Results.Ok(results);
@@ -50,4 +53,11 @@ public static class SessionEndpoints
 
     private static Guid GetUserId(ClaimsPrincipal user) =>
         Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    // Server-side upload validation (V5): the client-side MAX_IMAGE_MB gate is trivially
+    // bypassable via a direct API call, so every incoming Character/Location image byte
+    // array is re-checked here before it ever reaches the repository.
+    private static bool HasInvalidImages(UpsertSessionRequest req) =>
+        (req.Characters ?? []).Any(c => ImageValidation.IsInvalidUpload(c.OriginalImageData) || ImageValidation.IsInvalidUpload(c.CroppedImageData)) ||
+        (req.Locations ?? []).Any(l => ImageValidation.IsInvalidUpload(l.OriginalImageData) || ImageValidation.IsInvalidUpload(l.CroppedImageData));
 }
