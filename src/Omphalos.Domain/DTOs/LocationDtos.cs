@@ -6,7 +6,9 @@ public record LocationDto(
     string? Type,
     string? Description,
     string? Notes,
-    string? ImageBase64,
+    bool HasImage,
+    byte[]? OriginalImageData,
+    byte[]? CroppedImageData,
     string? GlobalLocationId,
     string? SessionNotes
 );

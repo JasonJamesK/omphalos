@@ -5,9 +5,9 @@ public record CharacterRelationshipDto(string Name, string Type);
 public record CharacterDto(
     string Id,
     string Name,
-    string? PortraitBase64,
-    double PortraitPanX,
-    double PortraitPanY,
+    bool HasImage,
+    byte[]? OriginalImageData,
+    byte[]? CroppedImageData,
     string? Tagline,
     string? Class,
     string? Race,

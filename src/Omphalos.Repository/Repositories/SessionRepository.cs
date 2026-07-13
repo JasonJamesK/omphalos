@@ -94,9 +94,11 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
     private static void CopyCharacterFields(Character existing, Character incoming)
     {
         existing.Name = incoming.Name;
-        existing.PortraitBase64 = incoming.PortraitBase64;
-        existing.PortraitPanX = incoming.PortraitPanX;
-        existing.PortraitPanY = incoming.PortraitPanY;
+        var (original, cropped) = ImageWriteContract.Apply(
+            incoming.HasImage, incoming.OriginalImageData, incoming.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
         existing.Tagline = incoming.Tagline;
         existing.Class = incoming.Class;
         existing.Race = incoming.Race;
@@ -120,7 +122,11 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
         existing.Type = incoming.Type;
         existing.Description = incoming.Description;
         existing.Notes = incoming.Notes;
-        existing.ImageBase64 = incoming.ImageBase64;
+        var (original, cropped) = ImageWriteContract.Apply(
+            incoming.HasImage, incoming.OriginalImageData, incoming.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
         existing.GlobalLocationId = incoming.GlobalLocationId;
         existing.SessionNotes = incoming.SessionNotes;
     }

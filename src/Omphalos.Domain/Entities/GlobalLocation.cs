@@ -8,7 +8,9 @@ public class GlobalLocation
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public string? SecretsAndHazards { get; set; }
-    public string? ImageBase64 { get; set; }
+    public byte[]? OriginalImageData { get; set; }
+    public byte[]? CroppedImageData { get; set; }
+    public bool HasImage { get; set; }
 
     public ICollection<Location> SessionLocations { get; set; } = [];
 }

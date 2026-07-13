@@ -29,7 +29,11 @@ public class GlobalLocationRepository(OmphalosDbContext db) : IGlobalLocationRep
         existing.Description = location.Description;
         existing.Notes = location.Notes;
         existing.SecretsAndHazards = location.SecretsAndHazards;
-        existing.ImageBase64 = location.ImageBase64;
+        var (original, cropped) = ImageWriteContract.Apply(
+            location.HasImage, location.OriginalImageData, location.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
 
         await db.SaveChangesAsync(ct);
         return existing;

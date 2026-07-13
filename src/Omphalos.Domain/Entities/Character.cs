@@ -5,9 +5,9 @@ public class Character
     public string Id { get; set; } = string.Empty;
     public string SessionId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string? PortraitBase64 { get; set; }
-    public double PortraitPanX { get; set; }
-    public double PortraitPanY { get; set; }
+    public byte[]? OriginalImageData { get; set; }
+    public byte[]? CroppedImageData { get; set; }
+    public bool HasImage { get; set; }
     public string? Tagline { get; set; }
     public string? Class { get; set; }
     public string? Race { get; set; }
