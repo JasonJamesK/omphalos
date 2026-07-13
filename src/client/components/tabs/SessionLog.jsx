@@ -196,6 +196,7 @@ export default function SessionLog() {
             onChange={v => updateNotes(v)}
             forceTabs
             placeholder="Quick notes, reminders, DC results..."
+            ariaLabel="Quick notes"
           />
         </div>
       </div>

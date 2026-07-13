@@ -39,7 +39,7 @@ function useIsSplitView(containerRef, forceTabs) {
   return isSplitView
 }
 
-export default function MarkdownField({ value, onChange, className = '', textareaClassName = '', placeholder = '', autoFocus = false, forceTabs = false }) {
+export default function MarkdownField({ value, onChange, className = '', textareaClassName = '', placeholder = '', autoFocus = false, forceTabs = false, ariaLabel }) {
   const [activeTab, setActiveTab] = useState('edit')
   const textareaRef = useAutoGrow(value)
   const containerRef = useRef(null)
@@ -90,6 +90,7 @@ export default function MarkdownField({ value, onChange, className = '', textare
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           autoFocus={autoFocus}
+          aria-label={ariaLabel}
         />
         <div className={`markdown-field-preview-pane ${activeTab === 'preview' ? '' : 'markdown-field-pane-hidden'}`}>
           <MarkdownPreview value={value} />
