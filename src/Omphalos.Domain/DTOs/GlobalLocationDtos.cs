@@ -7,7 +7,7 @@ public record GlobalLocationDto(
     string? Description,
     string? Notes,
     string? SecretsAndHazards,
-    string? ImageBase64
+    bool HasImage
 );
 
 public record CreateGlobalLocationRequest(
@@ -17,7 +17,9 @@ public record CreateGlobalLocationRequest(
     string? Description,
     string? Notes,
     string? SecretsAndHazards,
-    string? ImageBase64
+    bool HasImage,
+    byte[]? OriginalImageData,
+    byte[]? CroppedImageData
 );
 
 public record UpdateGlobalLocationRequest(
@@ -26,5 +28,7 @@ public record UpdateGlobalLocationRequest(
     string? Description,
     string? Notes,
     string? SecretsAndHazards,
-    string? ImageBase64
+    bool HasImage,
+    byte[]? OriginalImageData,
+    byte[]? CroppedImageData
 );

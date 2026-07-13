@@ -16,5 +16,7 @@ public class GlobalLocationConfiguration : IEntityTypeConfiguration<GlobalLocati
             .HasForeignKey(l => l.GlobalLocationId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Ignore(g => g.HasImage);
     }
 }

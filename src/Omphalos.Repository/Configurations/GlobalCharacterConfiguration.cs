@@ -30,5 +30,7 @@ public class GlobalCharacterConfiguration : IEntityTypeConfiguration<GlobalChara
             .HasForeignKey(c => c.GlobalCharacterId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Ignore(g => g.HasImage);
     }
 }

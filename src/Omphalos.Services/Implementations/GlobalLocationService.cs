@@ -25,7 +25,9 @@ public class GlobalLocationService(IGlobalLocationRepository repo) : IGlobalLoca
             Description = request.Description,
             Notes = request.Notes,
             SecretsAndHazards = request.SecretsAndHazards,
-            ImageBase64 = request.ImageBase64,
+            HasImage = request.HasImage,
+            OriginalImageData = request.OriginalImageData,
+            CroppedImageData = request.CroppedImageData,
         };
         var created = await repo.CreateAsync(entity, ct);
         return MapToDto(created);
@@ -41,7 +43,9 @@ public class GlobalLocationService(IGlobalLocationRepository repo) : IGlobalLoca
             Description = request.Description,
             Notes = request.Notes,
             SecretsAndHazards = request.SecretsAndHazards,
-            ImageBase64 = request.ImageBase64,
+            HasImage = request.HasImage,
+            OriginalImageData = request.OriginalImageData,
+            CroppedImageData = request.CroppedImageData,
         };
         var updated = await repo.UpdateAsync(id, entity, ct);
         return updated is null ? null : MapToDto(updated);
@@ -51,5 +55,5 @@ public class GlobalLocationService(IGlobalLocationRepository repo) : IGlobalLoca
         repo.DeleteAsync(id, force, ct);
 
     private static GlobalLocationDto MapToDto(GlobalLocation g) => new(
-        g.Id, g.Name, g.Type, g.Description, g.Notes, g.SecretsAndHazards, g.ImageBase64);
+        g.Id, g.Name, g.Type, g.Description, g.Notes, g.SecretsAndHazards, g.OriginalImageData != null);
 }

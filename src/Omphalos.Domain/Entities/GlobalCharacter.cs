@@ -11,9 +11,9 @@ public class GlobalCharacter
     public string? PersonalityTraits { get; set; }
     public string? Flaw { get; set; }
     public string? Description { get; set; }
-    public string? PortraitBase64 { get; set; }
-    public double PortraitPanX { get; set; }
-    public double PortraitPanY { get; set; }
+    public byte[]? OriginalImageData { get; set; }
+    public byte[]? CroppedImageData { get; set; }
+    public bool HasImage { get; set; }
     public string? QuestHooks { get; set; }
 
     public bool IsNpc { get; set; }

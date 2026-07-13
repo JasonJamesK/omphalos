@@ -32,9 +32,11 @@ public class GlobalCharacterRepository(OmphalosDbContext db) : IGlobalCharacterR
         existing.PersonalityTraits = character.PersonalityTraits;
         existing.Flaw = character.Flaw;
         existing.Description = character.Description;
-        existing.PortraitBase64 = character.PortraitBase64;
-        existing.PortraitPanX = character.PortraitPanX;
-        existing.PortraitPanY = character.PortraitPanY;
+        var (original, cropped) = ImageWriteContract.Apply(
+            character.HasImage, character.OriginalImageData, character.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
         existing.QuestHooks = character.QuestHooks;
         existing.Relationships = character.Relationships;
 
