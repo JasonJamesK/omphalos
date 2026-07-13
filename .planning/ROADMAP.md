@@ -134,12 +134,28 @@ Plans:
   5. An animated GIF uploaded without going through the crop step (GIFs skip cropping) still displays correctly everywhere its portrait/image appears, via a cropped-or-original fallback.
   6. Character/location list and detail pages render immediately without waiting on embedded image bytes — images load asynchronously from dedicated, HTTP-cached (ETag/Cache-Control) binary endpoints, and the DTOs expose only a `HasImage` flag until an image is actually requested.
 
-**Plans**: TBD — expect this phase to need more internal structure than a single plan given the added storage/serving scope. Likely breakdown (finalized during `/gsd-plan-phase 4`): (1) EF Core migration + DTO changes (`HasImage` flag) across all 4 entities, (2) new endpoint groups — original + cropped binary routes per entity with HTTP caching, (3) shared `ImageCropModal` component + EXIF-correct/downscale prepare-image utility, (4) wire the 3 crop call sites end-to-end against the new save/serve model, (5) refactor existing `<img src={base64}>` usages app-wide (list/detail views, not just the 3 crop sites) to the new binary endpoints.
+**Plans**: 6 plans (finalized `/gsd-plan-phase 4`). Structured as one atomic backend data-model foundation + parallel client crop engine, then the serving layer, then three disjoint frontend-integration slices. Internal shape is dependency-driven (EF migration atomicity + one shared `ImageCropModal` per CROP-07 preclude a pure per-entity slice); the phase remains a single vertical MVP slice at the phase level per the 2026-07-10 revision.
 **UI hint**: yes
 
 Plans:
 
-- [ ] 04-01: TBD
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Backend storage model: rename image columns to dual `OriginalImageData`/`CroppedImageData` bytea (base64->bytea migration), `HasImage` read flag + 4-rule image write contract, drop pan fields (IMG-01/02/03/05, D-11)
+- [ ] 04-02-PLAN.md — Shared `ImageCropModal` (Cropper.js v2 ref-wired) + EXIF-safe/2400px working-copy util + GIF check + image-URL resolvers; install cropperjs; delete dead PortraitCrop.jsx (CROP-04..09, D-10)
+
+**Wave 2** *(depends on 04-01)*
+
+- [ ] 04-03-PLAN.md — Cached binary image endpoints (all 4 kinds) + IImageService/ImageValidation + IDOR-safe ownership + upload validation + WebApplicationFactory test harness (IMG-04/05/07)
+
+**Wave 3** *(depends on 04-01/02/03; disjoint files, parallel)*
+
+- [ ] 04-04-PLAN.md — Library.jsx (GlobalCharacter 3:4 + GlobalLocation 4:3) crop wiring, GIF-skip, re-crop-from-original, endpoint display (CROP-01/03, IMG-02/03/06)
+- [ ] 04-05-PLAN.md — In-session character crop + endpoint display (CharacterModal/Characters/NpcQuickBar/Portrait/AddFromLibrary) + link-based library image reuse + mockData D-11 (CROP-02, IMG-02/03/06)
+
+**Wave 4** *(depends on 04-04/05 for safe CropModal deletion)*
+
+- [ ] 04-06-PLAN.md — In-session location crop + endpoint display (AddLocationModal/Locations/LocationsBlock) + delete hand-rolled CropModal.jsx (CROP-03, IMG-02/03/06)
 
 ## Progress
 
@@ -152,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 1/1 | Complete    | 2026-07-13 |
-| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
+| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/6 | Planned | - |
 
 ## Roadmap Revision Log
 
