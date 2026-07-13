@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-07-13T14:31:00.558Z",
+  "phase": "4",
+  "phase_name": "Image Cropping & Storage — Cropper.js v2 Rollout",
+  "phase_dir": ".planning/phases/04-image-cropping-storage-cropper-js-v2-rollout",
+  "plan": 3,
+  "task": null,
+  "total_tasks": 6,
+  "status": "paused",
+  "completed_tasks": [
+    { "id": 1, "name": "04-01: Backend dual-column image storage model + migration", "status": "done", "commit": "5f2dec9" },
+    { "id": 2, "name": "04-02: Shared ImageCropModal + frontend crop utilities", "status": "done", "commit": "c047957" },
+    { "id": 3, "name": "04-03: Cached binary image endpoints + WebApplicationFactory test harness", "status": "done", "commit": "bee55d2" }
+  ],
+  "remaining_tasks": [
+    { "id": 4, "name": "04-04: Library (global) crop wiring", "status": "not_started" },
+    { "id": 5, "name": "04-05: In-session character crop wiring", "status": "not_started" },
+    { "id": 6, "name": "04-06: In-session location crop wiring + delete legacy CropModal.jsx", "status": "not_started" }
+  ],
+  "blockers": [],
+  "async_jobs": [],
+  "human_actions_pending": [],
+  "decisions": [
+    { "decision": "cropperjs v2.1.1's <cropper-image> does not dispatch an externally-observable load event (its internal Image lives in its own shadow root); used the library's public $ready() promise instead", "rationale": "Verified directly against node_modules/cropperjs/dist/cropper.esm.js during 04-02 execution — resolves RESEARCH.md Open Question #2 concretely. Downstream plans (04-04/05/06 wiring ImageCropModal) should reuse this pattern rather than re-deriving it.", "phase": "4" },
+    { "decision": "Two Rule-1 bug deviations fixed during 04-03, both isolated to the new WebApplicationFactory test harness: (a) config override switched from ConfigureAppConfiguration to builder.UseSetting(...) since Program.cs reads Jwt:Secret too eagerly; (b) CreateAuthenticatedClient's manual Cookie header needed HandleCookies=false on the HttpClientHandler, since the default cookie-container handler silently overwrote it", "rationale": "Found while writing 04-03's endpoint tests; documented in 04-03-SUMMARY.md. Not production-code changes.", "phase": "4" },
+    { "decision": "Post-merge build/test gate runs dotnet build Omphalos.slnx + dotnet test + npm run build explicitly every wave, rather than relying on the generic single-command auto-sniff in post-merge-gate.md", "rationale": "This is a mixed .NET + npm repo with no workflow.build_command/test_command configured in .planning/config.json. The generic sniff would pick npm run build/npm test only (since package.json exists) and silently skip the entire .NET side — exactly the side Wave 1/2 touched most. Continue running both stacks explicitly for Waves 3 and 4.", "phase": "4" }
+  ],
+  "uncommitted_files": [],
+  "next_action": "Run /gsd-execute-phase 4 to resume — it will detect 04-01/02/03 have SUMMARY.md and skip them, then dispatch Wave 3 (04-04 + 04-05 in parallel worktrees), then Wave 4 (04-06).",
+  "context_notes": "Paused mid-phase at the user's explicit request, not because of a blocker — Waves 1 and 2 (3 of 6 plans) are merged, tested (19/19 .NET tests + npm build green), and tracked in ROADMAP.md/STATE.md. Two structural gotchas were discovered this session while orchestrating worktree merges — see Critical Anti-Patterns in .continue-here.md, both marked blocking since they will recur in Wave 3 (parallel plans again) and Wave 4 (a file deletion again)."
+}
