@@ -82,14 +82,10 @@ body {
 .markdown-field-pane-hidden { display: none; }
 
 @container mdfield (min-width: 480px) {
-  .markdown-field-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
-  .markdown-field-tabs { display: none; }
-  .markdown-field-pane-hidden { display: block; }
+  .markdown-field:not(.markdown-field-force-tabs) .markdown-field-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  .markdown-field:not(.markdown-field-force-tabs) .markdown-field-tabs { display: none; }
+  .markdown-field:not(.markdown-field-force-tabs) .markdown-field-pane-hidden { display: block; }
 }
-
-.markdown-field-force-tabs .markdown-field-tabs { display: flex; }
-.markdown-field-force-tabs .markdown-field-body { display: flex; flex-direction: column; }
-.markdown-field-force-tabs .markdown-field-pane-hidden { display: none; }
 
 /* DC button flash */
 @keyframes dcFlash {
