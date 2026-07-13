@@ -134,15 +134,15 @@ Plans:
   5. An animated GIF uploaded without going through the crop step (GIFs skip cropping) still displays correctly everywhere its portrait/image appears, via a cropped-or-original fallback.
   6. Character/location list and detail pages render immediately without waiting on embedded image bytes — images load asynchronously from dedicated, HTTP-cached (ETag/Cache-Control) binary endpoints, and the DTOs expose only a `HasImage` flag until an image is actually requested.
 
-**Plans**: 6 plans (finalized `/gsd-plan-phase 4`). Structured as one atomic backend data-model foundation + parallel client crop engine, then the serving layer, then three disjoint frontend-integration slices. Internal shape is dependency-driven (EF migration atomicity + one shared `ImageCropModal` per CROP-07 preclude a pure per-entity slice); the phase remains a single vertical MVP slice at the phase level per the 2026-07-10 revision.
+**Plans**: 2/6 plans executed
 **UI hint**: yes
 
 Plans:
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Backend storage model: rename image columns to dual `OriginalImageData`/`CroppedImageData` bytea (base64->bytea migration), `HasImage` read flag + 4-rule image write contract, drop pan fields (IMG-01/02/03/05, D-11)
-- [ ] 04-02-PLAN.md — Shared `ImageCropModal` (Cropper.js v2 ref-wired) + EXIF-safe/2400px working-copy util + GIF check + image-URL resolvers; install cropperjs; delete dead PortraitCrop.jsx (CROP-04..09, D-10)
+- [x] 04-01-PLAN.md — Backend storage model: rename image columns to dual `OriginalImageData`/`CroppedImageData` bytea (base64->bytea migration), `HasImage` read flag + 4-rule image write contract, drop pan fields (IMG-01/02/03/05, D-11)
+- [x] 04-02-PLAN.md — Shared `ImageCropModal` (Cropper.js v2 ref-wired) + EXIF-safe/2400px working-copy util + GIF check + image-URL resolvers; install cropperjs; delete dead PortraitCrop.jsx (CROP-04..09, D-10)
 
 **Wave 2** *(depends on 04-01)*
 
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 1/1 | Complete    | 2026-07-13 |
-| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/6 | Planned | - |
+| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 2/6 | In Progress|  |
 
 ## Roadmap Revision Log
 
