@@ -58,6 +58,9 @@ body {
 .markdown-preview blockquote { border-left: 3px solid #332922; padding-left: 12px; margin: 8px 0; color: #999999; }
 .markdown-preview code { background: #332922; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
 .markdown-preview pre { background: #161310; border: 1px solid #332922; padding: 8px; border-radius: 6px; overflow-x: auto; }
+.markdown-preview table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+.markdown-preview th, .markdown-preview td { border: 1px solid #332922; padding: 6px 10px; text-align: left; }
+.markdown-preview thead th { background: #211b17; color: #d4a574; }
 .markdown-preview-empty { font-size: 12px; color: #999999; }
 
 /* Markdown field (edit + preview) */
