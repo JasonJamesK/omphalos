@@ -1,9 +1,13 @@
+import MarkdownField from '../../markdown/MarkdownField'
+
 const inp = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
+
+function itemUid() { return `item-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 
 export default function LootBlock({ block, onChange }) {
   const items = block.items || []
 
-  const addItem = () => onChange({ ...block, items: [...items, { name: '', description: '' }] })
+  const addItem = () => onChange({ ...block, items: [...items, { id: itemUid(), name: '', description: '' }] })
   const updateItem = (i, k, v) => {
     const arr = [...items]; arr[i] = { ...arr[i], [k]: v }
     onChange({ ...block, items: arr })
@@ -19,7 +23,7 @@ export default function LootBlock({ block, onChange }) {
       {items.length === 0 && <p className="text-xs text-[#666] py-1">No loot yet.</p>}
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="bg-[#161310] rounded p-2 flex gap-2">
+          <div key={item.id ?? i} className="bg-[#161310] rounded p-2 flex gap-2">
             <div className="flex-1 space-y-1.5">
               <input
                 className={inp + ' py-1.5 text-sm font-medium'}
@@ -27,11 +31,9 @@ export default function LootBlock({ block, onChange }) {
                 onChange={e => updateItem(i, 'name', e.target.value)}
                 placeholder="Item name..."
               />
-              <textarea
-                className={inp + ' text-xs'}
-                rows={2}
+              <MarkdownField
                 value={item.description}
-                onChange={e => updateItem(i, 'description', e.target.value)}
+                onChange={v => updateItem(i, 'description', v)}
                 placeholder="Description, mechanics..."
               />
             </div>
