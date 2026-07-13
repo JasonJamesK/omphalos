@@ -1,3 +1,5 @@
+import MarkdownField from '../../markdown/MarkdownField'
+
 const inp = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
 
 const VARIANTS = {
@@ -26,11 +28,9 @@ export default function CalloutBlock({ block, onChange }) {
           placeholder={`${v.label} title...`}
         />
       </div>
-      <textarea
-        className={inp + ' resize-none italic'}
-        rows={4}
-        value={block.body || ''}
-        onChange={e => onChange({ ...block, body: e.target.value })}
+      <MarkdownField
+        value={block.body}
+        onChange={v => onChange({ ...block, body: v })}
         placeholder="Read this out loud to your players..."
       />
     </div>
