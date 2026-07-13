@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 4
-current_phase_name: Image Cropping & Storage — Cropper.js v2 Rollout
+current_phase: "3.1"
+current_phase_name: Quick Notes Markdown Conversion
 status: ready
-stopped_at: Phase 3 complete, transitioned to Phase 4
+stopped_at: Phase 3 complete; urgent Phase 3.1 inserted ahead of Phase 4
 last_updated: "2026-07-13T09:28:44.491Z"
 last_activity: 2026-07-13
-last_activity_desc: Phase 3 complete, transitioned to Phase 4
+last_activity_desc: Phase 3.1 inserted (urgent) — Quick Notes markdown conversion
 progress:
   total_phases: 5
   completed_phases: 3
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-13)
 
 **Core value:** A DM can prep everything needed for a session and reference/edit it live during play without fighting broken editing tools or losing content.
-**Current focus:** Phase 4 — Image Cropping & Storage — Cropper.js v2 Rollout
+**Current focus:** Phase 3.1 — Quick Notes Markdown Conversion (urgent insertion, ahead of Phase 4)
 
 ## Current Position
 
-Phase: 4 — Image Cropping & Storage — Cropper.js v2 Rollout
+Phase: 3.1 — Quick Notes Markdown Conversion (INSERTED, urgent)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-07-13 — Phase 3 complete, transitioned to Phase 4
+Last activity: 2026-07-13 — Phase 3.1 inserted ahead of Phase 4
 
-Progress: [███████████████░░░░] 75% (3/4 phases)
+Progress: [████████████░░░░░░░░] 60% (3/5 phases, Phase 3.1 not yet counted as complete)
 
 ## Performance Metrics
 
