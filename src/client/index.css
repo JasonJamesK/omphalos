@@ -49,6 +49,8 @@ body {
 .markdown-preview h1 { font-size: 22px; font-weight: 700; margin: 16px 0 8px; color: #d4a574; }
 .markdown-preview h2 { font-size: 18px; font-weight: 700; margin: 14px 0 6px; color: #d4a574; }
 .markdown-preview h3 { font-size: 18px; font-weight: 700; margin: 12px 0 4px; color: #d4a574; }
+.markdown-preview h4, .markdown-preview h5, .markdown-preview h6 { font-size: 15px; font-weight: 700; margin: 10px 0 4px; color: #d4a574; }
+.markdown-preview hr { border: none; border-top: 1px solid #332922; margin: 12px 0; }
 .markdown-preview p { font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
 .markdown-preview ul { list-style: disc; padding-left: 20px; margin: 8px 0; }
 .markdown-preview ol { list-style: decimal; padding-left: 20px; margin: 8px 0; }
