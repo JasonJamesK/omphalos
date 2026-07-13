@@ -111,13 +111,13 @@ Plans:
   2. Quick Notes always shows the Edit/Preview tab toggle, at any viewport/container width — it never switches to the side-by-side split view the other `MarkdownField` instances use.
   3. Everything else about Quick Notes' `MarkdownField` (toolbar, rendering, auto-grow, empty state, dark-theme styling) is identical to every other instance — no divergent implementation.
 
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
 
 **Wave 1**
 
-- [ ] 03.1-01-PLAN.md — Add `forceTabs` opt-in prop to `MarkdownField` + 3 CSS override rules, then wire the Session Log Quick Notes field to `<MarkdownField forceTabs>` with a raw-string `updateNotes` handler (MDED-11; D-01, D-02, D-03, D-04)
+- [x] 03.1-01-PLAN.md — Add `forceTabs` opt-in prop to `MarkdownField` + 3 CSS override rules, then wire the Session Log Quick Notes field to `<MarkdownField forceTabs>` with a raw-string `updateNotes` handler (MDED-11; D-01, D-02, D-03, D-04)
 
 ### Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout
 
