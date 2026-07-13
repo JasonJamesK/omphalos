@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext'
 import RichTextEditor from '../RichTextEditor'
 import NpcQuickBar from '../session/NpcQuickBar'
 import SessionPrep from './SessionPrep'
+import MarkdownField from '../markdown/MarkdownField'
 
 function extractPlainText(node) {
   if (!node) return ''
@@ -45,10 +46,10 @@ export default function SessionLog() {
     })
   }
 
-  function updateNotes(e) {
+  function updateNotes(v) {
     dispatch({
       type: 'UPDATE_SESSION',
-      payload: { ...session, sessionNotes: e.target.value },
+      payload: { ...session, sessionNotes: v },
     })
   }
 
@@ -189,11 +190,10 @@ export default function SessionLog() {
         <div>
           <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-2">Quick Notes</h2>
           <p className="text-xs text-[#666] mb-2">DC button clicks are logged here automatically.</p>
-          <textarea
-            className={inputCls + ' font-mono text-xs'}
-            rows={6}
-            value={session.sessionNotes || ''}
-            onChange={updateNotes}
+          <MarkdownField
+            value={session.sessionNotes}
+            onChange={v => updateNotes(v)}
+            forceTabs
             placeholder="Quick notes, reminders, DC results..."
           />
         </div>

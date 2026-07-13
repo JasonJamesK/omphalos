@@ -25,7 +25,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **MDED-07**: Markdown fields auto-grow to fit their content instead of being fixed-height boxes
 - [x] **MDED-08**: Markdown preview matches the app's dark theme (readable typography for headings, lists, bold/italic, blockquote, code)
 - [x] **MDED-09**: One shared `MarkdownField` component is reused across all 4 field locations rather than four divergent implementations
-- [ ] **MDED-11**: DM can write the Session Log's "Quick Notes" field (`session.sessionNotes`) using markdown syntax with live rendering, via the shared `MarkdownField`; unlike other markdown fields, this one always shows the Edit/Preview tab toggle (never the side-by-side split view), since it sits in the narrowest column of the Session tab's 3-column layout
+- [x] **MDED-11**: DM can write the Session Log's "Quick Notes" field (`session.sessionNotes`) using markdown syntax with live rendering, via the shared `MarkdownField`; unlike other markdown fields, this one always shows the Edit/Preview tab toggle (never the side-by-side split view), since it sits in the narrowest column of the Session tab's 3-column layout
 
 ### Image Cropping
 
@@ -98,7 +98,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MDED-07 | Phase 2 | Complete |
 | MDED-08 | Phase 2 | Complete |
 | MDED-09 | Phase 3 | Complete |
-| MDED-11 | Phase 3.1 | Pending |
+| MDED-11 | Phase 3.1 | Complete |
 | CROP-01 | Phase 4 | Pending |
 | CROP-02 | Phase 4 | Pending |
 | CROP-03 | Phase 4 | Pending |

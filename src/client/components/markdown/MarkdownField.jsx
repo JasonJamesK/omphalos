@@ -15,13 +15,13 @@ function useAutoGrow(value) {
   return ref
 }
 
-export default function MarkdownField({ value, onChange, className = '', textareaClassName = '', placeholder = '', autoFocus = false }) {
+export default function MarkdownField({ value, onChange, className = '', textareaClassName = '', placeholder = '', autoFocus = false, forceTabs = false }) {
   const [activeTab, setActiveTab] = useState('edit')
   const textareaRef = useAutoGrow(value)
   const toolbarDisabled = activeTab !== 'edit'
 
   return (
-    <div className={`markdown-field border border-[#332922] rounded-lg bg-[#161310] ${className}`}>
+    <div className={`markdown-field ${forceTabs ? 'markdown-field-force-tabs' : ''} border border-[#332922] rounded-lg bg-[#161310] ${className}`}>
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[#332922] bg-[#211b17]">
         <button type="button" disabled={toolbarDisabled} onClick={() => wrapSelection(textareaRef, '**')} className={`${btnCls} disabled:opacity-40 disabled:cursor-not-allowed`} title="Bold">
           <strong>B</strong>

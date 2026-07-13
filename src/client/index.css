@@ -84,6 +84,10 @@ body {
   .markdown-field-pane-hidden { display: block; }
 }
 
+.markdown-field-force-tabs .markdown-field-tabs { display: flex; }
+.markdown-field-force-tabs .markdown-field-body { display: flex; flex-direction: column; }
+.markdown-field-force-tabs .markdown-field-pane-hidden { display: none; }
+
 /* DC button flash */
 @keyframes dcFlash {
   0% { transform: scale(1); background-color: #d4a574; }
