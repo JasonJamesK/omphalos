@@ -164,3 +164,7 @@ None - no external service configuration required.
 ---
 *Phase: 04-image-cropping-storage-cropper-js-v2-rollout*
 *Completed: 2026-07-13*
+
+## Self-Check: PASSED
+
+All created/modified files confirmed present on disk; PortraitCrop.jsx confirmed deleted; all 3 task/summary commit hashes confirmed in git log.
