@@ -90,12 +90,14 @@ Plans:
   2. DM writes content in a Notes, Callout, or Loot prep block using markdown syntax with live preview, saves, reloads, and the content persists.
   3. All four markdown field locations (Overview & Hook, prep blocks, character bio/notes, location description) render through the same shared `MarkdownField` component rather than divergent implementations.
 
-**Plans**: TBD
+**Plans**: 1 plan
 **UI hint**: yes
 
 Plans:
 
-- [ ] 03-01: TBD
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Wire the shared `MarkdownField` into all 4 Session Prep prose fields (Overview & Hook, Notes body, Callout body, Loot item description) + required Loot list-key stability fix (MDED-01, MDED-02, MDED-09; D-01, D-02, D-03, D-04, D-05)
 
 ### Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout
 
@@ -129,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
-| 3. Markdown Editing — Session Prep Fields | 0/TBD | Not started | - |
+| 3. Markdown Editing — Session Prep Fields | 0/1 | Not started | - |
 | 4. Image Cropping & Storage — Cropper.js v2 Rollout | 0/TBD | Not started | - |
 
 ## Roadmap Revision Log
