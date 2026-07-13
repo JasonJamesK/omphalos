@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import MarkdownPreview from './MarkdownPreview'
 import { wrapSelection, insertAtCursor } from './markdownToolbar'
 
@@ -15,13 +15,39 @@ function useAutoGrow(value) {
   return ref
 }
 
+// Tracks whether the field is currently rendering as a side-by-side split
+// view (edit + preview both visible), which the `@container mdfield`
+// query switches on at 480px regardless of `activeTab`. Toolbar-disabled
+// state should follow actual pane visibility, not raw tab state.
+function useIsSplitView(containerRef, forceTabs) {
+  const [isSplitView, setIsSplitView] = useState(false)
+  useEffect(() => {
+    if (forceTabs) {
+      setIsSplitView(false)
+      return
+    }
+    const el = containerRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setIsSplitView(entry.contentRect.width >= 480)
+      }
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [containerRef, forceTabs])
+  return isSplitView
+}
+
 export default function MarkdownField({ value, onChange, className = '', textareaClassName = '', placeholder = '', autoFocus = false, forceTabs = false }) {
   const [activeTab, setActiveTab] = useState('edit')
   const textareaRef = useAutoGrow(value)
-  const toolbarDisabled = activeTab !== 'edit'
+  const containerRef = useRef(null)
+  const isSplitView = useIsSplitView(containerRef, forceTabs)
+  const toolbarDisabled = !isSplitView && activeTab !== 'edit'
 
   return (
-    <div className={`markdown-field ${forceTabs ? 'markdown-field-force-tabs' : ''} border border-[#332922] rounded-lg bg-[#161310] ${className}`}>
+    <div ref={containerRef} className={`markdown-field ${forceTabs ? 'markdown-field-force-tabs' : ''} border border-[#332922] rounded-lg bg-[#161310] ${className}`}>
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[#332922] bg-[#211b17]">
         <button type="button" disabled={toolbarDisabled} onClick={() => wrapSelection(textareaRef, '**')} className={`${btnCls} disabled:opacity-40 disabled:cursor-not-allowed`} title="Bold">
           <strong>B</strong>
