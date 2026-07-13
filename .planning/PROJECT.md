@@ -25,6 +25,7 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - ✓ DM can write the Session "Overview & Hook" field using markdown syntax, with a rendered preview — Phase 3
 - ✓ DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax, with a rendered preview — Phase 3
 - ✓ One shared `MarkdownField` component is reused across all 4 field locations (Overview & Hook, prep blocks, character bio/notes, location description) rather than divergent implementations — Phase 3
+- ✓ DM can write the Session Log's "Quick Notes" field using markdown syntax, with a rendered preview that always shows the Edit/Preview tab toggle (never side-by-side split view) given its narrow column — Phase 3.1 (urgent insertion; brings the shared `MarkdownField` rollout to all 11 usage sites)
 
 ### Active
 
@@ -49,7 +50,7 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - Image storage today is a single nullable base64 string column per entity — `Character.PortraitBase64`, `GlobalCharacter.PortraitBase64`, `Location.ImageBase64`, `GlobalLocation.ImageBase64` — embedded inline in the DTOs and returned as part of the main session/library JSON payloads.
 - quest-board's proven image pattern (confirmed by reading its source): a 1:1 image table per owning entity with `OriginalImageData`/`CroppedImageData` (both `byte[]`, cropped nullable), served via two separate binary endpoints per entity (e.g. `GetProfilePicture` for the original, `GetCroppedPicture` for the cropped result), with view models carrying only a `HasProfilePicture` bool — image bytes never touch the initial page/JSON payload. Read pattern is `CroppedImageData ?? OriginalImageData`. The user wants this pattern (both the dual-storage model and the separate-endpoint serving) ported to all 4 of Omphalos's image fields, for the same reasons quest-board has it: re-crop without re-upload, animated GIFs (which skip cropping) still display, and pages load without waiting on inline image bytes.
 - Unlike quest-board (no caching on its image endpoints), Omphalos's new image endpoints will add basic HTTP caching (ETag or Cache-Control) since cropped/original images are immutable once saved — a deliberate improvement over the reference implementation, not parity.
-- **"Session Notes" naming collision (discovered during Phase 3 UAT):** there are three distinct fields the app calls some variant of "Session Notes" — (1) `Character.sessionNotes`/`Location.sessionNotes`, in-session per-entity notes, markdown-enabled since Phase 2; (2) the Session Log tab's TipTap rich-text log itself, labeled "Session Notes" in the UI heading but backed by `session.sessionLog`; (3) the Session Log tab's separate "Quick Notes" section (labeled that in the UI, but the underlying field is `session.sessionNotes`), a DC-roll/reminder scratchpad — still a plain `<textarea>`, never in scope for any markdown-editing phase (not in REQUIREMENTS.md's MDED-01..09). If a future phase targets "session notes" markdown, clarify which of these three is meant before scoping.
+- **"Session Notes" naming collision (discovered during Phase 3 UAT, resolved in Phase 3.1):** there are three distinct fields the app calls some variant of "Session Notes" — (1) `Character.sessionNotes`/`Location.sessionNotes`, in-session per-entity notes, markdown-enabled since Phase 2; (2) the Session Log tab's TipTap rich-text log itself, labeled "Session Notes" in the UI heading but backed by `session.sessionLog` — stays TipTap WYSIWYG, out of scope; (3) the Session Log tab's "Quick Notes" section (labeled that in the UI, underlying field `session.sessionNotes`), a DC-roll/reminder scratchpad — markdown-enabled in Phase 3.1, the 11th and final `MarkdownField` site, forced to permanent tab-toggle mode (`forceTabs`) rather than the usual container-query split view.
 
 ## Constraints
 
@@ -71,6 +72,8 @@ A DM can prep everything needed for a session and reference/edit it live during 
 | Session Log (TipTap WYSIWYG) left untouched | Already works and already auto-grows; converting it wasn't requested and isn't broken | Holds |
 | Callout block's `MarkdownField` built with default chrome, no `bare`/chromeless variant added | The contingent double-border-clutter concern (D-05) didn't materialize on visual QA; keeps `MarkdownField`'s API surface unchanged | Shipped — Phase 3 |
 | Repeatable lists nesting a stateful child component (e.g. `MarkdownField`) must key by a stable per-item id, not array index | Loot items were keyed by bare index, causing a stateful `MarkdownField`'s Edit/Preview tab to follow list *position* instead of the logical item across delete/reorder; fixed via an `itemUid()` generator mirroring `phaseUid()`/`blockUid()`. Applies to any future repeatable list holding stateful children | Shipped — Phase 3 |
+| `MarkdownField` gained a `forceTabs` opt-in prop (default `false`) to permanently pin an instance to Edit/Preview tab mode, opting it out of the normal `@container` split-view breakpoint | Quick Notes sits in the narrowest column of the Session tab's 3-column layout — a split view would be too cramped to read even though its container is technically wide enough to trigger it. The CSS mechanism evolved during code review: the plan's original 3 descendant-override rules were replaced with a single `:not(.markdown-field-force-tabs)` scope on the `@container` block itself (cleaner, same effect, no `!important`) | Shipped — Phase 3.1 |
+| `MarkdownField`'s toolbar-disabled state now tracks actual pane visibility via a `ResizeObserver`-backed `useIsSplitView` hook, not the stale `activeTab` value | Code review (WR-02, Phase 3.1) found the toolbar could get permanently stuck disabled after a tab-then-resize sequence at any of the 11 call sites — `activeTab !== 'edit'` doesn't account for split-view showing both panes regardless of which tab was last active | Shipped — Phase 3.1, applies to all 11 `MarkdownField` sites |
 
 ## Evolution
 
@@ -90,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-13 after Phase 3*
+*Last updated: 2026-07-13 after Phase 3.1*
