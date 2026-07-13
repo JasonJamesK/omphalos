@@ -62,6 +62,18 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
         return rows > 0;
     }
 
+    public Task<byte[]?> GetCharacterImageAsync(string sessionId, string characterId, Guid userId, bool cropped, CancellationToken ct = default) =>
+        db.Characters
+            .Where(c => c.Id == characterId && c.SessionId == sessionId && c.Session.UserId == userId)
+            .Select(c => cropped ? (c.CroppedImageData ?? c.OriginalImageData) : c.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
+
+    public Task<byte[]?> GetLocationImageAsync(string sessionId, string locationId, Guid userId, bool cropped, CancellationToken ct = default) =>
+        db.Locations
+            .Where(l => l.Id == locationId && l.SessionId == sessionId && l.Session.UserId == userId)
+            .Select(l => cropped ? (l.CroppedImageData ?? l.OriginalImageData) : l.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
+
     // Reconciles a session-scoped child collection against an incoming payload, by Id.
     // Only ever operates on collections already loaded off the UserId-scoped session
     // query above — never introduces a global lookup by child Id alone.

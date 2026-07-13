@@ -54,4 +54,10 @@ public class GlobalLocationRepository(OmphalosDbContext db) : IGlobalLocationRep
         await db.SaveChangesAsync(ct);
         return DeleteGlobalLocationResult.Deleted;
     }
+
+    public Task<byte[]?> GetImageAsync(string id, bool cropped, CancellationToken ct = default) =>
+        db.GlobalLocations
+            .Where(g => g.Id == id)
+            .Select(g => cropped ? (g.CroppedImageData ?? g.OriginalImageData) : g.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
 }

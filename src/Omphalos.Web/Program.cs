@@ -26,6 +26,7 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGlobalLocationService, GlobalLocationService>();
 builder.Services.AddScoped<IGlobalCharacterService, GlobalCharacterService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]

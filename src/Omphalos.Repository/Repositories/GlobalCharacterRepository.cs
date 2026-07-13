@@ -59,4 +59,10 @@ public class GlobalCharacterRepository(OmphalosDbContext db) : IGlobalCharacterR
         await db.SaveChangesAsync(ct);
         return DeleteGlobalCharacterResult.Deleted;
     }
+
+    public Task<byte[]?> GetImageAsync(string id, bool cropped, CancellationToken ct = default) =>
+        db.GlobalCharacters
+            .Where(g => g.Id == id)
+            .Select(g => cropped ? (g.CroppedImageData ?? g.OriginalImageData) : g.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
 }
