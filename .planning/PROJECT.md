@@ -26,12 +26,13 @@ A DM can prep everything needed for a session and reference/edit it live during 
 - ✓ DM can write session-prep block content (Notes, Callout, Loot blocks) using markdown syntax, with a rendered preview — Phase 3
 - ✓ One shared `MarkdownField` component is reused across all 4 field locations (Overview & Hook, prep blocks, character bio/notes, location description) rather than divergent implementations — Phase 3
 - ✓ DM can write the Session Log's "Quick Notes" field using markdown syntax, with a rendered preview that always shows the Edit/Preview tab toggle (never side-by-side split view) given its narrow column — Phase 3.1 (urgent insertion; brings the shared `MarkdownField` rollout to all 11 usage sites)
+- ✓ DM can crop portrait and location images using Cropper.js v2 instead of the current hand-rolled canvas crop tool, across all three usage sites (Character Library portraits, in-session Character portraits, Location images) — Phase 4
+- ✓ Both the original upload and the cropped result are stored per image (Character, GlobalCharacter, Location, GlobalLocation), so a DM can re-crop without re-uploading and animated GIFs still display correctly — Phase 4
+- ✓ Images are served via dedicated binary endpoints instead of being embedded as base64 in session/character/location JSON payloads, so pages load without waiting on image bytes — Phase 4
 
 ### Active
 
-- [ ] DM can crop portrait and location images using Cropper.js v2 instead of the current hand-rolled canvas crop tool, across all three usage sites (Character Library portraits, in-session Character portraits, Location images)
-- [ ] Both the original upload and the cropped result are stored per image (Character, GlobalCharacter, Location, GlobalLocation), so a DM can re-crop without re-uploading and animated GIFs still display correctly
-- [ ] Images are served via dedicated binary endpoints instead of being embedded as base64 in session/character/location JSON payloads, so pages load without waiting on image bytes
+*(none — milestone v1.0 requirements fully shipped)*
 
 ### Out of Scope
 
@@ -65,9 +66,12 @@ A DM can prep everything needed for a session and reference/edit it live during 
 | True markdown editing (raw syntax + render) rather than extending the existing TipTap WYSIWYG to new fields | Matches quest-board's proven, working pattern the user wants to bring over; keeps stored content as portable plain text | Shipped — Phase 2 |
 | Client-side markdown rendering (`react-markdown` + `remark-gfm`) over server-side Markdig | No Razor/server-rendering pipeline exists in Omphalos; avoids a new backend dependency and endpoint changes; markdown source stays portable either way | Shipped — Phase 2 |
 | Toolbar text mutation via `document.execCommand('insertText', ...)` rather than `setRangeText` or native-setter+`dispatchEvent` | Only method that reliably preserved native Ctrl+Z undo in real-browser testing, despite being spec-deprecated; matches the approach used by `fregante/text-field-edit` | Shipped — Phase 2 |
-| Replace `CropModal.jsx` with Cropper.js v2 at all three existing usage sites | Matches quest-board's proven, EXIF-safe crop pipeline; consolidates on one crop implementation instead of a hand-rolled one | — Pending |
-| Store both original and cropped image per entity, served via dedicated binary endpoints (all 4 image fields: Character, GlobalCharacter, Location, GlobalLocation) | Matches quest-board's proven pattern exactly; enables re-crop without re-upload, GIF fallback, and instant page loads (images load async instead of blocking on inline base64 in the JSON payload) | — Pending |
-| Add HTTP caching (ETag/Cache-Control) to the new image endpoints | quest-board has none; images are immutable once saved so caching is a safe, cheap improvement over the reference implementation | — Pending |
+| Replace `CropModal.jsx` with Cropper.js v2 at all three existing usage sites | Matches quest-board's proven, EXIF-safe crop pipeline; consolidates on one crop implementation instead of a hand-rolled one | Shipped — Phase 4 |
+| Store both original and cropped image per entity, served via dedicated binary endpoints (all 4 image fields: Character, GlobalCharacter, Location, GlobalLocation) | Matches quest-board's proven pattern exactly; enables re-crop without re-upload, GIF fallback, and instant page loads (images load async instead of blocking on inline base64 in the JSON payload) | Shipped — Phase 4 |
+| Add HTTP caching (ETag/Cache-Control) to the new image endpoints | quest-board has none; images are immutable once saved so caching is a safe, cheap improvement over the reference implementation | Shipped — Phase 4 |
+| EF Core migration uses `USING ... decode(col,'base64')`/`encode(...)` raw-SQL casts (never `AlterColumn`) to retype the base64 text column to `bytea` in place | Preserves existing production image data during the text→bytea retype; `AlterColumn` alone cannot perform this transform and would silently corrupt/drop data | Shipped — Phase 4 |
+| `Cache-Control: private` (not `public`) on ALL image endpoints, including non-user-scoped Global* entities | Code review (WR-04) found `public` was unsafe for `RequireAuthorization()`-gated endpoints even when the underlying data isn't per-user — a shared/public cache could leak an authenticated response cross-user; `private` is safe regardless of ownership model | Shipped — Phase 4 |
+| GIF-skip-the-crop-modal check (`isGifFile`) must gate both the initial upload AND the re-crop entry point | Code review (CR-01, Critical) found re-crop never re-checked the file type, which could bake an animated GIF down to a static frame on re-crop; both entry points now route through the same gated file handler | Shipped — Phase 4 |
 | Auto-grow scoped to the new markdown fields only, not app-wide | Auto-grow comes bundled with the new markdown editor component; avoids unrelated scope creep into stat blocks/random tables | Shipped — Phase 2 |
 | Session Log (TipTap WYSIWYG) left untouched | Already works and already auto-grows; converting it wasn't requested and isn't broken | Holds |
 | Callout block's `MarkdownField` built with default chrome, no `bare`/chromeless variant added | The contingent double-border-clutter concern (D-05) didn't materialize on visual QA; keeps `MarkdownField`'s API surface unchanged | Shipped — Phase 3 |
@@ -93,4 +97,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-13 after Phase 3.1*
+*Last updated: 2026-07-14 after Phase 4*

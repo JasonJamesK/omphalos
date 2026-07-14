@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 1/1 | Complete    | 2026-07-13 |
-| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 6/6 | Complete   | 2026-07-14 |
+| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 6/6 | Complete    | 2026-07-14 |
 
 ## Roadmap Revision Log
 

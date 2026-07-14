@@ -2,44 +2,44 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 4
-current_phase_name: Image Cropping & Storage — Cropper.js v2 Rollout
-status: executing
-stopped_at: Session resumed, proceeding to execute Wave 3 (04-04, 04-05)
-last_updated: "2026-07-14T05:49:45.877Z"
-last_activity: 2026-07-13
-last_activity_desc: Phase 4 execution started
+current_phase: 04
+status: milestone_complete
+stopped_at: Phase 4 complete, milestone v1.0 100% (5/5 phases) — ready for /gsd-complete-milestone v1.0
+last_updated: "2026-07-14T09:06:19.768Z"
+last_activity: 2026-07-14
+last_activity_desc: Phase 04 complete
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 13
-  percent: 80
+  completed_plans: 16
+  percent: 100
+current_phase_name: Image Cropping & Storage — Cropper.js v2 Rollout
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-13)
+See: .planning/PROJECT.md (updated 2026-07-14)
 
 **Core value:** A DM can prep everything needed for a session and reference/edit it live during play without fighting broken editing tools or losing content.
-**Current focus:** Phase 4 — Image Cropping & Storage — Cropper.js v2 Rollout
+**Current focus:** Milestone v1.0 complete — all 5 phases shipped; ready for `/gsd-complete-milestone v1.0`
 
 ## Current Position
 
-Phase: 4 (Image Cropping & Storage — Cropper.js v2 Rollout) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 4
-Last activity: 2026-07-13 — Phase 4 execution started
+Phase: 04 (Image Cropping & Storage — Cropper.js v2 Rollout) — COMPLETE
+Plan: 6/6 complete
+Status: Milestone v1.0 100% complete
+Last activity: 2026-07-14 — Phase 04 complete (UAT 3/3 passed, security threats_open: 0)
 
-Progress: [████████████████░░░░] 80% (4/5 phases)
+Progress: [████████████████████] 100% (5/5 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 10
+- Total plans completed: 16
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -51,6 +51,7 @@ Progress: [████████████████░░░░] 80% (4/
 | 2 | 4 | - | - |
 | 3 | 1 | - | - |
 | 3.1 | 1 | - | - |
+| 04 | 6 | - | - |
 
 **Recent Trend:**
 
@@ -78,6 +79,7 @@ Recent decisions affecting current work:
 - Phase 3 (2026-07-13): Shipped markdown editing for Session Prep fields (MDED-01, MDED-02, MDED-09) — Overview & Hook plus Notes/Callout/Loot-description prep blocks — completing the 4-site `MarkdownField` rollout (6 sites from Phase 2 + these 4). Fixed a required Loot list-key stability bug (stateful `MarkdownField` nested in an index-keyed list scrambled Edit/Preview tab state across delete/reorder) via a stable `itemUid()`-generated `item.id` key, mirroring the existing `phaseUid()`/`blockUid()` pattern. Full UAT (4/4) confirmed live in a real browser via the Claude in Chrome extension against the running Docker stack, including a direct React-state inspection to rigorously verify the key-stability fix beyond visual approximation. Docker was available this session (unlike Phase 1/2's verification passes) — re-ran the previously `PRESENT_BEHAVIOR_UNVERIFIED` `PrepDataPersistsOnUpdate`/`CollectionDiffMerge` integration tests live against real Postgres; both now pass.
 - Phase 3 (2026-07-13): Discovered a "Session Notes" naming collision worth knowing before scoping any future work in that area — see PROJECT.md Context section for the full breakdown of the three distinct fields involved.
 - Phase 3.1 (2026-07-13, urgent insertion): Shipped markdown editing for the Session Log's "Quick Notes" field (MDED-11) — the 11th and final `MarkdownField` call site — via a new `forceTabs` opt-in prop that permanently pins an instance to Edit/Preview tabs, opting out of the normal `@container` split-view breakpoint (Quick Notes' column is too narrow for split view even past 480px). Code review found 7 issues post-execution (0 critical, 4 warning, 3 info), all fixed: notably WR-01 (missing `key={session.id}` caused auto-grow height to pin to 0px across session switches while on the Preview tab) and WR-02 (toolbar could get stuck disabled after a tab-then-resize sequence — fixed via a `ResizeObserver`-backed `useIsSplitView` hook, applying to all 11 `MarkdownField` sites, not just Quick Notes). Full UAT (6/6) confirmed live via Claude in Chrome against a rebuilt Docker stack, including forcing a real container-width change via inline style to verify the CSS/ResizeObserver fix since window resize wasn't reliably taking effect this session.
+- Phase 4 (2026-07-14): Shipped the Cropper.js v2 rollout across all 3 usage sites plus the full dual original/cropped image storage overhaul (4 entities, 8 binary endpoints, HTTP caching). 6 plans across 4 execution waves, with two real-world interruptions handled mid-flight: a user-requested pause/resume, and an actual PC reboot mid-fixer-agent that required forensic worktree recovery (completing a partially-applied fix, then fixing two cascading test failures it caused). Code review found 1 Critical (CR-01: GIF re-crop never re-checked file type, could bake an animated GIF to a static frame) + 7 Warnings + 3 Info; all fixed. Full live UAT (3/3) via Claude in Chrome against a rebuilt Docker stack confirmed drag/resize/zoom/EXIF-orientation/GIF-round-trip at all 4 real crop entry points (Character Library, Locations Library, in-session Character, in-session Location). Security review (ASVS L1): 9 threats registered at plan time, all closed (7 mitigated, 2 accepted — GIF type-spoof and the `cropperjs` supply-chain pin).
 
 ### Pending Todos
 
@@ -85,8 +87,6 @@ None yet.
 
 ### Blockers/Concerns
 
-- Cropper.js v2 (Phase 4) uses native Web Components with no maintained React wrapper for v2; research flags the imperative ref/lifecycle integration as the highest-risk pattern in this milestone — worth extra care during planning/execution of Phase 4.
-- Phase 4 now also carries an EF Core migration across 4 entities (Character, GlobalCharacter, Location, GlobalLocation moving from a single base64 column to separate original/cropped columns) plus 8 new binary endpoints and an app-wide frontend refactor of every existing `<img src={base64}>` usage — not just the 3 crop call sites. This is a materially larger phase than originally scoped; plan it in stages (migration/DTOs → endpoints → shared crop component → wiring → app-wide `<img>` refactor) rather than as one large plan.
 - Minor UX gap found during Phase 1 UAT (non-blocking): an edit made during the session-load race window is silently discarded client-side once full detail loads, rather than retried or flagged — no data loss, but no warning either. Candidate for a future polish pass.
 
 ### Roadmap Evolution
@@ -103,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-14T05:49:45.866Z
-Stopped at: Session resumed, proceeding to execute Wave 3 (04-04, 04-05)
-Resume file: .planning/phases/04-image-cropping-storage-cropper-js-v2-rollout/04-04-PLAN.md
+Last session: 2026-07-14
+Stopped at: Phase 4 complete, milestone v1.0 100% (5/5 phases) — ready for `/gsd-complete-milestone v1.0`
+Resume file: None
