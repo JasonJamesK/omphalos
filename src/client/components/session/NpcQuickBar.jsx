@@ -5,13 +5,14 @@ import Portrait from '../character/Portrait'
 import CharacterModal from '../character/CharacterModal'
 import AddFromLibraryModal from '../character/AddFromLibraryModal'
 import DeleteConfirm from '../DeleteConfirm'
+import { sessionCharacterImageUrl } from '../../utils/imageUrls'
 
 function uid() { return `char-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 function charUid() { return `gchar-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 
 function emptyNpcChar() {
   return {
-    id: uid(), name: '', portraitBase64: null, portraitPanX: 0, portraitPanY: 0,
+    id: uid(), name: '', hasImage: false, originalImageData: null, croppedImageData: null,
     tagline: '', class: null, race: null, level: 1, alignment: '',
     personalityTraits: '', flaw: '', inventory: '', questHooks: '', relationships: [], description: '',
     globalCharacterId: null, sessionNotes: null, isNpc: true, statBlock: null,
@@ -46,7 +47,7 @@ function AddNpcChooser({ onPickLibrary, onPickNew, onClose }) {
   )
 }
 
-function NpcStatCard({ char, onClick, onDelete }) {
+function NpcStatCard({ char, sessionId, onClick, onDelete }) {
   const sb = char.statBlock
   const isBoss = (sb?.legendaryActions?.length || 0) > 0
   const badge = isBoss ? { label: 'Boss', cls: 'bg-[#b24545]/20 text-[#e08a6a] border-[#b24545]/40' } : { label: 'NPC', cls: 'bg-[#6b8e6b]/20 text-[#6b8e6b] border-[#6b8e6b]/40' }
@@ -58,7 +59,7 @@ function NpcStatCard({ char, onClick, onDelete }) {
         className="w-full flex gap-3 text-left bg-[#161310] border border-[#332922] rounded-lg p-3 pr-6 hover:border-[#d4a574]/50 transition-colors"
       >
         <div className="rounded overflow-hidden flex-shrink-0">
-          <Portrait char={char} size="xs" />
+          <Portrait char={char} size="xs" imageUrl={sessionCharacterImageUrl(char, sessionId)} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
@@ -122,9 +123,9 @@ export default function NpcQuickBar() {
         personalityTraits: finalForm.personalityTraits || null,
         flaw: finalForm.flaw || null,
         description: finalForm.description || null,
-        portraitBase64: finalForm.portraitBase64 || null,
-        portraitPanX: finalForm.portraitPanX || 0,
-        portraitPanY: finalForm.portraitPanY || 0,
+        hasImage: finalForm.hasImage,
+        originalImageData: finalForm.originalImageData,
+        croppedImageData: finalForm.croppedImageData,
         questHooks: finalForm.questHooks || null,
         relationships: finalForm.relationships || [],
         isNpc: true,
@@ -150,9 +151,9 @@ export default function NpcQuickBar() {
       personalityTraits: globalChar.personalityTraits || '',
       flaw: globalChar.flaw || '',
       description: globalChar.description || '',
-      portraitBase64: globalChar.portraitBase64 || null,
-      portraitPanX: globalChar.portraitPanX || 0,
-      portraitPanY: globalChar.portraitPanY || 0,
+      hasImage: false,
+      originalImageData: null,
+      croppedImageData: null,
       inventory: '',
       questHooks: globalChar.questHooks || '',
       relationships: globalChar.relationships || [],
@@ -191,7 +192,7 @@ export default function NpcQuickBar() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {npcs.map(c => (
-            <NpcStatCard key={c.id} char={c} onClick={() => setEditing({ ...c })} onDelete={() => setDeleting(c)} />
+            <NpcStatCard key={c.id} char={c} sessionId={activeSession.id} onClick={() => setEditing({ ...c })} onDelete={() => setDeleting(c)} />
           ))}
         </div>
       )}
@@ -214,6 +215,7 @@ export default function NpcQuickBar() {
       {editing && (
         <CharacterModal
           char={editing}
+          sessionId={activeSession.id}
           defaultIsNpc
           onSave={editing.name ? saveEdit : saveNewNpc}
           onClose={() => setEditing(null)}
