@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
 import ImageCropModal from './ImageCropModal'
-import { isGifFile, blobToBase64, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
+import { isGifFile, isGifBlob, blobToBase64, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
 import { getImageUrl, fetchImageBlob } from '../utils/imageUrls'
 import MarkdownField from './markdown/MarkdownField'
 import { stripMarkdown } from './markdown/stripMarkdown'
@@ -90,16 +90,19 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
   }
 
   async function handleRecrop() {
+    let source = null
     if (form.originalImageData) {
-      setCropFile(base64ToBlob(form.originalImageData))
-      setCropMode('recrop')
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      source = await fetchImageBlob(getImageUrl('global-location', form.id, 'original'))
+    }
+    if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
       return
     }
-    const blob = await fetchImageBlob(getImageUrl('global-location', form.id, 'original'))
-    if (blob) {
-      setCropFile(blob)
-      setCropMode('recrop')
-    }
+    setCropFile(source)
+    setCropMode('recrop')
   }
 
   function handleRemoveImage() {
@@ -396,16 +399,19 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
   }
 
   async function handleRecrop() {
+    let source = null
     if (form.originalImageData) {
-      setCropFile(base64ToBlob(form.originalImageData))
-      setCropMode('recrop')
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      source = await fetchImageBlob(getImageUrl('global-character', form.id, 'original'))
+    }
+    if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
       return
     }
-    const blob = await fetchImageBlob(getImageUrl('global-character', form.id, 'original'))
-    if (blob) {
-      setCropFile(blob)
-      setCropMode('recrop')
-    }
+    setCropFile(source)
+    setCropMode('recrop')
   }
 
   function handleRemovePortrait() {

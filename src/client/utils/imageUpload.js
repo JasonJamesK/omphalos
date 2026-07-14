@@ -27,6 +27,19 @@ export function isGifFile(file) {
   return !!(file && file.type === 'image/gif')
 }
 
+// True when a Blob/File's real bytes are a GIF, regardless of its declared
+// `type` — used before opening ImageCropModal for a re-crop, since that
+// component must never be mounted for a GIF (baking it to a single frame
+// would silently destroy the animation). A locally-rebuilt Blob's `type`
+// (e.g. from a base64ToBlob helper) can't be trusted, so this sniffs the
+// GIF87a/GIF89a magic bytes ("GI") directly.
+export async function isGifBlob(blob) {
+  if (!blob) return false
+  if (blob.type === 'image/gif') return true
+  const header = new Uint8Array(await blob.slice(0, 2).arrayBuffer())
+  return header[0] === 0x47 && header[1] === 0x49
+}
+
 // Prepares an EXIF-safe, size-capped working copy of an uploaded image for the
 // crop stage to render. This is NOT what gets stored as the "original" — it is
 // only ever the source the user crops against, so a huge phone photo can't blow

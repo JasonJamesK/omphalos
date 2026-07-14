@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { db } from '../../db/index.js'
 import ImageCropModal from '../ImageCropModal'
-import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, blobToBase64 } from '../../utils/imageUpload'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64 } from '../../utils/imageUpload'
 import { getImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
@@ -96,6 +96,10 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
       source = await fetchImageBlob(url)
     }
     if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
+      return
+    }
     setCropMode('re-crop')
     setCropFile(source)
   }

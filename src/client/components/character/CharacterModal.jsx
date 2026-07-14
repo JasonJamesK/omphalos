@@ -4,7 +4,7 @@ import StatBlockFields, { emptyStatBlock } from './StatBlockFields'
 import StatBlockView from './StatBlockView'
 import ImageCropModal from '../ImageCropModal'
 import NameGenModal from '../NameGenModal'
-import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, blobToBase64 } from '../../utils/imageUpload'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64 } from '../../utils/imageUpload'
 import { sessionCharacterImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
@@ -90,6 +90,10 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
       if (url) source = await fetchImageBlob(url)
     }
     if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
+      return
+    }
     setCropMode('re-crop')
     setCropFile(source)
   }
