@@ -120,7 +120,7 @@ public class ImageEndpointTests(PostgresFixture fixture)
     }
 
     [Fact]
-    public async Task GetGlobalCharacterCropped_ReturnsPublicCacheControl()
+    public async Task GetGlobalCharacterCropped_ReturnsPrivateCacheControl()
     {
         var ct = TestContext.Current.CancellationToken;
         using var factory = CreateFactory();
@@ -144,7 +144,7 @@ public class ImageEndpointTests(PostgresFixture fixture)
         var response = await client.GetAsync($"/api/characters/{globalCharacterId}/portrait/cropped", ct);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("public", response.Headers.CacheControl?.ToString() ?? "");
+        Assert.Contains("private", response.Headers.CacheControl?.ToString() ?? "");
     }
 
     [Fact]
