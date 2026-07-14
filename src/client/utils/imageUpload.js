@@ -27,6 +27,17 @@ export function isGifFile(file) {
   return !!(file && file.type === 'image/gif')
 }
 
+// Sniffs the real image format from raw bytes, mirroring the server's
+// magic-byte detection (Omphalos.Services.Implementations.ImageValidation).
+// A caller-supplied `Blob.type` cannot be trusted for locally-rebuilt Blobs
+// (e.g. base64ToBlob helpers), whose type is just a hardcoded default —
+// only the actual bytes reveal a not-yet-saved original's real format.
+export function detectImageMimeType(bytes) {
+  if (bytes.length >= 2 && bytes[0] === 0x89 && bytes[1] === 0x50) return 'image/png'
+  if (bytes.length >= 2 && bytes[0] === 0x47 && bytes[1] === 0x49) return 'image/gif'
+  return 'image/jpeg'
+}
+
 // True when a Blob/File's real bytes are a GIF, regardless of its declared
 // `type` — used before opening ImageCropModal for a re-crop, since that
 // component must never be mounted for a GIF (baking it to a single frame

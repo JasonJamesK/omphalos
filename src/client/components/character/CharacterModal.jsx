@@ -4,19 +4,22 @@ import StatBlockFields, { emptyStatBlock } from './StatBlockFields'
 import StatBlockView from './StatBlockView'
 import ImageCropModal from '../ImageCropModal'
 import NameGenModal from '../NameGenModal'
-import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64 } from '../../utils/imageUpload'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64, detectImageMimeType } from '../../utils/imageUpload'
 import { sessionCharacterImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 
 // Rebuilds a Blob from a raw (no data-URL prefix) base64 string — used to feed
 // a locally-held, not-yet-saved original back into ImageCropModal for a re-crop
-// without a round trip through the server.
-function base64ToBlob(base64, mimeType = 'image/jpeg') {
+// without a round trip through the server. The MIME type is sniffed from the
+// actual bytes rather than assumed, so a not-yet-saved PNG original isn't
+// silently re-encoded as an opaque JPEG (losing transparency) at the crop stage.
+function base64ToBlob(base64) {
   const byteChars = atob(base64)
   const byteNumbers = new Array(byteChars.length)
   for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i)
-  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType })
+  const bytes = new Uint8Array(byteNumbers)
+  return new Blob([bytes], { type: detectImageMimeType(bytes) })
 }
 
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard']

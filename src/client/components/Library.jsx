@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
 import ImageCropModal from './ImageCropModal'
-import { isGifFile, isGifBlob, blobToBase64, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
+import { isGifFile, isGifBlob, blobToBase64, detectImageMimeType, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
 import { getImageUrl, fetchImageBlob } from '../utils/imageUrls'
 import MarkdownField from './markdown/MarkdownField'
 import { stripMarkdown } from './markdown/stripMarkdown'
@@ -19,13 +19,14 @@ function charUid() { return `gchar-${Date.now()}-${Math.random().toString(36).sl
 
 // Converts a base64 payload (no data: prefix) back into a Blob so a locally-held
 // original (not yet uploaded to the server) can be re-crop-fed into ImageCropModal.
-// The MIME type is a placeholder — image decoders sniff actual file content, not
-// the Blob's declared type, so this is safe regardless of the original's real type.
+// The MIME type is sniffed from the actual bytes (rather than left blank/assumed)
+// so prepareWorkingCopy's PNG-vs-JPEG output-format branch sees the real type and
+// doesn't silently composite a not-yet-saved transparent PNG onto an opaque JPEG.
 function base64ToBlob(base64) {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return new Blob([bytes])
+  return new Blob([bytes], { type: detectImageMimeType(bytes) })
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
