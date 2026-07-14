@@ -1,10 +1,21 @@
 import { useState, useMemo, useRef } from 'react'
 import { db } from '../../db/index.js'
-import CropModal from '../CropModal'
-import { readImageFile } from '../../utils/imageUpload'
+import ImageCropModal from '../ImageCropModal'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, blobToBase64 } from '../../utils/imageUpload'
+import { getImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 import { stripMarkdown } from '../markdown/stripMarkdown'
+
+// Rebuilds a Blob from a raw (no data-URL prefix) base64 string — used to feed
+// a locally-held, not-yet-saved original back into ImageCropModal for a re-crop
+// without a round trip through the server.
+function base64ToBlob(base64, mimeType = 'image/jpeg') {
+  const byteChars = atob(base64)
+  const byteNumbers = new Array(byteChars.length)
+  for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i)
+  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType })
+}
 
 function uid() {
   return `loc-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -26,21 +37,74 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
 
   // 'create' step form
   const [createForm, setCreateForm] = useState({
-    id: gluid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '', imageBase64: null,
+    id: gluid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '',
+    hasImage: false, originalImageData: null, croppedImageData: null,
   })
   const [saving, setSaving] = useState(false)
-  const [cropSrc, setCropSrc] = useState(null)
+  const [cropFile, setCropFile] = useState(null)
+  const [cropMode, setCropMode] = useState(null) // 'new' | 're-crop'
   const [uploadError, setUploadError] = useState('')
+  const [gifNotice, setGifNotice] = useState(false)
   const fileRef = useRef(null)
 
-  function handleImage(e) {
+  async function handleImage(e) {
     const f = e.target.files[0]
     if (!f) return
+    if (fileRef.current) fileRef.current.value = ''
     setUploadError('')
-    readImageFile(f,
-      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
-      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
-    )
+    setGifNotice(false)
+    if (f.size > MAX_IMAGE_BYTES) {
+      const mb = (f.size / (1024 * 1024)).toFixed(1)
+      setUploadError(`Image is ${mb} MB — max allowed size is ${MAX_IMAGE_MB} MB.`)
+      return
+    }
+    if (isGifFile(f)) {
+      const originalImageData = await blobToBase64(f)
+      setCreateForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData: null }))
+      setGifNotice(true)
+      return
+    }
+    setCropMode('new')
+    setCropFile(f)
+  }
+
+  async function handleCropSave(originalFile, croppedBlob) {
+    const croppedImageData = await blobToBase64(croppedBlob)
+    if (cropMode === 're-crop') {
+      setCreateForm(p => ({ ...p, hasImage: true, croppedImageData }))
+    } else {
+      const originalImageData = await blobToBase64(originalFile)
+      setCreateForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData }))
+    }
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  function handleCropClose() {
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  async function handleRecrop() {
+    setUploadError('')
+    setGifNotice(false)
+    let source = null
+    if (createForm.originalImageData) {
+      source = base64ToBlob(createForm.originalImageData)
+    } else if (createForm.hasImage) {
+      const url = getImageUrl('global-location', createForm.id, 'original')
+      source = await fetchImageBlob(url)
+    }
+    if (!source) return
+    setCropMode('re-crop')
+    setCropFile(source)
+  }
+
+  function handleRemoveImage() {
+    setCreateForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
+    setUploadError('')
+    setGifNotice(false)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   const filtered = useMemo(() => {
@@ -67,7 +131,9 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
         description: createForm.description || null,
         notes: createForm.notes || null,
         secretsAndHazards: createForm.secretsAndHazards || null,
-        imageBase64: createForm.imageBase64 || null,
+        hasImage: createForm.hasImage,
+        originalImageData: createForm.originalImageData,
+        croppedImageData: createForm.croppedImageData,
       })
       dispatch({ type: 'ADD_GLOBAL_LOCATION', payload: created })
       setSelected(created)
@@ -87,10 +153,14 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
       description: selected.description ?? '',
       notes: selected.notes ?? '',
       secretsAndHazards: selected.secretsAndHazards ?? '',
-      imageBase64: selected.imageBase64 ?? null,
+      hasImage: false,
       sessionNotes: sessionNotes.trim() || null,
     })
   }
+
+  const createImagePreviewUrl = createForm.croppedImageData
+    ? `data:image/jpeg;base64,${createForm.croppedImageData}`
+    : (createForm.hasImage ? getImageUrl('global-location', createForm.id, 'cropped') : null)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
@@ -153,7 +223,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
             </div>
             <div className="border-t border-[#332922] pt-3 flex-shrink-0">
               <button
-                onClick={() => { setCreateForm({ id: gluid(), name: search, type: '', description: '', notes: '', secretsAndHazards: '', imageBase64: null }); setStep('create') }}
+                onClick={() => { setCreateForm({ id: gluid(), name: search, type: '', description: '', notes: '', secretsAndHazards: '', hasImage: false, originalImageData: null, croppedImageData: null }); setStep('create') }}
                 className="w-full py-2 text-sm text-[#d4a574] hover:bg-[#332922] rounded border border-[#d4a574]/30 hover:border-[#d4a574]/60 transition-colors"
               >
                 + Create new shared location{search ? ` "${search}"` : ''}
@@ -168,14 +238,14 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
             <p className="text-xs text-[#999999]">This will be saved to the shared library and added to this session.</p>
             <div>
               <label className={labelCls}>Image (4:3)</label>
-              {createForm.imageBase64 ? (
+              {createImagePreviewUrl ? (
                 <div className="space-y-2">
                   <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 320, aspectRatio: '4 / 3' }}>
-                    <img src={createForm.imageBase64} alt={createForm.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={createImagePreviewUrl} alt={createForm.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => fileRef.current?.click()} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
-                    <button onClick={() => { setCreateForm(p => ({ ...p, imageBase64: null })); if (fileRef.current) fileRef.current.value = '' }} className="text-xs text-[#b24545] hover:underline">Remove</button>
+                    <button onClick={handleRecrop} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
+                    <button onClick={handleRemoveImage} className="text-xs text-[#b24545] hover:underline">Remove</button>
                   </div>
                 </div>
               ) : (
@@ -185,6 +255,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
               )}
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
               {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
+              {gifNotice && <p className="text-xs text-[#999999] mt-1">Animated GIFs are saved as-is — cropping isn't applied to GIFs.</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
@@ -285,14 +356,14 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
           </div>
         )}
       </div>
-      {cropSrc && (
-        <CropModal
-          imageData={cropSrc}
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
           aspectW={4}
           aspectH={3}
           title="Crop Location Image"
-          onSave={cropped => { setCreateForm(p => ({ ...p, imageBase64: cropped })); setCropSrc(null) }}
-          onClose={() => setCropSrc(null)}
+          onSave={handleCropSave}
+          onClose={handleCropClose}
         />
       )}
     </div>
