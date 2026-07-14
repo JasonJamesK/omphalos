@@ -2,11 +2,22 @@ import { useState, useRef } from 'react'
 import Portrait from './Portrait'
 import StatBlockFields, { emptyStatBlock } from './StatBlockFields'
 import StatBlockView from './StatBlockView'
-import CropModal from '../CropModal'
+import ImageCropModal from '../ImageCropModal'
 import NameGenModal from '../NameGenModal'
-import { readImageFile } from '../../utils/imageUpload'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, blobToBase64 } from '../../utils/imageUpload'
+import { sessionCharacterImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
+
+// Rebuilds a Blob from a raw (no data-URL prefix) base64 string — used to feed
+// a locally-held, not-yet-saved original back into ImageCropModal for a re-crop
+// without a round trip through the server.
+function base64ToBlob(base64, mimeType = 'image/jpeg') {
+  const byteChars = atob(base64)
+  const byteNumbers = new Array(byteChars.length)
+  for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i)
+  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType })
+}
 
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard']
 const RACES = ['Human', 'Elf', 'Dwarf', 'Halfling', 'Gnome', 'Half-Orc', 'Tiefling', 'Dragonborn', 'Half-Elf']
@@ -16,27 +27,83 @@ const REL_TYPES = ['Ally', 'Enemy', 'Rival', 'Friend', 'Family', 'Mentor', 'Stud
 const inp = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
 const lbl = 'block text-xs text-[#999999] mb-1'
 
-export default function CharacterModal({ char, onSave, onClose, globalCharacters, defaultIsNpc = false }) {
+export default function CharacterModal({ char, onSave, onClose, globalCharacters, defaultIsNpc = false, sessionId }) {
   const isNew = !char.name
   const isLinked = !!char.globalCharacterId
-  const [form, setForm] = useState({ isNpc: defaultIsNpc, statBlock: null, ...char })
+  const [form, setForm] = useState({ isNpc: defaultIsNpc, statBlock: null, hasImage: false, originalImageData: null, croppedImageData: null, ...char })
   const [saveToLibrary, setSaveToLibrary] = useState(false)
   const [showNameGen, setShowNameGen] = useState(false)
-  const [cropSrc, setCropSrc] = useState(null)
+  const [cropFile, setCropFile] = useState(null)
+  const [cropMode, setCropMode] = useState(null) // 'new' | 're-crop'
   const [uploadError, setUploadError] = useState('')
+  const [gifNotice, setGifNotice] = useState(false)
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
-  function handlePortrait(e) {
+  async function handlePortrait(e) {
     const f = e.target.files[0]
     if (!f) return
+    if (fileRef.current) fileRef.current.value = ''
     setUploadError('')
-    readImageFile(f,
-      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
-      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
-    )
+    setGifNotice(false)
+    if (f.size > MAX_IMAGE_BYTES) {
+      const mb = (f.size / (1024 * 1024)).toFixed(1)
+      setUploadError(`Image is ${mb} MB — max allowed size is ${MAX_IMAGE_MB} MB.`)
+      return
+    }
+    if (isGifFile(f)) {
+      const originalImageData = await blobToBase64(f)
+      setForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData: null }))
+      setGifNotice(true)
+      return
+    }
+    setCropMode('new')
+    setCropFile(f)
   }
+
+  async function handleCropSave(originalFile, croppedBlob) {
+    const croppedImageData = await blobToBase64(croppedBlob)
+    if (cropMode === 're-crop') {
+      setForm(p => ({ ...p, hasImage: true, croppedImageData }))
+    } else {
+      const originalImageData = await blobToBase64(originalFile)
+      setForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData }))
+    }
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  function handleCropClose() {
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  async function handleRecrop() {
+    setUploadError('')
+    setGifNotice(false)
+    let source = null
+    if (form.originalImageData) {
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      const url = sessionCharacterImageUrl(form, sessionId, 'original')
+      if (url) source = await fetchImageBlob(url)
+    }
+    if (!source) return
+    setCropMode('re-crop')
+    setCropFile(source)
+  }
+
+  function handleRemovePortrait() {
+    setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
+    setUploadError('')
+    setGifNotice(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  const portraitPreviewUrl = form.croppedImageData
+    ? `data:image/jpeg;base64,${form.croppedImageData}`
+    : sessionCharacterImageUrl(form, sessionId)
 
   const roInp = 'w-full bg-[#222] border border-[#332922]/50 rounded px-3 py-2 text-[#999999] text-sm cursor-not-allowed'
 
@@ -60,7 +127,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                 <span className="text-[#555] normal-case tracking-normal font-normal">— edit in the Library to update the source</span>
               </p>
               <div className="flex gap-4 bg-[#161310] rounded p-4">
-                <Portrait char={form} size="sm" />
+                <Portrait char={form} size="sm" imageUrl={sessionCharacterImageUrl(form, sessionId)} />
                 <div className="flex-1 min-w-0 space-y-2">
                   {form.isNpc ? (
                     <StatBlockView char={form} />
@@ -107,7 +174,9 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
             </div>
           </div>
         </div>
-        {cropSrc && <CropModal imageData={cropSrc} onSave={cropped => { set('portraitBase64', cropped); setCropSrc(null) }} onClose={() => setCropSrc(null)} />}
+        {cropFile && (
+          <ImageCropModal file={cropFile} aspectW={3} aspectH={4} title="Crop Portrait" onSave={handleCropSave} onClose={handleCropClose} />
+        )}
       </div>
     )
   }
@@ -199,14 +268,14 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
             <div className="space-y-3">
               <div>
                 <label className={lbl}>Portrait (3:4)</label>
-                {form.portraitBase64 ? (
+                {portraitPreviewUrl ? (
                   <div className="space-y-2">
                     <div className="overflow-hidden rounded" style={{ width: 150, height: 200 }}>
-                      <img src={form.portraitBase64} alt="Portrait" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+                      <img src={portraitPreviewUrl} alt="Portrait" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => fileRef.current?.click()} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
-                      <button onClick={() => { set('portraitBase64', null); if (fileRef.current) fileRef.current.value = '' }} className="text-xs text-[#b24545] hover:underline">Remove</button>
+                      <button onClick={handleRecrop} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
+                      <button onClick={handleRemovePortrait} className="text-xs text-[#b24545] hover:underline">Remove</button>
                     </div>
                   </div>
                 ) : (
@@ -216,6 +285,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
                 )}
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePortrait} />
                 {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
+                {gifNotice && <p className="text-xs text-[#999999] mt-1">Animated GIFs are saved as-is — cropping isn't applied to GIFs.</p>}
               </div>
 
               {!form.isNpc && (
@@ -272,7 +342,9 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
       </div>
 
       {showNameGen && <NameGenModal onSelect={name => { set('name', name); setShowNameGen(false) }} onClose={() => setShowNameGen(false)} />}
-      {cropSrc && <CropModal imageData={cropSrc} onSave={cropped => { set('portraitBase64', cropped); set('portraitPanX', 0); set('portraitPanY', 0); setCropSrc(null) }} onClose={() => setCropSrc(null)} />}
+      {cropFile && (
+        <ImageCropModal file={cropFile} aspectW={3} aspectH={4} title="Crop Portrait" onSave={handleCropSave} onClose={handleCropClose} />
+      )}
     </div>
   )
 }
