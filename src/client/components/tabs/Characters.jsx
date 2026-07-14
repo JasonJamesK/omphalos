@@ -7,13 +7,14 @@ import Portrait from '../character/Portrait'
 import CharacterModal from '../character/CharacterModal'
 import AddFromLibraryModal from '../character/AddFromLibraryModal'
 import StatBlockView from '../character/StatBlockView'
+import { sessionCharacterImageUrl } from '../../utils/imageUrls'
 
 function uid() { return `char-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 function charUid() { return `gchar-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 
 function emptyChar() {
   return {
-    id: uid(), name: '', portraitBase64: null, portraitPanX: 0, portraitPanY: 0,
+    id: uid(), name: '', hasImage: false, originalImageData: null, croppedImageData: null,
     tagline: '', class: 'Fighter', race: 'Human', level: 1, alignment: 'True Neutral',
     personalityTraits: '', flaw: '', inventory: '', questHooks: '', relationships: [], description: '',
     globalCharacterId: null, sessionNotes: null, isNpc: false, statBlock: null,
@@ -22,7 +23,7 @@ function emptyChar() {
 
 // ─── Drawer ──────────────────────────────────────────────────────────────────
 
-function CharacterDrawer({ char, onClose, onEdit, onDelete }) {
+function CharacterDrawer({ char, sessionId, onClose, onEdit, onDelete }) {
   return (
     <div className="fixed inset-0 z-40 flex" onClick={onClose}>
       <div className="flex-1 bg-black/40" />
@@ -45,7 +46,7 @@ function CharacterDrawer({ char, onClose, onEdit, onDelete }) {
         </div>
         <div className="p-5">
           <div className="flex gap-5 mb-5">
-            <Portrait char={char} size="lg" />
+            <Portrait char={char} size="lg" imageUrl={sessionCharacterImageUrl(char, sessionId)} />
             <div className="flex-1 min-w-0">
               {char.isNpc ? (
                 <StatBlockView char={char} />
@@ -139,9 +140,9 @@ export default function Characters() {
         personalityTraits: form.personalityTraits || null,
         flaw: form.flaw || null,
         description: form.description || null,
-        portraitBase64: form.portraitBase64 || null,
-        portraitPanX: form.portraitPanX || 0,
-        portraitPanY: form.portraitPanY || 0,
+        hasImage: form.hasImage,
+        originalImageData: form.originalImageData,
+        croppedImageData: form.croppedImageData,
         questHooks: form.questHooks || null,
         relationships: form.relationships || [],
         isNpc: !!form.isNpc,
@@ -170,9 +171,9 @@ export default function Characters() {
       personalityTraits: globalChar.personalityTraits || '',
       flaw: globalChar.flaw || '',
       description: globalChar.description || '',
-      portraitBase64: globalChar.portraitBase64 || null,
-      portraitPanX: globalChar.portraitPanX || 0,
-      portraitPanY: globalChar.portraitPanY || 0,
+      hasImage: false,
+      originalImageData: null,
+      croppedImageData: null,
       inventory: '',
       questHooks: globalChar.questHooks || '',
       relationships: globalChar.relationships || [],
@@ -228,7 +229,7 @@ export default function Characters() {
               onClick={() => setSelected(c)}
               className="cursor-pointer rounded-lg overflow-hidden bg-[#211b17] border border-[#332922] hover:border-[#d4a574]/60 hover:scale-[1.03] transition-all"
             >
-              <Portrait char={c} />
+              <Portrait char={c} imageUrl={sessionCharacterImageUrl(c, activeSession.id)} />
               <div className="p-2.5">
                 <div className="flex items-start justify-between gap-1">
                   <div className="font-semibold text-[#f0f0f0] text-sm truncate">{c.name || 'Unnamed'}</div>
@@ -257,6 +258,7 @@ export default function Characters() {
       {selected && (
         <CharacterDrawer
           char={selected}
+          sessionId={activeSession.id}
           onClose={() => setSelected(null)}
           onEdit={() => { setEditing({ ...selected }); setSelected(null) }}
           onDelete={() => { setDeleting(selected); setSelected(null) }}
@@ -265,6 +267,7 @@ export default function Characters() {
       {editing && (
         <CharacterModal
           char={editing}
+          sessionId={activeSession.id}
           onSave={save}
           onClose={() => setEditing(null)}
           globalCharacters={globalCharacters}
