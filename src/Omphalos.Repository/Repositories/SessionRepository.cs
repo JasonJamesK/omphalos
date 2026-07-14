@@ -34,6 +34,11 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
 
         if (existing is null)
         {
+            foreach (var character in session.Characters)
+                ApplyNewImageWriteContract(character);
+            foreach (var location in session.Locations)
+                ApplyNewImageWriteContract(location);
+
             db.GameSessions.Add(session);
         }
         else
@@ -101,6 +106,26 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
         {
             existingCollection.Add(added);
         }
+    }
+
+    // Applies the same "HasImage=false clears both byte columns" contract used by the
+    // update paths to a brand-new session's child entities, so a client that submits
+    // hasImage:false alongside stray image bytes on first insert can't leave a row whose
+    // computed HasImage disagrees with what was requested.
+    private static void ApplyNewImageWriteContract(Character character)
+    {
+        var (original, cropped) = ImageWriteContract.Apply(
+            character.HasImage, character.OriginalImageData, character.CroppedImageData, null, null);
+        character.OriginalImageData = original;
+        character.CroppedImageData = cropped;
+    }
+
+    private static void ApplyNewImageWriteContract(Location location)
+    {
+        var (original, cropped) = ImageWriteContract.Apply(
+            location.HasImage, location.OriginalImageData, location.CroppedImageData, null, null);
+        location.OriginalImageData = original;
+        location.CroppedImageData = cropped;
     }
 
     private static void CopyCharacterFields(Character existing, Character incoming)

@@ -32,8 +32,11 @@ public static class GlobalLocationEndpoints
 
             var mime = ImageValidation.DetectImageMimeType(bytes);
             var etag = new EntityTagHeaderValue($"\"{Convert.ToHexString(SHA256.HashData(bytes))}\"");
-            // Public: GlobalLocation images aren't user-scoped, safe to share across clients.
-            http.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            // Private: this endpoint requires authorization, and a shared/proxy cache
+            // does not participate in that check — "public" here would risk one
+            // authenticated user's response being served to a different, unauthenticated
+            // request for the same URL if an intermediary is configured to share it.
+            http.Response.Headers.CacheControl = "private, max-age=31536000, immutable";
             return TypedResults.File(bytes, mime, entityTag: etag);
         });
 

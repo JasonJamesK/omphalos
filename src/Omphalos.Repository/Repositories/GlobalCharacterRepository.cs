@@ -14,6 +14,11 @@ public class GlobalCharacterRepository(OmphalosDbContext db) : IGlobalCharacterR
 
     public async Task<GlobalCharacter> CreateAsync(GlobalCharacter character, CancellationToken ct = default)
     {
+        var (original, cropped) = ImageWriteContract.Apply(
+            character.HasImage, character.OriginalImageData, character.CroppedImageData, null, null);
+        character.OriginalImageData = original;
+        character.CroppedImageData = cropped;
+
         db.GlobalCharacters.Add(character);
         await db.SaveChangesAsync(ct);
         return character;

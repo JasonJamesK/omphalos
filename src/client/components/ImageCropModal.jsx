@@ -110,8 +110,18 @@ export default function ImageCropModal({ file, aspectW, aspectH, title, onSave, 
   }, [workingCopyUrl])
 
   async function handleCropAndSave() {
-    const canvas = await selectionElRef.current.$toCanvas()
-    canvas.toBlob(blob => onSave(file, blob), 'image/jpeg', 0.9)
+    try {
+      const canvas = await selectionElRef.current.$toCanvas()
+      canvas.toBlob(blob => {
+        if (!blob) {
+          setError('Could not export the cropped image.')
+          return
+        }
+        onSave(file, blob)
+      }, 'image/jpeg', 0.9)
+    } catch {
+      setError('Could not export the cropped image.')
+    }
   }
 
   return (

@@ -1,22 +1,25 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Portrait from './Portrait'
 import StatBlockFields, { emptyStatBlock } from './StatBlockFields'
 import StatBlockView from './StatBlockView'
 import ImageCropModal from '../ImageCropModal'
 import NameGenModal from '../NameGenModal'
-import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, blobToBase64 } from '../../utils/imageUpload'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64, detectImageMimeType } from '../../utils/imageUpload'
 import { sessionCharacterImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 
 // Rebuilds a Blob from a raw (no data-URL prefix) base64 string — used to feed
 // a locally-held, not-yet-saved original back into ImageCropModal for a re-crop
-// without a round trip through the server.
-function base64ToBlob(base64, mimeType = 'image/jpeg') {
+// without a round trip through the server. The MIME type is sniffed from the
+// actual bytes rather than assumed, so a not-yet-saved PNG original isn't
+// silently re-encoded as an opaque JPEG (losing transparency) at the crop stage.
+function base64ToBlob(base64) {
   const byteChars = atob(base64)
   const byteNumbers = new Array(byteChars.length)
   for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i)
-  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType })
+  const bytes = new Uint8Array(byteNumbers)
+  return new Blob([bytes], { type: detectImageMimeType(bytes) })
 }
 
 const CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard']
@@ -37,9 +40,16 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
   const [cropMode, setCropMode] = useState(null) // 'new' | 're-crop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handlePortrait(e) {
     const f = e.target.files[0]
@@ -54,10 +64,12 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
     }
     if (isGifFile(f)) {
       const originalImageData = await blobToBase64(f)
+      setGifPreviewUrl(URL.createObjectURL(f))
       setForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData: null }))
       setGifNotice(true)
       return
     }
+    setGifPreviewUrl(null)
     setCropMode('new')
     setCropFile(f)
   }
@@ -70,6 +82,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
       const originalImageData = await blobToBase64(originalFile)
       setForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData }))
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
@@ -90,6 +103,10 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
       if (url) source = await fetchImageBlob(url)
     }
     if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
+      return
+    }
     setCropMode('re-crop')
     setCropFile(source)
   }
@@ -98,12 +115,13 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
     setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setUploadError('')
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
   const portraitPreviewUrl = form.croppedImageData
     ? `data:image/jpeg;base64,${form.croppedImageData}`
-    : sessionCharacterImageUrl(form, sessionId)
+    : (gifPreviewUrl || sessionCharacterImageUrl(form, sessionId))
 
   const roInp = 'w-full bg-[#222] border border-[#332922]/50 rounded px-3 py-2 text-[#999999] text-sm cursor-not-allowed'
 

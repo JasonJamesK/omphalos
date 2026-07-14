@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { db } from '../../db/index.js'
 import ImageCropModal from '../ImageCropModal'
-import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, blobToBase64 } from '../../utils/imageUpload'
+import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64, detectImageMimeType } from '../../utils/imageUpload'
 import { getImageUrl, fetchImageBlob } from '../../utils/imageUrls'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
@@ -9,12 +9,15 @@ import { stripMarkdown } from '../markdown/stripMarkdown'
 
 // Rebuilds a Blob from a raw (no data-URL prefix) base64 string — used to feed
 // a locally-held, not-yet-saved original back into ImageCropModal for a re-crop
-// without a round trip through the server.
-function base64ToBlob(base64, mimeType = 'image/jpeg') {
+// without a round trip through the server. The MIME type is sniffed from the
+// actual bytes rather than assumed, so a not-yet-saved PNG original isn't
+// silently re-encoded as an opaque JPEG (losing transparency) at the crop stage.
+function base64ToBlob(base64) {
   const byteChars = atob(base64)
   const byteNumbers = new Array(byteChars.length)
   for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i)
-  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType })
+  const bytes = new Uint8Array(byteNumbers)
+  return new Blob([bytes], { type: detectImageMimeType(bytes) })
 }
 
 function uid() {
@@ -45,7 +48,14 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
   const [cropMode, setCropMode] = useState(null) // 'new' | 're-crop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handleImage(e) {
     const f = e.target.files[0]
@@ -60,10 +70,12 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
     }
     if (isGifFile(f)) {
       const originalImageData = await blobToBase64(f)
+      setGifPreviewUrl(URL.createObjectURL(f))
       setCreateForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData: null }))
       setGifNotice(true)
       return
     }
+    setGifPreviewUrl(null)
     setCropMode('new')
     setCropFile(f)
   }
@@ -76,6 +88,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
       const originalImageData = await blobToBase64(originalFile)
       setCreateForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData }))
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
@@ -96,6 +109,10 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
       source = await fetchImageBlob(url)
     }
     if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
+      return
+    }
     setCropMode('re-crop')
     setCropFile(source)
   }
@@ -104,6 +121,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
     setCreateForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setUploadError('')
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -160,7 +178,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
 
   const createImagePreviewUrl = createForm.croppedImageData
     ? `data:image/jpeg;base64,${createForm.croppedImageData}`
-    : (createForm.hasImage ? getImageUrl('global-location', createForm.id, 'cropped') : null)
+    : (gifPreviewUrl || (createForm.hasImage ? getImageUrl('global-location', createForm.id, 'cropped') : null))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>

@@ -14,7 +14,7 @@ namespace Omphalos.Repository.Migrations
             migrationBuilder.RenameColumn(name: "PortraitBase64", table: "Characters", newName: "OriginalImageData");
             migrationBuilder.Sql(
                 "ALTER TABLE \"Characters\" ALTER COLUMN \"OriginalImageData\" TYPE bytea " +
-                "USING CASE WHEN \"OriginalImageData\" IS NULL THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
+                "USING CASE WHEN \"OriginalImageData\" IS NULL OR \"OriginalImageData\" = '' THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
             migrationBuilder.AddColumn<byte[]>(name: "CroppedImageData", table: "Characters", type: "bytea", nullable: true);
             migrationBuilder.DropColumn(name: "PortraitPanX", table: "Characters");
             migrationBuilder.DropColumn(name: "PortraitPanY", table: "Characters");
@@ -23,7 +23,7 @@ namespace Omphalos.Repository.Migrations
             migrationBuilder.RenameColumn(name: "PortraitBase64", table: "GlobalCharacters", newName: "OriginalImageData");
             migrationBuilder.Sql(
                 "ALTER TABLE \"GlobalCharacters\" ALTER COLUMN \"OriginalImageData\" TYPE bytea " +
-                "USING CASE WHEN \"OriginalImageData\" IS NULL THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
+                "USING CASE WHEN \"OriginalImageData\" IS NULL OR \"OriginalImageData\" = '' THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
             migrationBuilder.AddColumn<byte[]>(name: "CroppedImageData", table: "GlobalCharacters", type: "bytea", nullable: true);
             migrationBuilder.DropColumn(name: "PortraitPanX", table: "GlobalCharacters");
             migrationBuilder.DropColumn(name: "PortraitPanY", table: "GlobalCharacters");
@@ -32,14 +32,14 @@ namespace Omphalos.Repository.Migrations
             migrationBuilder.RenameColumn(name: "ImageBase64", table: "Locations", newName: "OriginalImageData");
             migrationBuilder.Sql(
                 "ALTER TABLE \"Locations\" ALTER COLUMN \"OriginalImageData\" TYPE bytea " +
-                "USING CASE WHEN \"OriginalImageData\" IS NULL THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
+                "USING CASE WHEN \"OriginalImageData\" IS NULL OR \"OriginalImageData\" = '' THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
             migrationBuilder.AddColumn<byte[]>(name: "CroppedImageData", table: "Locations", type: "bytea", nullable: true);
 
             // GlobalLocations.ImageBase64 (text) -> OriginalImageData (bytea)
             migrationBuilder.RenameColumn(name: "ImageBase64", table: "GlobalLocations", newName: "OriginalImageData");
             migrationBuilder.Sql(
                 "ALTER TABLE \"GlobalLocations\" ALTER COLUMN \"OriginalImageData\" TYPE bytea " +
-                "USING CASE WHEN \"OriginalImageData\" IS NULL THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
+                "USING CASE WHEN \"OriginalImageData\" IS NULL OR \"OriginalImageData\" = '' THEN NULL ELSE decode(\"OriginalImageData\", 'base64') END;");
             migrationBuilder.AddColumn<byte[]>(name: "CroppedImageData", table: "GlobalLocations", type: "bytea", nullable: true);
         }
 

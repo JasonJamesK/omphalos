@@ -27,6 +27,30 @@ export function isGifFile(file) {
   return !!(file && file.type === 'image/gif')
 }
 
+// Sniffs the real image format from raw bytes, mirroring the server's
+// magic-byte detection (Omphalos.Services.Implementations.ImageValidation).
+// A caller-supplied `Blob.type` cannot be trusted for locally-rebuilt Blobs
+// (e.g. base64ToBlob helpers), whose type is just a hardcoded default —
+// only the actual bytes reveal a not-yet-saved original's real format.
+export function detectImageMimeType(bytes) {
+  if (bytes.length >= 2 && bytes[0] === 0x89 && bytes[1] === 0x50) return 'image/png'
+  if (bytes.length >= 2 && bytes[0] === 0x47 && bytes[1] === 0x49) return 'image/gif'
+  return 'image/jpeg'
+}
+
+// True when a Blob/File's real bytes are a GIF, regardless of its declared
+// `type` — used before opening ImageCropModal for a re-crop, since that
+// component must never be mounted for a GIF (baking it to a single frame
+// would silently destroy the animation). A locally-rebuilt Blob's `type`
+// (e.g. from a base64ToBlob helper) can't be trusted, so this sniffs the
+// GIF87a/GIF89a magic bytes ("GI") directly.
+export async function isGifBlob(blob) {
+  if (!blob) return false
+  if (blob.type === 'image/gif') return true
+  const header = new Uint8Array(await blob.slice(0, 2).arrayBuffer())
+  return header[0] === 0x47 && header[1] === 0x49
+}
+
 // Prepares an EXIF-safe, size-capped working copy of an uploaded image for the
 // crop stage to render. This is NOT what gets stored as the "original" — it is
 // only ever the source the user crops against, so a huge phone photo can't blow

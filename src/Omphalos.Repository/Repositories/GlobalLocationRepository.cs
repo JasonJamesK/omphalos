@@ -14,6 +14,11 @@ public class GlobalLocationRepository(OmphalosDbContext db) : IGlobalLocationRep
 
     public async Task<GlobalLocation> CreateAsync(GlobalLocation location, CancellationToken ct = default)
     {
+        var (original, cropped) = ImageWriteContract.Apply(
+            location.HasImage, location.OriginalImageData, location.CroppedImageData, null, null);
+        location.OriginalImageData = original;
+        location.CroppedImageData = cropped;
+
         db.GlobalLocations.Add(location);
         await db.SaveChangesAsync(ct);
         return location;

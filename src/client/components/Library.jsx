@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
 import ImageCropModal from './ImageCropModal'
-import { isGifFile, blobToBase64, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
+import { isGifFile, isGifBlob, blobToBase64, detectImageMimeType, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
 import { getImageUrl, fetchImageBlob } from '../utils/imageUrls'
 import MarkdownField from './markdown/MarkdownField'
 import { stripMarkdown } from './markdown/stripMarkdown'
@@ -19,13 +19,14 @@ function charUid() { return `gchar-${Date.now()}-${Math.random().toString(36).sl
 
 // Converts a base64 payload (no data: prefix) back into a Blob so a locally-held
 // original (not yet uploaded to the server) can be re-crop-fed into ImageCropModal.
-// The MIME type is a placeholder — image decoders sniff actual file content, not
-// the Blob's declared type, so this is safe regardless of the original's real type.
+// The MIME type is sniffed from the actual bytes (rather than left blank/assumed)
+// so prepareWorkingCopy's PNG-vs-JPEG output-format branch sees the real type and
+// doesn't silently composite a not-yet-saved transparent PNG onto an opaque JPEG.
 function base64ToBlob(base64) {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return new Blob([bytes])
+  return new Blob([bytes], { type: detectImageMimeType(bytes) })
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -43,7 +44,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
   const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handleSave() {
     if (!form.name.trim()) return
@@ -65,12 +73,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
     if (isGifFile(f)) {
       blobToBase64(f)
         .then(b64 => {
+          setGifPreviewUrl(URL.createObjectURL(f))
           setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
           setGifNotice(true)
         })
         .catch(() => setUploadError('Could not read that file.'))
       return
     }
+    setGifPreviewUrl(null)
     setCropFile(f)
     setCropMode('new')
   }
@@ -85,26 +95,31 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
         setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
       })
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
 
   async function handleRecrop() {
+    let source = null
     if (form.originalImageData) {
-      setCropFile(base64ToBlob(form.originalImageData))
-      setCropMode('recrop')
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      source = await fetchImageBlob(getImageUrl('global-location', form.id, 'original'))
+    }
+    if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
       return
     }
-    const blob = await fetchImageBlob(getImageUrl('global-location', form.id, 'original'))
-    if (blob) {
-      setCropFile(blob)
-      setCropMode('recrop')
-    }
+    setCropFile(source)
+    setCropMode('recrop')
   }
 
   function handleRemoveImage() {
     setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -122,7 +137,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
               <div className="space-y-2">
                 <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 320, aspectRatio: '4 / 3' }}>
                   <img
-                    src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : getImageUrl('global-location', form.id, 'cropped')}
+                    src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : (gifPreviewUrl || getImageUrl('global-location', form.id, 'cropped'))}
                     alt={form.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
@@ -353,9 +368,16 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
   const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   function handlePortrait(e) {
     const f = e.target.files[0]
@@ -371,12 +393,14 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
     if (isGifFile(f)) {
       blobToBase64(f)
         .then(b64 => {
+          setGifPreviewUrl(URL.createObjectURL(f))
           setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
           setGifNotice(true)
         })
         .catch(() => setUploadError('Could not read that file.'))
       return
     }
+    setGifPreviewUrl(null)
     setCropFile(f)
     setCropMode('new')
   }
@@ -391,26 +415,31 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
         setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
       })
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
 
   async function handleRecrop() {
+    let source = null
     if (form.originalImageData) {
-      setCropFile(base64ToBlob(form.originalImageData))
-      setCropMode('recrop')
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      source = await fetchImageBlob(getImageUrl('global-character', form.id, 'original'))
+    }
+    if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
       return
     }
-    const blob = await fetchImageBlob(getImageUrl('global-character', form.id, 'original'))
-    if (blob) {
-      setCropFile(blob)
-      setCropMode('recrop')
-    }
+    setCropFile(source)
+    setCropMode('recrop')
   }
 
   function handleRemovePortrait() {
     setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -474,7 +503,7 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
                   <div className="space-y-2">
                     <div className="overflow-hidden rounded" style={{ width: 120, height: 160 }}>
                       <img
-                        src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : getImageUrl('global-character', form.id, 'cropped')}
+                        src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : (gifPreviewUrl || getImageUrl('global-character', form.id, 'cropped'))}
                         alt="Portrait"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
                       />
