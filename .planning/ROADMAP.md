@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Session Persistence Reliability** - Session prep content, log, top bar, and toolkit saves reliably persist without silently wiping other session data (completed 2026-07-10)
 - [x] **Phase 2: Markdown Editing — Character & Location Fields** - DM writes character bios/notes and location descriptions in markdown with live, auto-growing, dark-themed preview (completed 2026-07-12)
 - [x] **Phase 3: Markdown Editing — Session Prep Fields** - DM writes the Overview & Hook and Notes/Callout/Loot prep blocks in markdown with live preview, content persists on reload (completed 2026-07-13)
-- [ ] **Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout** - DM crops portraits and location images with Cropper.js v2 (zoom, EXIF-safe, touch) at all three upload sites, backed by a new dual original/cropped storage model served via dedicated cached endpoints
+- [x] **Phase 4: Image Cropping & Storage — Cropper.js v2 Rollout** - DM crops portraits and location images with Cropper.js v2 (zoom, EXIF-safe, touch) at all three upload sites, backed by a new dual original/cropped storage model served via dedicated cached endpoints (completed 2026-07-14)
 
 ## Phase Details
 
@@ -134,7 +134,7 @@ Plans:
   5. An animated GIF uploaded without going through the crop step (GIFs skip cropping) still displays correctly everywhere its portrait/image appears, via a cropped-or-original fallback.
   6. Character/location list and detail pages render immediately without waiting on embedded image bytes — images load asynchronously from dedicated, HTTP-cached (ETag/Cache-Control) binary endpoints, and the DTOs expose only a `HasImage` flag until an image is actually requested.
 
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans complete
 **UI hint**: yes
 
 Plans:
@@ -155,7 +155,7 @@ Plans:
 
 **Wave 4** *(depends on 04-04/05 for safe CropModal deletion)*
 
-- [ ] 04-06-PLAN.md — In-session location crop + endpoint display (AddLocationModal/Locations/LocationsBlock) + delete hand-rolled CropModal.jsx (CROP-03, IMG-02/03/06)
+- [x] 04-06-PLAN.md — In-session location crop + endpoint display (AddLocationModal/Locations/LocationsBlock) + delete hand-rolled CropModal.jsx (CROP-03, IMG-02/03/06)
 
 ## Progress
 
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Session Persistence Reliability | 4/4 | Complete    | 2026-07-10 |
 | 2. Markdown Editing — Character & Location Fields | 4/4 | Complete    | 2026-07-12 |
 | 3. Markdown Editing — Session Prep Fields | 1/1 | Complete    | 2026-07-13 |
-| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 5/6 | In Progress|  |
+| 4. Image Cropping & Storage — Cropper.js v2 Rollout | 6/6 | Complete   | 2026-07-14 |
 
 ## Roadmap Revision Log
 
