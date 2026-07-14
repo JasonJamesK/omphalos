@@ -2,9 +2,8 @@ import { useState, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
-import CropModal from './CropModal'
 import ImageCropModal from './ImageCropModal'
-import { readImageFile, isGifFile, blobToBase64, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
+import { isGifFile, blobToBase64, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
 import { getImageUrl, fetchImageBlob } from '../utils/imageUrls'
 import MarkdownField from './markdown/MarkdownField'
 import { stripMarkdown } from './markdown/stripMarkdown'
@@ -34,14 +33,16 @@ function base64ToBlob(base64) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function emptyGlobalLocation() {
-  return { id: locUid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '', imageBase64: null }
+  return { id: locUid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '', hasImage: false, originalImageData: null, croppedImageData: null }
 }
 
 function GlobalLocationModal({ loc, onSave, onClose }) {
   const [form, setForm] = useState({ ...loc })
   const [saving, setSaving] = useState(false)
-  const [cropSrc, setCropSrc] = useState(null)
+  const [cropFile, setCropFile] = useState(null)
+  const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
+  const [gifNotice, setGifNotice] = useState(false)
   const fileRef = useRef(null)
 
   async function handleSave() {
@@ -52,12 +53,59 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
 
   function handleImage(e) {
     const f = e.target.files[0]
+    if (fileRef.current) fileRef.current.value = ''
     if (!f) return
     setUploadError('')
-    readImageFile(f,
-      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
-      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
-    )
+    setGifNotice(false)
+    if (f.size > MAX_IMAGE_BYTES) {
+      const mb = (f.size / (1024 * 1024)).toFixed(1)
+      setUploadError(`Image is ${mb} MB — max allowed size is ${MAX_IMAGE_MB} MB.`)
+      return
+    }
+    if (isGifFile(f)) {
+      blobToBase64(f)
+        .then(b64 => {
+          setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
+          setGifNotice(true)
+        })
+        .catch(() => setUploadError('Could not read that file.'))
+      return
+    }
+    setCropFile(f)
+    setCropMode('new')
+  }
+
+  function handleCropSave(originalFile, croppedBlob) {
+    if (cropMode === 'recrop') {
+      blobToBase64(croppedBlob).then(croppedB64 => {
+        setForm(p => ({ ...p, hasImage: true, croppedImageData: croppedB64 }))
+      })
+    } else {
+      Promise.all([blobToBase64(originalFile), blobToBase64(croppedBlob)]).then(([originalB64, croppedB64]) => {
+        setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
+      })
+    }
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  async function handleRecrop() {
+    if (form.originalImageData) {
+      setCropFile(base64ToBlob(form.originalImageData))
+      setCropMode('recrop')
+      return
+    }
+    const blob = await fetchImageBlob(getImageUrl('global-location', form.id, 'original'))
+    if (blob) {
+      setCropFile(blob)
+      setCropMode('recrop')
+    }
+  }
+
+  function handleRemoveImage() {
+    setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
+    setGifNotice(false)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   return (
@@ -70,14 +118,18 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
         <div className="p-5 space-y-4">
           <div>
             <label className={labelCls}>Image (4:3)</label>
-            {form.imageBase64 ? (
+            {form.hasImage ? (
               <div className="space-y-2">
                 <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 320, aspectRatio: '4 / 3' }}>
-                  <img src={form.imageBase64} alt={form.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : getImageUrl('global-location', form.id, 'cropped')}
+                    alt={form.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => fileRef.current?.click()} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
-                  <button onClick={() => { setForm(p => ({ ...p, imageBase64: null })); if (fileRef.current) fileRef.current.value = '' }} className="text-xs text-[#b24545] hover:underline">Remove</button>
+                  <button onClick={handleRecrop} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
+                  <button onClick={handleRemoveImage} className="text-xs text-[#b24545] hover:underline">Remove</button>
                 </div>
               </div>
             ) : (
@@ -87,6 +139,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
             )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
             {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
+            {!uploadError && gifNotice && <p className="text-xs text-[#999999] mt-1">{GIF_NOTICE}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -118,14 +171,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
           </div>
         </div>
       </div>
-      {cropSrc && (
-        <CropModal
-          imageData={cropSrc}
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
           aspectW={4}
           aspectH={3}
           title="Crop Location Image"
-          onSave={cropped => { setForm(p => ({ ...p, imageBase64: cropped })); setCropSrc(null) }}
-          onClose={() => setCropSrc(null)}
+          onSave={handleCropSave}
+          onClose={() => { setCropFile(null); setCropMode(null) }}
         />
       )}
     </div>
@@ -137,9 +190,9 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
   const cleanDescription = stripMarkdown(loc.description)
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
-      {loc.imageBase64 && (
+      {loc.hasImage && (
         <div className="w-full overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
-          <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={getImageUrl('global-location', loc.id, 'cropped')} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
       <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#332922]">
@@ -188,11 +241,12 @@ function LocationsTab() {
 
   async function handleSave(form) {
     const existing = locations.find(l => l.id === form.id)
+    const payload = { name: form.name, type: form.type || null, description: form.description || null, notes: form.notes || null, secretsAndHazards: form.secretsAndHazards || null, hasImage: form.hasImage, originalImageData: form.originalImageData, croppedImageData: form.croppedImageData }
     if (existing) {
-      const updated = await db.updateGlobalLocation(form.id, { name: form.name, type: form.type || null, description: form.description || null, notes: form.notes || null, secretsAndHazards: form.secretsAndHazards || null, imageBase64: form.imageBase64 || null })
+      const updated = await db.updateGlobalLocation(form.id, payload)
       dispatch({ type: 'UPDATE_GLOBAL_LOCATION', payload: updated })
     } else {
-      const created = await db.createGlobalLocation({ id: form.id, name: form.name, type: form.type || null, description: form.description || null, notes: form.notes || null, secretsAndHazards: form.secretsAndHazards || null, imageBase64: form.imageBase64 || null })
+      const created = await db.createGlobalLocation({ id: form.id, ...payload })
       dispatch({ type: 'ADD_GLOBAL_LOCATION', payload: created })
     }
     setEditing(null)
@@ -234,7 +288,7 @@ function LocationsTab() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(loc => (
-            <GlobalLocationCard key={loc.id} loc={loc} onEdit={() => setEditing({ ...loc })} onDelete={() => setDeleteTarget(loc)} />
+            <GlobalLocationCard key={loc.id} loc={loc} onEdit={() => setEditing({ ...loc, originalImageData: null, croppedImageData: null })} onDelete={() => setDeleteTarget(loc)} />
           ))}
         </div>
       )}
