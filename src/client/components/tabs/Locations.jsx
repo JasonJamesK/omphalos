@@ -5,13 +5,15 @@ import AddLocationModal from '../location/AddLocationModal'
 import MarkdownField from '../markdown/MarkdownField'
 import MarkdownPreview from '../markdown/MarkdownPreview'
 import { stripMarkdown } from '../markdown/stripMarkdown'
+import { sessionLocationImageUrl } from '../../utils/imageUrls'
 
 const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
 const labelCls = 'block text-xs text-[#999999] mb-1'
 
 // ─── Edit session-location modal ─────────────────────────────────────────────
-function EditLocationModal({ loc, onSave, onClose }) {
+function EditLocationModal({ loc, sessionId, onSave, onClose }) {
   const [sessionNotes, setSessionNotes] = useState(loc.sessionNotes || '')
+  const imageUrl = sessionLocationImageUrl(loc, sessionId)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
@@ -30,9 +32,9 @@ function EditLocationModal({ loc, onSave, onClose }) {
               Shared Info
               <span className="text-[#555] normal-case tracking-normal font-normal">— edit in the Library to update the source</span>
             </p>
-            {loc.imageBase64 && (
+            {imageUrl && (
               <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 280, aspectRatio: '4 / 3' }}>
-                <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={imageUrl} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
             {loc.type && <p className="text-xs text-[#d4a574]">{loc.type}</p>}
@@ -72,15 +74,16 @@ function EditLocationModal({ loc, onSave, onClose }) {
 }
 
 // ─── Location card ────────────────────────────────────────────────────────────
-function LocationCard({ loc, onEdit, onDelete }) {
+function LocationCard({ loc, sessionId, onEdit, onDelete }) {
   const hazardLines = stripMarkdown(loc.secretsAndHazards || '').split('\n').filter(Boolean)
   const isFromLibrary = !!loc.globalLocationId
+  const imageUrl = sessionLocationImageUrl(loc, sessionId)
 
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#6b8e6b]/60 transition-colors group">
-      {loc.imageBase64 && (
+      {imageUrl && (
         <div className="w-full overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
-          <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={imageUrl} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
       <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#332922]">
@@ -191,6 +194,7 @@ export default function Locations() {
             <LocationCard
               key={loc.id}
               loc={loc}
+              sessionId={activeSession.id}
               onEdit={() => setEditing({ ...loc })}
               onDelete={() => setDeleteTarget(loc)}
             />
@@ -208,7 +212,7 @@ export default function Locations() {
       )}
 
       {editing && (
-        <EditLocationModal loc={editing} onSave={handleEditSave} onClose={() => setEditing(null)} />
+        <EditLocationModal loc={editing} sessionId={activeSession.id} onSave={handleEditSave} onClose={() => setEditing(null)} />
       )}
 
       {deleteTarget && (

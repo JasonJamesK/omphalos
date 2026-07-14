@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useApp } from '../../../context/AppContext'
 import AddLocationModal from '../../location/AddLocationModal'
+import { sessionLocationImageUrl } from '../../../utils/imageUrls'
 
-function LocationMiniCard({ loc, onRemove }) {
+function LocationMiniCard({ loc, sessionId, onRemove }) {
+  const imageUrl = sessionLocationImageUrl(loc, sessionId)
   return (
     <div className="flex gap-2 bg-[#161310] rounded p-2">
       <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-[#332922] flex items-center justify-center text-[#666] font-bold">
-        {loc.imageBase64 ? (
-          <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {imageUrl ? (
+          <img src={imageUrl} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <span>{loc.name?.[0]?.toUpperCase() || '?'}</span>
         )}
@@ -52,7 +54,7 @@ export default function LocationsBlock({ block, onChange }) {
       {linked.length === 0 && <p className="text-xs text-[#666] py-1">No locations linked yet.</p>}
       <div className="space-y-1.5">
         {linked.map(loc => (
-          <LocationMiniCard key={loc.id} loc={loc} onRemove={() => removeRef(loc.id)} />
+          <LocationMiniCard key={loc.id} loc={loc} sessionId={activeSession.id} onRemove={() => removeRef(loc.id)} />
         ))}
       </div>
 
