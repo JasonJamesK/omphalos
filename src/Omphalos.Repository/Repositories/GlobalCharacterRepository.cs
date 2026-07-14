@@ -14,6 +14,11 @@ public class GlobalCharacterRepository(OmphalosDbContext db) : IGlobalCharacterR
 
     public async Task<GlobalCharacter> CreateAsync(GlobalCharacter character, CancellationToken ct = default)
     {
+        var (original, cropped) = ImageWriteContract.Apply(
+            character.HasImage, character.OriginalImageData, character.CroppedImageData, null, null);
+        character.OriginalImageData = original;
+        character.CroppedImageData = cropped;
+
         db.GlobalCharacters.Add(character);
         await db.SaveChangesAsync(ct);
         return character;
@@ -32,9 +37,11 @@ public class GlobalCharacterRepository(OmphalosDbContext db) : IGlobalCharacterR
         existing.PersonalityTraits = character.PersonalityTraits;
         existing.Flaw = character.Flaw;
         existing.Description = character.Description;
-        existing.PortraitBase64 = character.PortraitBase64;
-        existing.PortraitPanX = character.PortraitPanX;
-        existing.PortraitPanY = character.PortraitPanY;
+        var (original, cropped) = ImageWriteContract.Apply(
+            character.HasImage, character.OriginalImageData, character.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
         existing.QuestHooks = character.QuestHooks;
         existing.Relationships = character.Relationships;
 
@@ -57,4 +64,10 @@ public class GlobalCharacterRepository(OmphalosDbContext db) : IGlobalCharacterR
         await db.SaveChangesAsync(ct);
         return DeleteGlobalCharacterResult.Deleted;
     }
+
+    public Task<byte[]?> GetImageAsync(string id, bool cropped, CancellationToken ct = default) =>
+        db.GlobalCharacters
+            .Where(g => g.Id == id)
+            .Select(g => cropped ? (g.CroppedImageData ?? g.OriginalImageData) : g.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
 }

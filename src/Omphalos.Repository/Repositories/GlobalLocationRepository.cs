@@ -14,6 +14,11 @@ public class GlobalLocationRepository(OmphalosDbContext db) : IGlobalLocationRep
 
     public async Task<GlobalLocation> CreateAsync(GlobalLocation location, CancellationToken ct = default)
     {
+        var (original, cropped) = ImageWriteContract.Apply(
+            location.HasImage, location.OriginalImageData, location.CroppedImageData, null, null);
+        location.OriginalImageData = original;
+        location.CroppedImageData = cropped;
+
         db.GlobalLocations.Add(location);
         await db.SaveChangesAsync(ct);
         return location;
@@ -29,7 +34,11 @@ public class GlobalLocationRepository(OmphalosDbContext db) : IGlobalLocationRep
         existing.Description = location.Description;
         existing.Notes = location.Notes;
         existing.SecretsAndHazards = location.SecretsAndHazards;
-        existing.ImageBase64 = location.ImageBase64;
+        var (original, cropped) = ImageWriteContract.Apply(
+            location.HasImage, location.OriginalImageData, location.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
 
         await db.SaveChangesAsync(ct);
         return existing;
@@ -50,4 +59,10 @@ public class GlobalLocationRepository(OmphalosDbContext db) : IGlobalLocationRep
         await db.SaveChangesAsync(ct);
         return DeleteGlobalLocationResult.Deleted;
     }
+
+    public Task<byte[]?> GetImageAsync(string id, bool cropped, CancellationToken ct = default) =>
+        db.GlobalLocations
+            .Where(g => g.Id == id)
+            .Select(g => cropped ? (g.CroppedImageData ?? g.OriginalImageData) : g.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
 }

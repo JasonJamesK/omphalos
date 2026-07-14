@@ -34,6 +34,11 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
 
         if (existing is null)
         {
+            foreach (var character in session.Characters)
+                ApplyNewImageWriteContract(character);
+            foreach (var location in session.Locations)
+                ApplyNewImageWriteContract(location);
+
             db.GameSessions.Add(session);
         }
         else
@@ -42,15 +47,12 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
             existing.DateModified = session.DateModified;
             existing.SessionLog = session.SessionLog;
             existing.SessionNotes = session.SessionNotes;
+            existing.PrepData = session.PrepData;
             existing.Metadata = session.Metadata;
 
-            db.Characters.RemoveRange(existing.Characters);
-            db.Locations.RemoveRange(existing.Locations);
-            db.Encounters.RemoveRange(existing.Encounters);
-
-            existing.Characters = session.Characters;
-            existing.Locations = session.Locations;
-            existing.Encounters = session.Encounters;
+            ApplyDiff(existing.Characters, session.Characters, c => c.Id, db.Characters, CopyCharacterFields);
+            ApplyDiff(existing.Locations, session.Locations, l => l.Id, db.Locations, CopyLocationFields);
+            ApplyDiff(existing.Encounters, session.Encounters, e => e.Id, db.Encounters, CopyEncounterFields);
         }
 
         await db.SaveChangesAsync(ct);
@@ -63,5 +65,116 @@ public class SessionRepository(OmphalosDbContext db) : ISessionRepository
             .Where(s => s.Id == id && s.UserId == userId)
             .ExecuteDeleteAsync(ct);
         return rows > 0;
+    }
+
+    public Task<byte[]?> GetCharacterImageAsync(string sessionId, string characterId, Guid userId, bool cropped, CancellationToken ct = default) =>
+        db.Characters
+            .Where(c => c.Id == characterId && c.SessionId == sessionId && c.Session.UserId == userId)
+            .Select(c => cropped ? (c.CroppedImageData ?? c.OriginalImageData) : c.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
+
+    public Task<byte[]?> GetLocationImageAsync(string sessionId, string locationId, Guid userId, bool cropped, CancellationToken ct = default) =>
+        db.Locations
+            .Where(l => l.Id == locationId && l.SessionId == sessionId && l.Session.UserId == userId)
+            .Select(l => cropped ? (l.CroppedImageData ?? l.OriginalImageData) : l.OriginalImageData)
+            .FirstOrDefaultAsync(ct);
+
+    // Reconciles a session-scoped child collection against an incoming payload, by Id.
+    // Only ever operates on collections already loaded off the UserId-scoped session
+    // query above — never introduces a global lookup by child Id alone.
+    private static void ApplyDiff<T>(
+        ICollection<T> existingCollection,
+        ICollection<T> incomingCollection,
+        Func<T, string> keySelector,
+        DbSet<T> dbSet,
+        Action<T, T> copyFields) where T : class
+    {
+        var diff = SessionCollectionSync.Diff(existingCollection, incomingCollection, keySelector);
+
+        foreach (var stale in diff.ToRemove)
+        {
+            existingCollection.Remove(stale);
+            dbSet.Remove(stale);
+        }
+
+        foreach (var (existingItem, incomingItem) in diff.ToUpdate)
+        {
+            copyFields(existingItem, incomingItem);
+        }
+
+        foreach (var added in diff.ToAdd)
+        {
+            existingCollection.Add(added);
+        }
+    }
+
+    // Applies the same "HasImage=false clears both byte columns" contract used by the
+    // update paths to a brand-new session's child entities, so a client that submits
+    // hasImage:false alongside stray image bytes on first insert can't leave a row whose
+    // computed HasImage disagrees with what was requested.
+    private static void ApplyNewImageWriteContract(Character character)
+    {
+        var (original, cropped) = ImageWriteContract.Apply(
+            character.HasImage, character.OriginalImageData, character.CroppedImageData, null, null);
+        character.OriginalImageData = original;
+        character.CroppedImageData = cropped;
+    }
+
+    private static void ApplyNewImageWriteContract(Location location)
+    {
+        var (original, cropped) = ImageWriteContract.Apply(
+            location.HasImage, location.OriginalImageData, location.CroppedImageData, null, null);
+        location.OriginalImageData = original;
+        location.CroppedImageData = cropped;
+    }
+
+    private static void CopyCharacterFields(Character existing, Character incoming)
+    {
+        existing.Name = incoming.Name;
+        var (original, cropped) = ImageWriteContract.Apply(
+            incoming.HasImage, incoming.OriginalImageData, incoming.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
+        existing.Tagline = incoming.Tagline;
+        existing.Class = incoming.Class;
+        existing.Race = incoming.Race;
+        existing.Level = incoming.Level;
+        existing.Alignment = incoming.Alignment;
+        existing.PersonalityTraits = incoming.PersonalityTraits;
+        existing.Flaw = incoming.Flaw;
+        existing.Inventory = incoming.Inventory;
+        existing.QuestHooks = incoming.QuestHooks;
+        existing.Description = incoming.Description;
+        existing.GlobalCharacterId = incoming.GlobalCharacterId;
+        existing.SessionNotes = incoming.SessionNotes;
+        existing.IsNpc = incoming.IsNpc;
+        existing.Relationships = incoming.Relationships;
+        existing.StatBlock = incoming.StatBlock;
+    }
+
+    private static void CopyLocationFields(Location existing, Location incoming)
+    {
+        existing.Name = incoming.Name;
+        existing.Type = incoming.Type;
+        existing.Description = incoming.Description;
+        existing.Notes = incoming.Notes;
+        var (original, cropped) = ImageWriteContract.Apply(
+            incoming.HasImage, incoming.OriginalImageData, incoming.CroppedImageData,
+            existing.OriginalImageData, existing.CroppedImageData);
+        existing.OriginalImageData = original;
+        existing.CroppedImageData = cropped;
+        existing.GlobalLocationId = incoming.GlobalLocationId;
+        existing.SessionNotes = incoming.SessionNotes;
+    }
+
+    private static void CopyEncounterFields(Encounter existing, Encounter incoming)
+    {
+        existing.Name = incoming.Name;
+        existing.Type = incoming.Type;
+        existing.Description = incoming.Description;
+        existing.Notes = incoming.Notes;
+        existing.Difficulty = incoming.Difficulty;
+        existing.Enemies = incoming.Enemies;
     }
 }

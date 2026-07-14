@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import PhaseCard from '../session/PhaseCard'
-
-const inp = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
+import MarkdownField from '../markdown/MarkdownField'
 
 function phaseUid() { return `phase-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 
@@ -24,11 +23,11 @@ export default function SessionPrep() {
   const phases = prep.phases || []
 
   function updatePrep(newPrep) {
-    dispatch({ type: 'UPDATE_SESSION', payload: { id: activeSession.id, prepData: newPrep } })
+    dispatch({ type: 'UPDATE_SESSION', payload: { ...activeSession, prepData: newPrep } })
   }
 
-  function updateOverview(e) {
-    updatePrep({ ...prep, overview: e.target.value })
+  function updateOverview(v) {
+    updatePrep({ ...prep, overview: v })
   }
 
   function addPhase() {
@@ -50,9 +49,7 @@ export default function SessionPrep() {
     <div className="p-4 space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-[#d4a574] uppercase tracking-wider mb-2">Adventure Overview & Hook</h2>
-        <textarea
-          className={inp}
-          rows={4}
+        <MarkdownField
           value={prep.overview}
           onChange={updateOverview}
           placeholder="The setup, the hook that draws the party in, who wants what..."

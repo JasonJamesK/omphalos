@@ -1,6 +1,9 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using Microsoft.Net.Http.Headers;
 using Omphalos.Domain.DTOs;
 using Omphalos.Domain.Interfaces;
+using Omphalos.Services.Implementations;
 
 namespace Omphalos.Web.Endpoints;
 
@@ -19,14 +22,38 @@ public static class GlobalCharacterEndpoints
             return result is null ? Results.NotFound() : Results.Ok(result);
         });
 
+        group.MapGet("/{id}/portrait/{variant}", async (
+            string id, string variant, IImageService images, HttpContext http, CancellationToken ct) =>
+        {
+            if (variant != "original" && variant != "cropped") return Results.NotFound();
+
+            var bytes = await images.GetGlobalCharacterImageAsync(id, variant == "cropped", ct);
+            if (bytes is null) return Results.NotFound();
+
+            var mime = ImageValidation.DetectImageMimeType(bytes);
+            var etag = new EntityTagHeaderValue($"\"{Convert.ToHexString(SHA256.HashData(bytes))}\"");
+            // Private: this endpoint requires authorization, and a shared/proxy cache
+            // does not participate in that check — "public" here would risk one
+            // authenticated user's response being served to a different, unauthenticated
+            // request for the same URL if an intermediary is configured to share it.
+            http.Response.Headers.CacheControl = "private, max-age=31536000, immutable";
+            return TypedResults.File(bytes, mime, entityTag: etag);
+        });
+
         group.MapPost("/", async (CreateGlobalCharacterRequest req, IGlobalCharacterService service, CancellationToken ct) =>
         {
+            if (ImageValidation.IsInvalidUpload(req.OriginalImageData) || ImageValidation.IsInvalidUpload(req.CroppedImageData))
+                return Results.BadRequest("Invalid image data.");
+
             var result = await service.CreateAsync(req, ct);
             return Results.Created($"/api/characters/{result.Id}", result);
         });
 
         group.MapPut("/{id}", async (string id, UpdateGlobalCharacterRequest req, IGlobalCharacterService service, CancellationToken ct) =>
         {
+            if (ImageValidation.IsInvalidUpload(req.OriginalImageData) || ImageValidation.IsInvalidUpload(req.CroppedImageData))
+                return Results.BadRequest("Invalid image data.");
+
             var result = await service.UpdateAsync(id, req, ct);
             return result is null ? Results.NotFound() : Results.Ok(result);
         });

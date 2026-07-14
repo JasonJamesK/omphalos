@@ -2,13 +2,18 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import DeleteConfirm from '../DeleteConfirm'
 import AddLocationModal from '../location/AddLocationModal'
+import MarkdownField from '../markdown/MarkdownField'
+import MarkdownPreview from '../markdown/MarkdownPreview'
+import { stripMarkdown } from '../markdown/stripMarkdown'
+import { sessionLocationImageUrl } from '../../utils/imageUrls'
 
 const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
 const labelCls = 'block text-xs text-[#999999] mb-1'
 
 // ─── Edit session-location modal ─────────────────────────────────────────────
-function EditLocationModal({ loc, onSave, onClose }) {
+function EditLocationModal({ loc, sessionId, onSave, onClose }) {
   const [sessionNotes, setSessionNotes] = useState(loc.sessionNotes || '')
+  const imageUrl = sessionLocationImageUrl(loc, sessionId)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
@@ -27,17 +32,17 @@ function EditLocationModal({ loc, onSave, onClose }) {
               Shared Info
               <span className="text-[#555] normal-case tracking-normal font-normal">— edit in the Library to update the source</span>
             </p>
-            {loc.imageBase64 && (
+            {imageUrl && (
               <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 280, aspectRatio: '4 / 3' }}>
-                <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={imageUrl} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
             {loc.type && <p className="text-xs text-[#d4a574]">{loc.type}</p>}
-            {loc.description && <p className="text-sm text-[#d4d4d4] leading-relaxed">{loc.description}</p>}
+            {loc.description && <MarkdownPreview value={loc.description} className="text-sm text-[#d4d4d4]" />}
             {loc.secretsAndHazards && (
               <div className="pt-1">
                 <p className="text-xs text-[#b24545] font-semibold uppercase tracking-wide mb-1">Secrets / Hazards</p>
-                {loc.secretsAndHazards.split('\n').filter(Boolean).map((line, i) => (
+                {stripMarkdown(loc.secretsAndHazards).split('\n').filter(Boolean).map((line, i) => (
                   <p key={i} className="text-xs text-[#f0f0f0] flex gap-1.5"><span className="text-[#b24545]">▸</span>{line}</p>
                 ))}
               </div>
@@ -45,11 +50,10 @@ function EditLocationModal({ loc, onSave, onClose }) {
           </div>
           <div>
             <label className={labelCls}>Session Notes</label>
-            <textarea
-              className={inputCls}
-              rows={5}
+            <MarkdownField
               value={sessionNotes}
-              onChange={e => setSessionNotes(e.target.value)}
+              onChange={setSessionNotes}
+              textareaClassName={inputCls}
               placeholder="What happened here this session? Player discoveries, events, changes..."
               autoFocus
             />
@@ -70,15 +74,16 @@ function EditLocationModal({ loc, onSave, onClose }) {
 }
 
 // ─── Location card ────────────────────────────────────────────────────────────
-function LocationCard({ loc, onEdit, onDelete }) {
-  const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
+function LocationCard({ loc, sessionId, onEdit, onDelete }) {
+  const hazardLines = stripMarkdown(loc.secretsAndHazards || '').split('\n').filter(Boolean)
   const isFromLibrary = !!loc.globalLocationId
+  const imageUrl = sessionLocationImageUrl(loc, sessionId)
 
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#6b8e6b]/60 transition-colors group">
-      {loc.imageBase64 && (
+      {imageUrl && (
         <div className="w-full overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
-          <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={imageUrl} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
       <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#332922]">
@@ -110,7 +115,10 @@ function LocationCard({ loc, onEdit, onDelete }) {
       </div>
       {loc.description && (
         <div className="px-4 py-3 text-sm text-[#d4d4d4] leading-relaxed">
-          {loc.description.length > 220 ? loc.description.slice(0, 220) + '…' : loc.description}
+          {(() => {
+            const stripped = stripMarkdown(loc.description)
+            return stripped.length > 220 ? stripped.slice(0, 220) + '…' : stripped
+          })()}
         </div>
       )}
       {hazardLines.length > 0 && (
@@ -129,7 +137,7 @@ function LocationCard({ loc, onEdit, onDelete }) {
       {loc.sessionNotes && (
         <div className="px-4 py-3 border-t border-[#332922] bg-[#161310]/50">
           <p className="text-xs text-[#6b8e6b] font-semibold mb-1 uppercase tracking-wide">Session Notes</p>
-          <p className="text-xs text-[#d4d4d4] leading-relaxed">{loc.sessionNotes}</p>
+          <MarkdownPreview value={loc.sessionNotes} className="text-xs text-[#d4d4d4]" />
         </div>
       )}
     </div>
@@ -186,6 +194,7 @@ export default function Locations() {
             <LocationCard
               key={loc.id}
               loc={loc}
+              sessionId={activeSession.id}
               onEdit={() => setEditing({ ...loc })}
               onDelete={() => setDeleteTarget(loc)}
             />
@@ -203,7 +212,7 @@ export default function Locations() {
       )}
 
       {editing && (
-        <EditLocationModal loc={editing} onSave={handleEditSave} onClose={() => setEditing(null)} />
+        <EditLocationModal loc={editing} sessionId={activeSession.id} onSave={handleEditSave} onClose={() => setEditing(null)} />
       )}
 
       {deleteTarget && (

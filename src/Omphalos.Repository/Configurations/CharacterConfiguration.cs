@@ -27,5 +27,7 @@ public class CharacterConfiguration : IEntityTypeConfiguration<Character>
 
         builder.Property(c => c.GlobalCharacterId).IsRequired(false);
         builder.Property(c => c.SessionNotes).IsRequired(false);
+
+        builder.Ignore(c => c.HasImage);
     }
 }

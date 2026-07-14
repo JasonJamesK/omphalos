@@ -1,8 +1,3 @@
-function portrait(initials, bg) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 267"><rect width="200" height="267" fill="${bg}"/><circle cx="100" cy="95" r="52" fill="rgba(0,0,0,0.25)"/><text x="100" y="107" font-family="Georgia,serif" font-size="54" font-weight="bold" fill="rgba(255,255,255,0.9)" text-anchor="middle" dominant-baseline="middle">${initials}</text><ellipse cx="100" cy="225" rx="75" ry="45" fill="rgba(0,0,0,0.2)"/></svg>`
-  return `data:image/svg+xml;base64,${btoa(svg)}`
-}
-
 const sessionLog1 = {
   type: 'doc',
   content: [
@@ -63,9 +58,6 @@ export const mockSessions = [
       {
         id: 'char-mock-001',
         name: 'Aldric Thornton',
-        portraitBase64: portrait('AT', '#4a6741'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Honour-bound soldier haunted by a battlefield betrayal',
         class: 'Fighter',
         race: 'Human',
@@ -85,9 +77,6 @@ export const mockSessions = [
       {
         id: 'char-mock-002',
         name: 'Seraphina Galanodel',
-        portraitBase64: portrait('SG', '#5a4a7a'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Elven scholar who traded her tower for the road',
         class: 'Wizard',
         race: 'Elf',
@@ -107,9 +96,6 @@ export const mockSessions = [
       {
         id: 'char-mock-003',
         name: 'Borin Ironforge',
-        portraitBase64: portrait('BI', '#7a5a30'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Dwarven cleric of Moradin — pragmatic, blunt, and surprisingly tender',
         class: 'Cleric',
         race: 'Dwarf',
@@ -129,9 +115,6 @@ export const mockSessions = [
       {
         id: 'char-mock-004',
         name: 'Kira Lightfoot',
-        portraitBase64: portrait('KL', '#7a4040'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Halfling rogue who steals hearts and purses with equal ease',
         class: 'Rogue',
         race: 'Halfling',
@@ -208,9 +191,6 @@ export const mockSessions = [
       {
         id: 'char-mock-005',
         name: 'Mordai Brimstone',
-        portraitBase64: portrait('MB', '#3d2a5a'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Tiefling warlock bound to a patron he has never seen',
         class: 'Warlock',
         race: 'Tiefling',
@@ -230,9 +210,6 @@ export const mockSessions = [
       {
         id: 'char-mock-006',
         name: 'Aelindra Brightwood',
-        portraitBase64: portrait('AB', '#3a6a4a'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Half-elf ranger who speaks to forests and can\'t speak to people',
         class: 'Ranger',
         race: 'Half-Elf',
@@ -252,9 +229,6 @@ export const mockSessions = [
       {
         id: 'char-mock-007',
         name: 'Krusk Blacktusk',
-        portraitBase64: portrait('KB', '#5a3a2a'),
-        portraitPanX: 0,
-        portraitPanY: 0,
         tagline: 'Half-orc barbarian trying very hard not to be what people expect',
         class: 'Barbarian',
         race: 'Half-Orc',

@@ -13,3 +13,7 @@ dist
 .vs/
 *.user
 .claude/settings.local.json
+.claude/worktrees/
+
+# GSD research cache
+.planning/research/.cache/

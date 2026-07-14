@@ -26,6 +26,7 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGlobalLocationService, GlobalLocationService>();
 builder.Services.AddScoped<IGlobalCharacterService, GlobalCharacterService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]
@@ -94,6 +95,8 @@ app.MapAdminEndpoints();
 app.MapSettingsEndpoints();
 app.MapGlobalLocationEndpoints();
 app.MapGlobalCharacterEndpoints();
+app.MapCharacterImageEndpoints();
+app.MapLocationImageEndpoints();
 
 // Serve React SPA from wwwroot (production)
 app.UseDefaultFiles();
@@ -101,3 +104,6 @@ app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+// Referenceable entry point so WebApplicationFactory<Program> can host this app in tests.
+public partial class Program { }

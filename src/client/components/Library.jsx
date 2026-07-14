@@ -1,32 +1,57 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
-import CropModal from './CropModal'
-import { readImageFile } from '../utils/imageUpload'
+import ImageCropModal from './ImageCropModal'
+import { isGifFile, isGifBlob, blobToBase64, detectImageMimeType, MAX_IMAGE_MB, MAX_IMAGE_BYTES } from '../utils/imageUpload'
+import { getImageUrl, fetchImageBlob } from '../utils/imageUrls'
+import MarkdownField from './markdown/MarkdownField'
+import { stripMarkdown } from './markdown/stripMarkdown'
 
 // ─── shared styles ───────────────────────────────────────────────────────────
 const inputCls = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574] resize-none'
 const labelCls = 'block text-xs text-[#999999] mb-1'
+const GIF_NOTICE = "Animated GIFs are saved as-is — cropping isn't applied to GIFs."
 
 // ─── uid helpers ─────────────────────────────────────────────────────────────
 function locUid() { return `gloc-${Date.now()}-${Math.random().toString(36).slice(2)}` }
 function charUid() { return `gchar-${Date.now()}-${Math.random().toString(36).slice(2)}` }
+
+// Converts a base64 payload (no data: prefix) back into a Blob so a locally-held
+// original (not yet uploaded to the server) can be re-crop-fed into ImageCropModal.
+// The MIME type is sniffed from the actual bytes (rather than left blank/assumed)
+// so prepareWorkingCopy's PNG-vs-JPEG output-format branch sees the real type and
+// doesn't silently composite a not-yet-saved transparent PNG onto an opaque JPEG.
+function base64ToBlob(base64) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: detectImageMimeType(bytes) })
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  LOCATIONS TAB
 // ═══════════════════════════════════════════════════════════════════════════
 
 function emptyGlobalLocation() {
-  return { id: locUid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '', imageBase64: null }
+  return { id: locUid(), name: '', type: '', description: '', notes: '', secretsAndHazards: '', hasImage: false, originalImageData: null, croppedImageData: null }
 }
 
 function GlobalLocationModal({ loc, onSave, onClose }) {
   const [form, setForm] = useState({ ...loc })
   const [saving, setSaving] = useState(false)
-  const [cropSrc, setCropSrc] = useState(null)
+  const [cropFile, setCropFile] = useState(null)
+  const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
+  const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handleSave() {
     if (!form.name.trim()) return
@@ -36,12 +61,66 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
 
   function handleImage(e) {
     const f = e.target.files[0]
+    if (fileRef.current) fileRef.current.value = ''
     if (!f) return
     setUploadError('')
-    readImageFile(f,
-      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
-      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
-    )
+    setGifNotice(false)
+    if (f.size > MAX_IMAGE_BYTES) {
+      const mb = (f.size / (1024 * 1024)).toFixed(1)
+      setUploadError(`Image is ${mb} MB — max allowed size is ${MAX_IMAGE_MB} MB.`)
+      return
+    }
+    if (isGifFile(f)) {
+      blobToBase64(f)
+        .then(b64 => {
+          setGifPreviewUrl(URL.createObjectURL(f))
+          setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
+          setGifNotice(true)
+        })
+        .catch(() => setUploadError('Could not read that file.'))
+      return
+    }
+    setGifPreviewUrl(null)
+    setCropFile(f)
+    setCropMode('new')
+  }
+
+  function handleCropSave(originalFile, croppedBlob) {
+    if (cropMode === 'recrop') {
+      blobToBase64(croppedBlob).then(croppedB64 => {
+        setForm(p => ({ ...p, hasImage: true, croppedImageData: croppedB64 }))
+      })
+    } else {
+      Promise.all([blobToBase64(originalFile), blobToBase64(croppedBlob)]).then(([originalB64, croppedB64]) => {
+        setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
+      })
+    }
+    setGifPreviewUrl(null)
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  async function handleRecrop() {
+    let source = null
+    if (form.originalImageData) {
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      source = await fetchImageBlob(getImageUrl('global-location', form.id, 'original'))
+    }
+    if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
+      return
+    }
+    setCropFile(source)
+    setCropMode('recrop')
+  }
+
+  function handleRemoveImage() {
+    setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
+    setGifNotice(false)
+    setGifPreviewUrl(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   return (
@@ -54,14 +133,18 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
         <div className="p-5 space-y-4">
           <div>
             <label className={labelCls}>Image (4:3)</label>
-            {form.imageBase64 ? (
+            {form.hasImage ? (
               <div className="space-y-2">
                 <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 320, aspectRatio: '4 / 3' }}>
-                  <img src={form.imageBase64} alt={form.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : (gifPreviewUrl || getImageUrl('global-location', form.id, 'cropped'))}
+                    alt={form.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => fileRef.current?.click()} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
-                  <button onClick={() => { setForm(p => ({ ...p, imageBase64: null })); if (fileRef.current) fileRef.current.value = '' }} className="text-xs text-[#b24545] hover:underline">Remove</button>
+                  <button onClick={handleRecrop} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
+                  <button onClick={handleRemoveImage} className="text-xs text-[#b24545] hover:underline">Remove</button>
                 </div>
               </div>
             ) : (
@@ -71,6 +154,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
             )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
             {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
+            {!uploadError && gifNotice && <p className="text-xs text-[#999999] mt-1">{GIF_NOTICE}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -84,15 +168,15 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
           </div>
           <div>
             <label className={labelCls}>Description</label>
-            <textarea className={inputCls} rows={5} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Appearance, atmosphere, notable features..." />
+            <MarkdownField value={form.description} onChange={v => setForm(p => ({ ...p, description: v }))} textareaClassName={inputCls} placeholder="Appearance, atmosphere, notable features..." />
           </div>
           <div>
             <label className={labelCls}>Secrets & Hazards</label>
-            <textarea className={inputCls} rows={4} value={form.secretsAndHazards} onChange={e => setForm(p => ({ ...p, secretsAndHazards: e.target.value }))} placeholder="Hidden passages, traps, lore secrets... (one per line)" />
+            <MarkdownField value={form.secretsAndHazards} onChange={v => setForm(p => ({ ...p, secretsAndHazards: v }))} textareaClassName={inputCls} placeholder="Hidden passages, traps, lore secrets... (one per line)" />
           </div>
           <div>
             <label className={labelCls}>Notes</label>
-            <textarea className={inputCls} rows={3} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Additional DM notes..." />
+            <MarkdownField value={form.notes} onChange={v => setForm(p => ({ ...p, notes: v }))} textareaClassName={inputCls} placeholder="Additional DM notes..." />
           </div>
           <div className="flex gap-3 justify-end pt-2 border-t border-[#332922]">
             <button onClick={onClose} className="px-4 py-2 bg-[#332922] text-[#f0f0f0] rounded hover:bg-[#40332a] transition-colors">Cancel</button>
@@ -102,14 +186,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
           </div>
         </div>
       </div>
-      {cropSrc && (
-        <CropModal
-          imageData={cropSrc}
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
           aspectW={4}
           aspectH={3}
           title="Crop Location Image"
-          onSave={cropped => { setForm(p => ({ ...p, imageBase64: cropped })); setCropSrc(null) }}
-          onClose={() => setCropSrc(null)}
+          onSave={handleCropSave}
+          onClose={() => { setCropFile(null); setCropMode(null) }}
         />
       )}
     </div>
@@ -117,12 +201,13 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
 }
 
 function GlobalLocationCard({ loc, onEdit, onDelete }) {
-  const hazardLines = (loc.secretsAndHazards || '').split('\n').filter(Boolean)
+  const hazardLines = stripMarkdown(loc.secretsAndHazards || '').split('\n').filter(Boolean)
+  const cleanDescription = stripMarkdown(loc.description)
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
-      {loc.imageBase64 && (
+      {loc.hasImage && (
         <div className="w-full overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
-          <img src={loc.imageBase64} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={getImageUrl('global-location', loc.id, 'cropped')} alt={loc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
       <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#332922]">
@@ -135,9 +220,9 @@ function GlobalLocationCard({ loc, onEdit, onDelete }) {
           <button onClick={onDelete} className="px-2 py-0.5 text-xs bg-[#b24545]/20 text-[#b24545] rounded hover:bg-[#b24545]/40 transition-colors">Del</button>
         </div>
       </div>
-      {loc.description && (
+      {cleanDescription && (
         <div className="px-4 py-3 text-sm text-[#d4d4d4] leading-relaxed">
-          {loc.description.length > 200 ? loc.description.slice(0, 200) + '…' : loc.description}
+          {cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription}
         </div>
       )}
       {hazardLines.length > 0 && (
@@ -171,11 +256,12 @@ function LocationsTab() {
 
   async function handleSave(form) {
     const existing = locations.find(l => l.id === form.id)
+    const payload = { name: form.name, type: form.type || null, description: form.description || null, notes: form.notes || null, secretsAndHazards: form.secretsAndHazards || null, hasImage: form.hasImage, originalImageData: form.originalImageData, croppedImageData: form.croppedImageData }
     if (existing) {
-      const updated = await db.updateGlobalLocation(form.id, { name: form.name, type: form.type || null, description: form.description || null, notes: form.notes || null, secretsAndHazards: form.secretsAndHazards || null, imageBase64: form.imageBase64 || null })
+      const updated = await db.updateGlobalLocation(form.id, payload)
       dispatch({ type: 'UPDATE_GLOBAL_LOCATION', payload: updated })
     } else {
-      const created = await db.createGlobalLocation({ id: form.id, name: form.name, type: form.type || null, description: form.description || null, notes: form.notes || null, secretsAndHazards: form.secretsAndHazards || null, imageBase64: form.imageBase64 || null })
+      const created = await db.createGlobalLocation({ id: form.id, ...payload })
       dispatch({ type: 'ADD_GLOBAL_LOCATION', payload: created })
     }
     setEditing(null)
@@ -217,7 +303,7 @@ function LocationsTab() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(loc => (
-            <GlobalLocationCard key={loc.id} loc={loc} onEdit={() => setEditing({ ...loc })} onDelete={() => setDeleteTarget(loc)} />
+            <GlobalLocationCard key={loc.id} loc={loc} onEdit={() => setEditing({ ...loc, originalImageData: null, croppedImageData: null })} onDelete={() => setDeleteTarget(loc)} />
           ))}
         </div>
       )}
@@ -255,13 +341,13 @@ const ALIGNMENTS = ['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral'
 const REL_TYPES = ['Ally','Enemy','Rival','Friend','Family','Mentor','Student','Neutral','Romantic']
 
 function emptyGlobalCharacter() {
-  return { id: charUid(), name: '', tagline: '', class: 'Fighter', race: 'Human', alignment: 'True Neutral', personalityTraits: '', flaw: '', description: '', portraitBase64: null, portraitPanX: 0, portraitPanY: 0, questHooks: '', relationships: [] }
+  return { id: charUid(), name: '', tagline: '', class: 'Fighter', race: 'Human', alignment: 'True Neutral', personalityTraits: '', flaw: '', description: '', hasImage: false, originalImageData: null, croppedImageData: null, questHooks: '', relationships: [] }
 }
 
 function LibraryPortrait({ char, size = 'sm' }) {
   const w = size === 'sm' ? 80 : 120
   const h = size === 'sm' ? 107 : 160
-  if (!char.portraitBase64) {
+  if (!char.hasImage) {
     return (
       <div className="flex items-center justify-center bg-[#332922] text-[#666] font-bold flex-shrink-0 rounded" style={{ width: w, height: h }}>
         <span style={{ fontSize: size === 'sm' ? 28 : 42 }}>{char.name?.[0]?.toUpperCase() || '?'}</span>
@@ -270,7 +356,7 @@ function LibraryPortrait({ char, size = 'sm' }) {
   }
   return (
     <div className="overflow-hidden flex-shrink-0 rounded" style={{ width: w, height: h }}>
-      <img src={char.portraitBase64} alt={char.name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+      <img src={getImageUrl('global-character', char.id, 'cropped')} alt={char.name} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
     </div>
   )
 }
@@ -278,20 +364,83 @@ function LibraryPortrait({ char, size = 'sm' }) {
 function GlobalCharacterModal({ char, onSave, onClose }) {
   const [form, setForm] = useState({ ...char })
   const [saving, setSaving] = useState(false)
-  const [cropSrc, setCropSrc] = useState(null)
+  const [cropFile, setCropFile] = useState(null)
+  const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
+  const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
+
   function handlePortrait(e) {
     const f = e.target.files[0]
+    if (fileRef.current) fileRef.current.value = ''
     if (!f) return
     setUploadError('')
-    readImageFile(f,
-      dataUrl => { setCropSrc(dataUrl); if (fileRef.current) fileRef.current.value = '' },
-      err => { setUploadError(err); if (fileRef.current) fileRef.current.value = '' }
-    )
+    setGifNotice(false)
+    if (f.size > MAX_IMAGE_BYTES) {
+      const mb = (f.size / (1024 * 1024)).toFixed(1)
+      setUploadError(`Image is ${mb} MB — max allowed size is ${MAX_IMAGE_MB} MB.`)
+      return
+    }
+    if (isGifFile(f)) {
+      blobToBase64(f)
+        .then(b64 => {
+          setGifPreviewUrl(URL.createObjectURL(f))
+          setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
+          setGifNotice(true)
+        })
+        .catch(() => setUploadError('Could not read that file.'))
+      return
+    }
+    setGifPreviewUrl(null)
+    setCropFile(f)
+    setCropMode('new')
+  }
+
+  function handleCropSave(originalFile, croppedBlob) {
+    if (cropMode === 'recrop') {
+      blobToBase64(croppedBlob).then(croppedB64 => {
+        setForm(p => ({ ...p, hasImage: true, croppedImageData: croppedB64 }))
+      })
+    } else {
+      Promise.all([blobToBase64(originalFile), blobToBase64(croppedBlob)]).then(([originalB64, croppedB64]) => {
+        setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
+      })
+    }
+    setGifPreviewUrl(null)
+    setCropFile(null)
+    setCropMode(null)
+  }
+
+  async function handleRecrop() {
+    let source = null
+    if (form.originalImageData) {
+      source = base64ToBlob(form.originalImageData)
+    } else {
+      source = await fetchImageBlob(getImageUrl('global-character', form.id, 'original'))
+    }
+    if (!source) return
+    if (await isGifBlob(source)) {
+      setGifNotice(true)
+      return
+    }
+    setCropFile(source)
+    setCropMode('recrop')
+  }
+
+  function handleRemovePortrait() {
+    setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
+    setGifNotice(false)
+    setGifPreviewUrl(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function handleSave() {
@@ -340,24 +489,28 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
               </div>
               <div>
                 <label className={labelCls}>Personality Traits</label>
-                <textarea className={inputCls} rows={3} value={form.personalityTraits} onChange={e => set('personalityTraits', e.target.value)} />
+                <MarkdownField value={form.personalityTraits} onChange={v => set('personalityTraits', v)} textareaClassName={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Flaw</label>
-                <textarea className={inputCls} rows={2} value={form.flaw} onChange={e => set('flaw', e.target.value)} />
+                <MarkdownField value={form.flaw} onChange={v => set('flaw', v)} textareaClassName={inputCls} />
               </div>
             </div>
             <div className="space-y-3">
               <div>
                 <label className={labelCls}>Portrait (3:4)</label>
-                {form.portraitBase64 ? (
+                {form.hasImage ? (
                   <div className="space-y-2">
                     <div className="overflow-hidden rounded" style={{ width: 120, height: 160 }}>
-                      <img src={form.portraitBase64} alt="Portrait" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+                      <img
+                        src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : (gifPreviewUrl || getImageUrl('global-character', form.id, 'cropped'))}
+                        alt="Portrait"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+                      />
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => fileRef.current?.click()} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
-                      <button onClick={() => { set('portraitBase64', null); if (fileRef.current) fileRef.current.value = '' }} className="text-xs text-[#b24545] hover:underline">Remove</button>
+                      <button onClick={handleRecrop} className="text-xs text-[#d4a574] hover:underline">Re-crop</button>
+                      <button onClick={handleRemovePortrait} className="text-xs text-[#b24545] hover:underline">Remove</button>
                     </div>
                   </div>
                 ) : (
@@ -367,14 +520,15 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
                 )}
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePortrait} />
                 {uploadError && <p className="text-xs text-[#b24545] mt-1">{uploadError}</p>}
+                {!uploadError && gifNotice && <p className="text-xs text-[#999999] mt-1">{GIF_NOTICE}</p>}
               </div>
               <div>
                 <label className={labelCls}>Description</label>
-                <textarea className={inputCls} rows={3} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Physical appearance, background..." />
+                <MarkdownField value={form.description} onChange={v => set('description', v)} textareaClassName={inputCls} placeholder="Physical appearance, background..." />
               </div>
               <div>
                 <label className={labelCls}>Quest Hooks</label>
-                <textarea className={inputCls} rows={3} value={form.questHooks} onChange={e => set('questHooks', e.target.value)} placeholder="Personal quests, goals, secrets..." />
+                <MarkdownField value={form.questHooks} onChange={v => set('questHooks', v)} textareaClassName={inputCls} placeholder="Personal quests, goals, secrets..." />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
@@ -403,12 +557,22 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
           </div>
         </div>
       </div>
-      {cropSrc && <CropModal imageData={cropSrc} onSave={cropped => { set('portraitBase64', cropped); set('portraitPanX', 0); set('portraitPanY', 0); setCropSrc(null) }} onClose={() => setCropSrc(null)} />}
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
+          aspectW={3}
+          aspectH={4}
+          title="Crop Portrait"
+          onSave={handleCropSave}
+          onClose={() => { setCropFile(null); setCropMode(null) }}
+        />
+      )}
     </div>
   )
 }
 
 function GlobalCharacterCard({ char, onEdit, onDelete }) {
+  const cleanDescription = stripMarkdown(char.description)
   return (
     <div className="bg-[#211b17] border border-[#332922] rounded-lg overflow-hidden hover:border-[#d4a574]/40 transition-colors group">
       <div className="p-3 flex gap-3">
@@ -428,9 +592,9 @@ function GlobalCharacterCard({ char, onEdit, onDelete }) {
           {char.alignment && <p className="text-xs text-[#777] mt-0.5">{char.alignment}</p>}
         </div>
       </div>
-      {char.description && (
+      {cleanDescription && (
         <div className="px-3 pb-3 text-xs text-[#d4d4d4] leading-relaxed border-t border-[#332922] pt-2">
-          {char.description.length > 160 ? char.description.slice(0, 160) + '…' : char.description}
+          {cleanDescription.length > 160 ? cleanDescription.slice(0, 160) + '…' : cleanDescription}
         </div>
       )}
     </div>
@@ -464,9 +628,9 @@ function CharactersTab() {
       personalityTraits: form.personalityTraits || null,
       flaw: form.flaw || null,
       description: form.description || null,
-      portraitBase64: form.portraitBase64 || null,
-      portraitPanX: form.portraitPanX || 0,
-      portraitPanY: form.portraitPanY || 0,
+      hasImage: form.hasImage,
+      originalImageData: form.originalImageData,
+      croppedImageData: form.croppedImageData,
       questHooks: form.questHooks || null,
       relationships: form.relationships || [],
     }
@@ -516,7 +680,7 @@ function CharactersTab() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(char => (
-            <GlobalCharacterCard key={char.id} char={char} onEdit={() => setEditing({ ...char })} onDelete={() => setDeleteTarget(char)} />
+            <GlobalCharacterCard key={char.id} char={char} onEdit={() => setEditing({ ...char, originalImageData: null, croppedImageData: null })} onDelete={() => setDeleteTarget(char)} />
           ))}
         </div>
       )}

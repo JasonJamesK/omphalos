@@ -34,6 +34,9 @@ namespace Omphalos.Repository.Migrations
                     b.Property<string>("Class")
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("CroppedImageData")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -57,17 +60,11 @@ namespace Omphalos.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<byte[]>("OriginalImageData")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("PersonalityTraits")
                         .HasColumnType("text");
-
-                    b.Property<string>("PortraitBase64")
-                        .HasColumnType("text");
-
-                    b.Property<double>("PortraitPanX")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("PortraitPanY")
-                        .HasColumnType("double precision");
 
                     b.Property<string>("QuestHooks")
                         .HasColumnType("text");
@@ -184,6 +181,9 @@ namespace Omphalos.Repository.Migrations
                     b.Property<string>("Class")
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("CroppedImageData")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -198,17 +198,11 @@ namespace Omphalos.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<byte[]>("OriginalImageData")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("PersonalityTraits")
                         .HasColumnType("text");
-
-                    b.Property<string>("PortraitBase64")
-                        .HasColumnType("text");
-
-                    b.Property<double>("PortraitPanX")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("PortraitPanY")
-                        .HasColumnType("double precision");
 
                     b.Property<string>("QuestHooks")
                         .HasColumnType("text");
@@ -236,10 +230,10 @@ namespace Omphalos.Repository.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
+                    b.Property<byte[]>("CroppedImageData")
+                        .HasColumnType("bytea");
 
-                    b.Property<string>("ImageBase64")
+                    b.Property<string>("Description")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -249,6 +243,9 @@ namespace Omphalos.Repository.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
+
+                    b.Property<byte[]>("OriginalImageData")
+                        .HasColumnType("bytea");
 
                     b.Property<string>("SecretsAndHazards")
                         .HasColumnType("text");
@@ -266,21 +263,25 @@ namespace Omphalos.Repository.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("CroppedImageData")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
                     b.Property<string>("GlobalLocationId")
                         .HasColumnType("text");
 
-                    b.Property<string>("ImageBase64")
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
+
+                    b.Property<byte[]>("OriginalImageData")
+                        .HasColumnType("bytea");
 
                     b.Property<string>("SessionId")
                         .IsRequired()

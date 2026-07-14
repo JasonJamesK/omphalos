@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import Portrait from './Portrait'
 import StatBlockView from './StatBlockView'
+import MarkdownField from '../markdown/MarkdownField'
+import { stripMarkdown } from '../markdown/stripMarkdown'
+import { getImageUrl } from '../../utils/imageUrls'
 
 const inp = 'w-full bg-[#161310] border border-[#332922] rounded px-3 py-2 text-[#f0f0f0] text-sm focus:outline-none focus:border-[#d4a574]'
 
 function LibraryMiniPortrait({ char }) {
-  if (!char.portraitBase64) {
+  const imageUrl = char.hasImage ? getImageUrl('global-character', char.id, 'cropped') : null
+  if (!imageUrl) {
     return (
       <div className="w-8 h-8 rounded bg-[#332922] flex items-center justify-center text-[#666] font-bold text-sm flex-shrink-0">
         {char.name?.[0]?.toUpperCase() || '?'}
@@ -14,16 +18,18 @@ function LibraryMiniPortrait({ char }) {
   }
   return (
     <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
-      <img src={char.portraitBase64} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+      <img src={imageUrl} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
     </div>
   )
 }
 
 function CharacterPreview({ char, compact = false }) {
+  const imageUrl = char.hasImage ? getImageUrl('global-character', char.id, 'cropped') : null
+
   if (char.isNpc) {
     return (
       <div className="flex gap-3">
-        {!compact && <Portrait char={char} size="sm" />}
+        {!compact && <Portrait char={char} size="sm" imageUrl={imageUrl} />}
         <div className="flex-1 min-w-0">
           <StatBlockView char={char} />
         </div>
@@ -36,8 +42,8 @@ function CharacterPreview({ char, compact = false }) {
       <div className="flex gap-3 mb-3">
         {!compact && (
           <div className="overflow-hidden rounded flex-shrink-0" style={{ width: 80, height: 107 }}>
-            {char.portraitBase64 ? (
-              <img src={char.portraitBase64} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+            {imageUrl ? (
+              <img src={imageUrl} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
             ) : (
               <div className="w-full h-full bg-[#332922] flex items-center justify-center text-[#666] font-bold text-2xl">
                 {char.name?.[0]?.toUpperCase() || '?'}
@@ -60,7 +66,7 @@ function CharacterPreview({ char, compact = false }) {
       ].filter(([, v]) => v).map(([label, value]) => (
         <div key={label} className="mb-2">
           <p className="text-xs text-[#666] uppercase tracking-wide mb-0.5">{label}</p>
-          <p className="text-xs text-[#d4d4d4] leading-relaxed whitespace-pre-wrap">{value}</p>
+          <p className="text-xs text-[#d4d4d4] leading-relaxed whitespace-pre-wrap">{stripMarkdown(value)}</p>
         </div>
       ))}
 
@@ -175,11 +181,10 @@ export default function AddFromLibraryModal({ globalCharacters, onAdd, onClose, 
               </div>
               <div>
                 <label className="block text-xs text-[#999999] mb-1">Session Notes <span className="text-[#555]">(optional)</span></label>
-                <textarea
-                  className={inp + ' resize-none'}
-                  rows={5}
+                <MarkdownField
                   value={sessionNotes}
-                  onChange={e => setSessionNotes(e.target.value)}
+                  onChange={setSessionNotes}
+                  textareaClassName={inp}
                   placeholder="Notes specific to this session — how you met them, their current status, etc."
                   autoFocus
                 />

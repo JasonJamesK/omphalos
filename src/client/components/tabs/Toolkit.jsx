@@ -107,7 +107,7 @@ function SaveBtn({ text }) {
     const line = `[${stamp}] ${text}`
     dispatch({
       type: 'UPDATE_SESSION',
-      payload: { id: activeSession.id, sessionNotes: (activeSession.sessionNotes ? activeSession.sessionNotes + '\n' : '') + line },
+      payload: { ...activeSession, sessionNotes: (activeSession.sessionNotes ? activeSession.sessionNotes + '\n' : '') + line },
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
