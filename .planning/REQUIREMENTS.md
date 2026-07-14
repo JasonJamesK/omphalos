@@ -30,9 +30,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Image Cropping
 
 - [ ] **CROP-01**: DM can crop character portraits in the Character Library using Cropper.js v2 instead of the hand-rolled crop tool
-- [ ] **CROP-02**: DM can crop in-session character portraits using Cropper.js v2
+- [x] **CROP-02**: DM can crop in-session character portraits using Cropper.js v2
 - [ ] **CROP-03**: DM can crop location images using Cropper.js v2
-- [ ] **CROP-04**: Crop tool preserves aspect-ratio lock (configurable per call site), drag-to-reposition, touch/mobile support, rule-of-thirds grid, and corner resize handles matching current behavior
+- [x] **CROP-04**: Crop tool preserves aspect-ratio lock (configurable per call site), drag-to-reposition, touch/mobile support, rule-of-thirds grid, and corner resize handles matching current behavior
 - [ ] **CROP-05**: Crop tool matches the app's existing modal chrome/theme (dark overlay, `bg-[#211b17]` card, amber heading, `×` close, Cancel / "Crop & Save" buttons)
 - [ ] **CROP-06**: `ImageCropModal` outputs both the original and cropped image data on save, so callers can upload both (replaces the old single `onSave(dataURL)` contract, which only carried the cropped result)
 - [ ] **CROP-07**: One shared `ImageCropModal` component is reused across all 3 usage sites rather than three divergent implementations
@@ -42,11 +42,11 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Image Storage & Serving
 
 - [ ] **IMG-01**: Each image-bearing entity (Character, GlobalCharacter, Location, GlobalLocation) stores both the original uploaded image and the cropped result as separate columns, replacing the current single base64 field
-- [ ] **IMG-02**: DM can re-crop an existing image without re-uploading, since the original is retained separately from the cropped result
-- [ ] **IMG-03**: Animated GIFs (which skip cropping entirely) still display correctly via a cropped-or-original fallback (`CroppedImage ?? OriginalImage`)
+- [x] **IMG-02**: DM can re-crop an existing image without re-uploading, since the original is retained separately from the cropped result
+- [x] **IMG-03**: Animated GIFs (which skip cropping entirely) still display correctly via a cropped-or-original fallback (`CroppedImage ?? OriginalImage`)
 - [ ] **IMG-04**: Images are served via dedicated binary endpoints (one route for the original, one for the cropped result, per entity type) instead of being embedded as base64 in the session/character/location JSON payloads
 - [ ] **IMG-05**: Session/character/location DTOs expose a `HasImage` boolean instead of embedded image bytes, so list/detail views can show a placeholder-or-photo state without pulling image data
-- [ ] **IMG-06**: Pages that list or display characters/locations load without waiting on image bytes — images load asynchronously via their own endpoint requests
+- [x] **IMG-06**: Pages that list or display characters/locations load without waiting on image bytes — images load asynchronously via their own endpoint requests
 - [ ] **IMG-07**: Image endpoints include HTTP caching (ETag or Cache-Control), since cropped/original images are immutable once saved — a deliberate improvement over quest-board's uncached reference implementation
 
 ## v1.1 Requirements (urgent insertion, Phase 3.1)
@@ -100,20 +100,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MDED-09 | Phase 3 | Complete |
 | MDED-11 | Phase 3.1 | Complete |
 | CROP-01 | Phase 4 | Pending |
-| CROP-02 | Phase 4 | Pending |
+| CROP-02 | Phase 4 | Complete |
 | CROP-03 | Phase 4 | Pending |
-| CROP-04 | Phase 4 | Pending |
+| CROP-04 | Phase 4 | Complete |
 | CROP-05 | Phase 4 | Pending |
 | CROP-06 | Phase 4 | Pending |
 | CROP-07 | Phase 4 | Pending |
 | CROP-08 | Phase 4 | Pending |
 | CROP-09 | Phase 4 | Pending |
 | IMG-01 | Phase 4 | Pending |
-| IMG-02 | Phase 4 | Pending |
-| IMG-03 | Phase 4 | Pending |
+| IMG-02 | Phase 4 | Complete |
+| IMG-03 | Phase 4 | Complete |
 | IMG-04 | Phase 4 | Pending |
 | IMG-05 | Phase 4 | Pending |
-| IMG-06 | Phase 4 | Pending |
+| IMG-06 | Phase 4 | Complete |
 | IMG-07 | Phase 4 | Pending |
 
 **Coverage:**
