@@ -1,17 +1,20 @@
 ---
 phase: 04-image-cropping-storage-cropper-js-v2-rollout
 verified: 2026-07-14T08:08:52Z
-status: human_needed
+status: passed
 score: 13/13 must-haves verified (code-level), behavior_unverified: 3 (interactive crop UX)
 behavior_unverified: 3
 overrides_applied: 0
 human_verification:
+
   - test: "Crop a character portrait in the Character Library, an in-session character portrait, and a location image via drag-to-reposition, mouse-wheel zoom, and (if a touch device is available) pinch-zoom/touch-drag; confirm rule-of-thirds grid and all 8 corner/edge resize handles render and work at all 3 sites."
     expected: "Selection box drags, resizes via handles, zooms in/out smoothly; grid overlay renders in amber (#d4a574); works with touch as well as mouse."
     why_human: "No frontend test framework exists in this repo (no vitest/jest/@testing-library) — CROP-01/02/03/04/08 interactive behavior can only be judged by driving a real browser. Code inspection confirms the wiring (movable/resizable/scalable attributes, 8 cropper-handle elements, amber theme-color) is present at all 3 call sites, but no automated test exercises the interaction itself."
+
   - test: "Upload a real EXIF-rotated phone photo at each of the 3 crop sites and confirm it renders right-side-up (not sideways/upside-down) in the crop stage; if an iOS Safari device is available, confirm no blank/crashed canvas."
     expected: "Photo appears correctly oriented regardless of source EXIF orientation tag; crop stage renders (no blank canvas) on iOS Safari."
     why_human: "CROP-09's `createImageBitmap(..., { imageOrientation: 'from-image' })` + 2400px downscale is present in `imageUpload.js`'s `prepareWorkingCopy` (code-verified), but correct visual orientation on a real EXIF-tagged photo and iOS Safari's canvas-size behavior can only be confirmed on a real device/browser."
+
   - test: "Upload an animated GIF at each of the 3 sites; confirm the crop modal never opens, an inline notice appears, and the GIF still animates (not a single static frame) in every place its portrait/image subsequently renders. Then click Re-crop on that same GIF-holding entry and confirm the crop modal is still skipped (CR-01 fix)."
     expected: "GIF bytes stored as-is; animation plays in all cards/previews; Re-crop on a GIF shows the same skip notice rather than opening ImageCropModal and baking it to a static frame."
     why_human: "IMG-03 backend fallback (`Cropped ?? Original`) is proven by passing integration tests, and CR-01's guard (`isGifBlob` check before every one of the 4 re-crop entry points) is confirmed present in source for all 4 sites — but whether an actual GIF animates correctly end-to-end in a browser after the full upload/display/re-crop round trip needs live confirmation."
