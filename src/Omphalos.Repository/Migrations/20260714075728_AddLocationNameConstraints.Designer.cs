@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Omphalos.Repository;
@@ -12,9 +13,11 @@ using Omphalos.Repository;
 namespace Omphalos.Repository.Migrations
 {
     [DbContext(typeof(OmphalosDbContext))]
-    partial class OmphalosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714075728_AddLocationNameConstraints")]
+    partial class AddLocationNameConstraints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
