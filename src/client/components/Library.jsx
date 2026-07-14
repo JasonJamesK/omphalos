@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { db } from '../db/index.js'
 import DeleteConfirm from './DeleteConfirm'
@@ -44,7 +44,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
   const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handleSave() {
     if (!form.name.trim()) return
@@ -66,12 +73,14 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
     if (isGifFile(f)) {
       blobToBase64(f)
         .then(b64 => {
+          setGifPreviewUrl(URL.createObjectURL(f))
           setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
           setGifNotice(true)
         })
         .catch(() => setUploadError('Could not read that file.'))
       return
     }
+    setGifPreviewUrl(null)
     setCropFile(f)
     setCropMode('new')
   }
@@ -86,6 +95,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
         setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
       })
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
@@ -109,6 +119,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
   function handleRemoveImage() {
     setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -126,7 +137,7 @@ function GlobalLocationModal({ loc, onSave, onClose }) {
               <div className="space-y-2">
                 <div className="overflow-hidden rounded" style={{ width: '100%', maxWidth: 320, aspectRatio: '4 / 3' }}>
                   <img
-                    src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : getImageUrl('global-location', form.id, 'cropped')}
+                    src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : (gifPreviewUrl || getImageUrl('global-location', form.id, 'cropped'))}
                     alt={form.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
@@ -357,9 +368,16 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
   const [cropMode, setCropMode] = useState(null) // 'new' | 'recrop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   function handlePortrait(e) {
     const f = e.target.files[0]
@@ -375,12 +393,14 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
     if (isGifFile(f)) {
       blobToBase64(f)
         .then(b64 => {
+          setGifPreviewUrl(URL.createObjectURL(f))
           setForm(p => ({ ...p, hasImage: true, originalImageData: b64, croppedImageData: null }))
           setGifNotice(true)
         })
         .catch(() => setUploadError('Could not read that file.'))
       return
     }
+    setGifPreviewUrl(null)
     setCropFile(f)
     setCropMode('new')
   }
@@ -395,6 +415,7 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
         setForm(p => ({ ...p, hasImage: true, originalImageData: originalB64, croppedImageData: croppedB64 }))
       })
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
@@ -418,6 +439,7 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
   function handleRemovePortrait() {
     setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -481,7 +503,7 @@ function GlobalCharacterModal({ char, onSave, onClose }) {
                   <div className="space-y-2">
                     <div className="overflow-hidden rounded" style={{ width: 120, height: 160 }}>
                       <img
-                        src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : getImageUrl('global-character', form.id, 'cropped')}
+                        src={form.croppedImageData ? `data:image/jpeg;base64,${form.croppedImageData}` : (gifPreviewUrl || getImageUrl('global-character', form.id, 'cropped'))}
                         alt="Portrait"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
                       />

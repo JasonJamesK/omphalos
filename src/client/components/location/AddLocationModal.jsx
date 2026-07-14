@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { db } from '../../db/index.js'
 import ImageCropModal from '../ImageCropModal'
 import { MAX_IMAGE_MB, MAX_IMAGE_BYTES, isGifFile, isGifBlob, blobToBase64, detectImageMimeType } from '../../utils/imageUpload'
@@ -48,7 +48,14 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
   const [cropMode, setCropMode] = useState(null) // 'new' | 're-crop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handleImage(e) {
     const f = e.target.files[0]
@@ -63,10 +70,12 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
     }
     if (isGifFile(f)) {
       const originalImageData = await blobToBase64(f)
+      setGifPreviewUrl(URL.createObjectURL(f))
       setCreateForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData: null }))
       setGifNotice(true)
       return
     }
+    setGifPreviewUrl(null)
     setCropMode('new')
     setCropFile(f)
   }
@@ -79,6 +88,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
       const originalImageData = await blobToBase64(originalFile)
       setCreateForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData }))
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
@@ -111,6 +121,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
     setCreateForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setUploadError('')
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -167,7 +178,7 @@ export default function AddLocationModal({ globalLocations, onAdd, onClose, disp
 
   const createImagePreviewUrl = createForm.croppedImageData
     ? `data:image/jpeg;base64,${createForm.croppedImageData}`
-    : (createForm.hasImage ? getImageUrl('global-location', createForm.id, 'cropped') : null)
+    : (gifPreviewUrl || (createForm.hasImage ? getImageUrl('global-location', createForm.id, 'cropped') : null))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>

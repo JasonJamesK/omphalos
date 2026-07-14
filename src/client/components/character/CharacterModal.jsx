@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Portrait from './Portrait'
 import StatBlockFields, { emptyStatBlock } from './StatBlockFields'
 import StatBlockView from './StatBlockView'
@@ -40,9 +40,16 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
   const [cropMode, setCropMode] = useState(null) // 'new' | 're-crop'
   const [uploadError, setUploadError] = useState('')
   const [gifNotice, setGifNotice] = useState(false)
+  const [gifPreviewUrl, setGifPreviewUrl] = useState(null)
   const fileRef = useRef(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  // Revoke the previous local GIF preview URL whenever it's replaced or the
+  // modal unmounts — it's never persisted anywhere else, so nothing else owns it.
+  useEffect(() => {
+    return () => { if (gifPreviewUrl) URL.revokeObjectURL(gifPreviewUrl) }
+  }, [gifPreviewUrl])
 
   async function handlePortrait(e) {
     const f = e.target.files[0]
@@ -57,10 +64,12 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
     }
     if (isGifFile(f)) {
       const originalImageData = await blobToBase64(f)
+      setGifPreviewUrl(URL.createObjectURL(f))
       setForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData: null }))
       setGifNotice(true)
       return
     }
+    setGifPreviewUrl(null)
     setCropMode('new')
     setCropFile(f)
   }
@@ -73,6 +82,7 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
       const originalImageData = await blobToBase64(originalFile)
       setForm(p => ({ ...p, hasImage: true, originalImageData, croppedImageData }))
     }
+    setGifPreviewUrl(null)
     setCropFile(null)
     setCropMode(null)
   }
@@ -105,12 +115,13 @@ export default function CharacterModal({ char, onSave, onClose, globalCharacters
     setForm(p => ({ ...p, hasImage: false, originalImageData: null, croppedImageData: null }))
     setUploadError('')
     setGifNotice(false)
+    setGifPreviewUrl(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
   const portraitPreviewUrl = form.croppedImageData
     ? `data:image/jpeg;base64,${form.croppedImageData}`
-    : sessionCharacterImageUrl(form, sessionId)
+    : (gifPreviewUrl || sessionCharacterImageUrl(form, sessionId))
 
   const roInp = 'w-full bg-[#222] border border-[#332922]/50 rounded px-3 py-2 text-[#999999] text-sm cursor-not-allowed'
 
